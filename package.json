@@ -1,0 +1,23 @@
+{
+  "name": "alphagamebot",
+  "version": "4.0.0",
+  "description": "A Discord bot that's free and (hopefully) doesn't suck.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Discord",
+    "Engagement"
+  ],
+  "author": "Damien Boisvert",
+  "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "discord.js": "^14.23.1"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.46.0",
+    "@typescript-eslint/parser": "^8.46.0",
+    "typescript-eslint": "^8.46.0"
+  }
+}
