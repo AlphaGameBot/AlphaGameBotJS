@@ -1,3 +1,5 @@
 {
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "licenser.license": "Custom",
+    "licenser.customHeaderFile": ".vscode/license-header.txt"
 }
