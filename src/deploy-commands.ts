@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 // This file is a part of AlphaGameBot.
 // 
 //     AlphaGameBot - A Discord bot that's free and (hopefully) doesn't suck.
@@ -20,13 +19,14 @@
 import { REST, User } from "discord.js";
 import { crawlCommands } from "./utility/crawler.js";
 import { loadDotenv } from "./utility/debug/dotenv.js";
+import logger from "./utility/logger.js";
 
 await loadDotenv();
 const commands = await crawlCommands();
 
 const token = process.env.TOKEN;
 if (!token) {
-    console.error("No token provided. Please set the TOKEN environment variable.");
+    logger.error("No token provided. Please set the TOKEN environment variable.");
     process.exit(1);
 }
 const rest = new REST().setToken(token);
@@ -36,13 +36,13 @@ const clientID = (await rest.get("/users/@me") as User).id;
 
 (async () => {
     try {
-        console.log(`Started refreshing ${commands.size} application (/) commands.`);
+        logger.info(`Started refreshing ${commands.size} application (/) commands.`);
 
         // Convert commands to JSON format that Discord expects
         const commandsData = commands.map(command => command.data.toJSON());
-        console.log("Commands:");
+        logger.info("Commands:");
         for (const command of commands) {
-            console.log(`- ${command[1].data.name}`);
+            logger.info(`- ${command[1].data.name}`);
         }
 
         // Register commands globally
@@ -51,8 +51,8 @@ const clientID = (await rest.get("/users/@me") as User).id;
             { body: commandsData },
         );
 
-        console.log(`Successfully reloaded ${commands.size} application (/) commands.`);
+        logger.info(`Successfully reloaded ${commands.size} application (/) commands.`);
     } catch (error) {
-        console.error(error);
+        logger.error(error);
     }
 })();

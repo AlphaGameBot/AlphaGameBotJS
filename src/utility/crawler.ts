@@ -42,14 +42,13 @@ export async function crawlCommands() {
 
     logger.debug(`Crawling commands in: ${foldersPath}`);
     for (const folder of commandFolders) {
-        logger.debug(`- ${folder}`);
         const commandsPath = path.join(foldersPath, folder);
         const isDist = foldersPath.includes(path.join(path.sep, "dist", path.sep)) || foldersPath.endsWith(path.join(path.sep, "dist"));
         // In dist we only want .js files. In src we may have .ts files.
         const commandFiles = readdirSync(commandsPath).filter(file => isDist ? file.endsWith(".js") : file.endsWith(".ts") || file.endsWith(".js"));
+        logger.debug(`- ${folder} (Includes ${commandFiles.length} commands)`);
 
         for (const file of commandFiles) {
-            logger.debug(`  - ${file}`);
             const filePath = path.join(commandsPath, file);
             // Build a file:// URL for Node to import the correct compiled JS when running from dist.
             const importTarget = pathToFileURL(filePath).href;
@@ -59,8 +58,8 @@ export async function crawlCommands() {
             const command: Command = (commandModule && commandModule.default) ? commandModule.default : commandModule;
 
             if ("data" in command && "execute" in command) {
-                logger.info(`Loading command: ${command.data.name}`);
                 commands.set(command.data.name, command);
+                logger.debug(`  - ${file} (Implements command: ${command.data.name})`);
             } else {
                 logger.warn(`The command at ${filePath} is missing a required "data" or "execute" property.`);
             }
@@ -87,7 +86,6 @@ export async function crawlEvents() {
 
     logger.debug(`Crawling events in: ${eventsPath}`);
     for (const file of eventFiles) {
-        logger.debug(`- ${file}`);
         const filePath = path.join(eventsPath, file);
         const importTarget = pathToFileURL(filePath).href;
         // Dynamically import the event module
@@ -100,6 +98,8 @@ export async function crawlEvents() {
                 once: event.once ? true : false,
                 execute: event.execute
             } as EventHandler<keyof ClientEvents>);
+            logger.debug(`- ${file} (Implements event: ${event.name})`);
+
         } else {
             logger.warn(`The event at ${filePath} is missing a required "name", "event" or "execute" property.`);
         }

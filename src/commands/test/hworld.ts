@@ -17,6 +17,7 @@
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import type { Command } from "../../interfaces/Command.js";
 
 export default {
     data: new SlashCommandBuilder()
@@ -25,4 +26,4 @@ export default {
     async execute(interaction: ChatInputCommandInteraction) {
         await interaction.reply("Hello, World!");
     }
-};
+} as Command;

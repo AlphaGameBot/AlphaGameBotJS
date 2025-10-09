@@ -19,12 +19,21 @@
 // /* eslint-enable no-trailing-spaces */
 
 
-import { Client, Events, GatewayIntentBits } from "discord.js";
+import { Client, Events, GatewayIntentBits, type ClientEvents } from "discord.js";
+import { existsSync } from "node:fs";
 import { crawlEvents } from "./utility/crawler.js";
 import { loadDotenv } from "./utility/debug/dotenv.js";
 import logger from "./utility/logger.js";
 
 await loadDotenv();
+
+// is there the 'dist' folder in cwd?
+const weHaveDist = existsSync("./dist");
+
+if (weHaveDist) {
+    logger.verbose("I can see that we have a 'dist' folder, changing cwd to it.");
+    process.chdir("./dist");
+}
 
 const client = new Client({
     intents: [
@@ -50,19 +59,12 @@ if (!token) {
 }
 
 const events = await crawlEvents();
-
 for (const event of events) {
-    if (event.once) {
-        client.once(event.name, async (...args) => {
-            logger.info(`Fired event: ${event.name}`);
-            await event.execute(...args);
-        });
-    } else {
-        client.on(event.name, async (...args) => {
-            logger.info(`Fired event: ${event.name}`);
-            await event.execute(...args);
-        });
-    }
+    const wrapper = async (...args: unknown[]) => {
+        logger.verbose(`Fired event: ${event.name} (${args})`);
+        await event.execute(...args as ClientEvents[typeof event.name]);
+    };
+    (event.once ? client.once : client.on)(event.name, wrapper);
 }
 
 client.login(token);
