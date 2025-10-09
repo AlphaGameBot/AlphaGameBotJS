@@ -17,10 +17,15 @@
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
 import { Collection, type ClientEvents } from "discord.js";
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import type { Command } from "../interfaces/Command.js";
 import type { EventHandler } from "../interfaces/Event.js";
+
+// Cached project root for resolving src/dist paths
+const projectRoot = process.cwd();
+
 
 /**
  * Crawls the command directories and collects all command modules.
@@ -28,21 +33,30 @@ import type { EventHandler } from "../interfaces/Event.js";
  * @returns A collection of commands mapped by their names.
  */
 export async function crawlCommands() {
-    const foldersPath = path.join("src", "commands");
+    // Prefer built files in `dist` when running the compiled output. Fall back to `src` during dev.
+    const distCommandsPath = path.join(projectRoot, "dist", "commands");
+    const srcCommandsPath = path.join(projectRoot, "src", "commands");
+    const foldersPath = existsSync(distCommandsPath) ? distCommandsPath : srcCommandsPath;
     const commandFolders = readdirSync(foldersPath);
     const commands = new Collection<string, Command>();
 
     for (const folder of commandFolders) {
         const commandsPath = path.join(foldersPath, folder);
-        const commandFiles = readdirSync(commandsPath).filter(file => file.endsWith(".ts") || file.endsWith(".js"));
+        const isDist = foldersPath.includes(path.join(path.sep, "dist", path.sep)) || foldersPath.endsWith(path.join(path.sep, "dist"));
+        // In dist we only want .js files. In src we may have .ts files.
+        const commandFiles = readdirSync(commandsPath).filter(file => isDist ? file.endsWith(".js") : file.endsWith(".ts") || file.endsWith(".js"));
 
         for (const file of commandFiles) {
             const filePath = path.join(commandsPath, file);
+            // Build a file:// URL for Node to import the correct compiled JS when running from dist.
+            const importTarget = pathToFileURL(filePath).href;
             // Dynamically import the command module
-            // import command from `../commands/${folder}/${file}`; (not async)
-            const command: Command = await import(path.resolve(filePath));
+            const commandModule = await import(importTarget);
+            // support both default and named exports
+            const command: Command = (commandModule && commandModule.default) ? commandModule.default : commandModule;
 
             if ("data" in command && "execute" in command) {
+                console.log(`Loading command: ${command.data.name}`);
                 commands.set(command.data.name, command);
             } else {
                 console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
@@ -60,16 +74,22 @@ export async function crawlCommands() {
  * @returns An array of event handlers.
  */
 export async function crawlEvents() {
-    const eventsPath = path.join("src", "events");
-    const eventFiles = readdirSync(eventsPath).filter(file => file.endsWith(".ts") || file.endsWith(".js"));
+    // 10/26/2025 - damien - man i hate the typescript bullshit sometimes
+    const distEventsPath = path.join(projectRoot, "dist", "events");
+    const srcEventsPath = path.join(projectRoot, "src", "events");
+    const eventsPath = existsSync(distEventsPath) ? distEventsPath : srcEventsPath;
+    const eventsIsDist = eventsPath.includes(path.join(path.sep, "dist", path.sep)) || eventsPath.endsWith(path.join(path.sep, "dist"));
+    const eventFiles = readdirSync(eventsPath).filter(file => eventsIsDist ? file.endsWith(".js") : file.endsWith(".ts") || file.endsWith(".js"));
     const events: Array<EventHandler<keyof ClientEvents>> = [];
 
     for (const file of eventFiles) {
         const filePath = path.join(eventsPath, file);
+        const importTarget = pathToFileURL(filePath).href;
         // Dynamically import the event module
-        // import event from `../events/${file}`; (not async)
-        const event = await import(path.resolve(filePath));
+        const eventModule = await import(importTarget);
+        const event = (eventModule && eventModule.default) ? eventModule.default : eventModule;
         if ("name" in event && "event" in event && "execute" in event) {
+            console.log("Loading event: " + event.name);
             events.push({
                 name: event.name,
                 once: event.once ? true : false,
