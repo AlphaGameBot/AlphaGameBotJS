@@ -16,10 +16,12 @@
   "author": "Damien Boisvert",
   "license": "GPL-3.0-or-later",
   "dependencies": {
-    "discord.js": "^14.23.1"
+    "discord.js": "^14.23.1",
+    "winston": "^3.18.3"
   },
   "devDependencies": {
     "@types/node": "^24.7.0",
+    "@types/winston": "^2.4.4",
     "@typescript-eslint/eslint-plugin": "^8.46.0",
     "@typescript-eslint/parser": "^8.46.0",
     "dotenv": "^17.2.3",

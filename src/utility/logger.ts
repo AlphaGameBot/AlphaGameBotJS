@@ -16,25 +16,21 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import { ChatInputCommandInteraction, Events } from "discord.js";
-import type { EventHandler } from "../interfaces/Event.js";
-import { crawlCommands } from "../utility/crawler.js";
-import logger from "../utility/logger.js";
+import { createLogger, format, transports } from "winston";
 
-const commands = await crawlCommands();
+const logger = createLogger({
+    level: process.env.NODE_ENV === "production" ? "info" : "debug",
+    // [file:line] [level]: message
+    format: format.combine(
+        process.env.NODE_ENV !== "production" ? format.colorize() : format.uncolorize(),
+        format.timestamp(),
+        format.printf(({ timestamp, level, message }): string => {
+            return `[${timestamp}] [${level}]: ${message}`;
+        })
+    ),
+    transports: [
+        new (transports.Console)()
+    ]
+});
 
-export default {
-    name: Events.InteractionCreate,
-    execute: async (interaction) => {
-        if (!interaction.isCommand()) return;
-
-        const command = commands.get(interaction.commandName);
-        if (!command) return;
-
-        try {
-            await command.execute(interaction as ChatInputCommandInteraction);
-        } catch (error) {
-            logger.error(`Error executing command ${interaction.commandName}:`, error);
-        }
-    }
-} as EventHandler<Events.InteractionCreate>;
+export default logger;

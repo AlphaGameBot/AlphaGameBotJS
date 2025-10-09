@@ -22,6 +22,7 @@
 import { Client, Events, GatewayIntentBits } from "discord.js";
 import "dotenv/config";
 import { crawlEvents } from "./utility/crawler.js";
+import logger from "./utility/logger.js";
 
 const client = new Client({
     intents: [
@@ -30,19 +31,19 @@ const client = new Client({
 });
 
 client.once(Events.ClientReady, (readyClient) => {
-    console.log(`Ready! Logged in as ${readyClient.user.username}`);
+    logger.info(`Ready! Logged in as ${readyClient.user.username}`);
 });
 
 // when quit signal is received, log out the bot
 process.on("SIGINT", async () => {
-    console.log("SIGINT received, logging out...");
+    logger.info("SIGINT received, logging out...");
     await client.destroy();
     process.exit(0);
 });
 
 const token = process.env.TOKEN;
 if (!token) {
-    console.error("Error: TOKEN environment variable is not set.");
+    logger.error("Error: TOKEN environment variable is not set.");
     process.exit(1);
 }
 
@@ -51,12 +52,12 @@ const events = await crawlEvents();
 for (const event of events) {
     if (event.once) {
         client.once(event.name, async (...args) => {
-            console.log(`Fired event: ${event.name}`);
+            logger.info(`Fired event: ${event.name}`);
             await event.execute(...args);
         });
     } else {
         client.on(event.name, async (...args) => {
-            console.log(`Fired event: ${event.name}`);
+            logger.info(`Fired event: ${event.name}`);
             await event.execute(...args);
         });
     }

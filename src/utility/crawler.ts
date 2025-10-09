@@ -22,6 +22,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import type { Command } from "../interfaces/Command.js";
 import type { EventHandler } from "../interfaces/Event.js";
+import logger from "./logger.js";
 
 // Cached project root for resolving src/dist paths
 const projectRoot = process.cwd();
@@ -56,10 +57,10 @@ export async function crawlCommands() {
             const command: Command = (commandModule && commandModule.default) ? commandModule.default : commandModule;
 
             if ("data" in command && "execute" in command) {
-                console.log(`Loading command: ${command.data.name}`);
+                logger.info(`Loading command: ${command.data.name}`);
                 commands.set(command.data.name, command);
             } else {
-                console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+                logger.warn(`The command at ${filePath} is missing a required "data" or "execute" property.`);
             }
         }
     }
@@ -88,16 +89,15 @@ export async function crawlEvents() {
         // Dynamically import the event module
         const eventModule = await import(importTarget);
         const event = (eventModule && eventModule.default) ? eventModule.default : eventModule;
-        if ("name" in event && "event" in event && "execute" in event) {
-            console.log("Loading event: " + event.name);
+        if ("name" in event && "execute" in event) {
+            logger.info("Loading event: " + event.name);
             events.push({
                 name: event.name,
                 once: event.once ? true : false,
-                event: event.event,
                 execute: event.execute
             } as EventHandler<keyof ClientEvents>);
         } else {
-            console.log(`[WARNING] The event at ${filePath} is missing a required "name", "event" or "execute" property.`);
+            logger.warn(`The event at ${filePath} is missing a required "name", "event" or "execute" property.`);
         }
     }
 

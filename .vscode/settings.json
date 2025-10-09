@@ -10,6 +10,11 @@
         "javascript",
         "typescript",
     ],
+    "files.exclude": {
+        "**/node_modules": true,
+        "**/dist": true,
+        "**/build": true
+    },
     "licenser.license": "Custom",
     "licenser.customHeaderFile": ".vscode/license-header.txt"
 }
