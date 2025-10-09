@@ -20,9 +20,11 @@
 
 
 import { Client, Events, GatewayIntentBits } from "discord.js";
-import "dotenv/config";
 import { crawlEvents } from "./utility/crawler.js";
+import { loadDotenv } from "./utility/debug/dotenv.js";
 import logger from "./utility/logger.js";
+
+await loadDotenv();
 
 const client = new Client({
     intents: [

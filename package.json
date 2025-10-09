@@ -7,7 +7,11 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint . --ext .ts",
-    "start": "tsc --build --verbose && echo ---starting--- && node ./dist/main.js"
+    "build:start": "tsc --build --verbose && echo ---starting--- && node ./dist/main.js",
+    "build:deploy": "tsc --build --verbose && node ./dist/deploy-commands.js",
+    "build": "tsc --build --verbose && tsc-alias",
+    "start": "node ./dist/main.js",
+    "deploy": "node ./dist/deploy-commands.js"
   },
   "keywords": [
     "Discord",
