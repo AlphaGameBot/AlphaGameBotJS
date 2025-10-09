@@ -20,7 +20,8 @@
 
 
 import { Client, Events, GatewayIntentBits } from "discord.js";
-
+import "dotenv/config";
+import { crawlCommands } from "./utility/crawler.js";
 
 const client = new Client({
     intents: [
@@ -32,10 +33,36 @@ client.once(Events.ClientReady, (readyClient) => {
     console.log(`Ready! Logged in as ${readyClient.user.username}`);
 });
 
-const token = process.env.BOT_TOKEN;
+// when quit signal is received, log out the bot
+process.on("SIGINT", async () => {
+    console.log("SIGINT received, logging out...");
+    await client.destroy();
+    process.exit(0);
+});
+
+const token = process.env.TOKEN;
 if (!token) {
-    console.error("Error: BOT_TOKEN environment variable is not set.");
+    console.error("Error: TOKEN environment variable is not set.");
     process.exit(1);
 }
+
+const commands = await crawlCommands();
+
+client.on(Events.InteractionCreate, async (interaction) => {
+    if (!interaction.isChatInputCommand()) return;
+
+    console.log(`Interaction received: ${interaction.commandName}`);
+    const command = commands.get(interaction.commandName);
+    if (!command) {
+        console.error(`No command matching ${interaction.commandName} was found.`);
+        return;
+    }
+
+    try {
+        await command.execute(interaction);
+    } catch (error) {
+        console.error(`Error executing ${interaction.commandName}:`, error);
+    }
+});
 
 client.login(token);

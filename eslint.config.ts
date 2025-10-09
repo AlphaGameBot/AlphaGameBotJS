@@ -14,7 +14,6 @@ export default tseslint.config(
             // Custom TypeScript-specific rules
             "@typescript-eslint/explicit-function-return-type": "off",
             "arrow-spacing": ["warn", { before: true, after: true }],
-            "brace-style": ["error", "stroustrup", { allowSingleLine: true }],
             "comma-spacing": "error",
             "comma-style": "error",
             curly: ["error", "multi-line", "consistent"],
@@ -52,6 +51,7 @@ export default tseslint.config(
             "space-infix-ops": "error",
             "space-unary-ops": "error",
             "spaced-comment": "error",
+            "brace-style": ["error", "1tbs", { allowSingleLine: true }],
             yoda: "error",
         },
     },
