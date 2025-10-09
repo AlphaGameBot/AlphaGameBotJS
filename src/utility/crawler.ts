@@ -36,18 +36,20 @@ const projectRoot = process.cwd();
 export async function crawlCommands() {
     // Prefer built files in `dist` when running the compiled output. Fall back to `src` during dev.
     const distCommandsPath = path.join(projectRoot, "dist", "commands");
-    const srcCommandsPath = path.join(projectRoot, "src", "commands");
-    const foldersPath = existsSync(distCommandsPath) ? distCommandsPath : srcCommandsPath;
+    const foldersPath = existsSync(distCommandsPath) ? distCommandsPath : ".";
     const commandFolders = readdirSync(foldersPath);
     const commands = new Collection<string, Command>();
 
+    logger.debug(`Crawling commands in: ${foldersPath}`);
     for (const folder of commandFolders) {
+        logger.debug(`- ${folder}`);
         const commandsPath = path.join(foldersPath, folder);
         const isDist = foldersPath.includes(path.join(path.sep, "dist", path.sep)) || foldersPath.endsWith(path.join(path.sep, "dist"));
         // In dist we only want .js files. In src we may have .ts files.
         const commandFiles = readdirSync(commandsPath).filter(file => isDist ? file.endsWith(".js") : file.endsWith(".ts") || file.endsWith(".js"));
 
         for (const file of commandFiles) {
+            logger.debug(`  - ${file}`);
             const filePath = path.join(commandsPath, file);
             // Build a file:// URL for Node to import the correct compiled JS when running from dist.
             const importTarget = pathToFileURL(filePath).href;
@@ -83,7 +85,9 @@ export async function crawlEvents() {
     const eventFiles = readdirSync(eventsPath).filter(file => eventsIsDist ? file.endsWith(".js") : file.endsWith(".ts") || file.endsWith(".js"));
     const events: Array<EventHandler<keyof ClientEvents>> = [];
 
+    logger.debug(`Crawling events in: ${eventsPath}`);
     for (const file of eventFiles) {
+        logger.debug(`- ${file}`);
         const filePath = path.join(eventsPath, file);
         const importTarget = pathToFileURL(filePath).href;
         // Dynamically import the event module
