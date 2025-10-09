@@ -21,7 +21,7 @@
 
 import { Client, Events, GatewayIntentBits } from "discord.js";
 import "dotenv/config";
-import { crawlCommands } from "./utility/crawler.js";
+import { crawlEvents } from "./utility/crawler.js";
 
 const client = new Client({
     intents: [
@@ -46,23 +46,20 @@ if (!token) {
     process.exit(1);
 }
 
-const commands = await crawlCommands();
+const events = await crawlEvents();
 
-client.on(Events.InteractionCreate, async (interaction) => {
-    if (!interaction.isChatInputCommand()) return;
-
-    console.log(`Interaction received: ${interaction.commandName}`);
-    const command = commands.get(interaction.commandName);
-    if (!command) {
-        console.error(`No command matching ${interaction.commandName} was found.`);
-        return;
+for (const event of events) {
+    if (event.once) {
+        client.once(event.name, async (...args) => {
+            console.log(`Fired event: ${event.name}`);
+            await event.execute(...args);
+        });
+    } else {
+        client.on(event.name, async (...args) => {
+            console.log(`Fired event: ${event.name}`);
+            await event.execute(...args);
+        });
     }
-
-    try {
-        await command.execute(interaction);
-    } catch (error) {
-        console.error(`Error executing ${interaction.commandName}:`, error);
-    }
-});
+}
 
 client.login(token);

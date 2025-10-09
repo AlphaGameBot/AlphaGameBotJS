@@ -1,5 +1,15 @@
 {
     "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "always",
+        "source.fixAll.eslint": "always",
+        "source.fixAll.ts": "always"
+    },
+    "typescript.tsserver.experimental.enableProjectDiagnostics": true,
+    "eslint.validate": [
+        "javascript",
+        "typescript",
+    ],
     "licenser.license": "Custom",
     "licenser.customHeaderFile": ".vscode/license-header.txt"
 }

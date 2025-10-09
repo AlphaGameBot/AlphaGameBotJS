@@ -16,14 +16,21 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import { ChatInputCommandInteraction, Collection, SlashCommandBuilder } from "discord.js";
+import { Collection, type ClientEvents } from "discord.js";
 import { readdirSync } from "node:fs";
 import path from "node:path";
+import type { Command } from "../interfaces/Command.js";
+import type { EventHandler } from "../interfaces/Event.js";
 
+/**
+ * Crawls the command directories and collects all command modules.
+ * 
+ * @returns A collection of commands mapped by their names.
+ */
 export async function crawlCommands() {
     const foldersPath = path.join("src", "commands");
     const commandFolders = readdirSync(foldersPath);
-    const commands = new Collection<string, { data: SlashCommandBuilder, execute: (interaction: ChatInputCommandInteraction) => Promise<void> }>();
+    const commands = new Collection<string, Command>();
 
     for (const folder of commandFolders) {
         const commandsPath = path.join(foldersPath, folder);
@@ -33,7 +40,7 @@ export async function crawlCommands() {
             const filePath = path.join(commandsPath, file);
             // Dynamically import the command module
             // import command from `../commands/${folder}/${file}`; (not async)
-            const command = await import(path.resolve(filePath));
+            const command: Command = await import(path.resolve(filePath));
 
             if ("data" in command && "execute" in command) {
                 commands.set(command.data.name, command);
@@ -44,4 +51,35 @@ export async function crawlCommands() {
     }
 
     return commands;
+}
+
+
+/**
+ * Crawls the event directories and collects all event modules.
+ * 
+ * @returns An array of event handlers.
+ */
+export async function crawlEvents() {
+    const eventsPath = path.join("src", "events");
+    const eventFiles = readdirSync(eventsPath).filter(file => file.endsWith(".ts") || file.endsWith(".js"));
+    const events: Array<EventHandler<keyof ClientEvents>> = [];
+
+    for (const file of eventFiles) {
+        const filePath = path.join(eventsPath, file);
+        // Dynamically import the event module
+        // import event from `../events/${file}`; (not async)
+        const event = await import(path.resolve(filePath));
+        if ("name" in event && "event" in event && "execute" in event) {
+            events.push({
+                name: event.name,
+                once: event.once ? true : false,
+                event: event.event,
+                execute: event.execute
+            } as EventHandler<keyof ClientEvents>);
+        } else {
+            console.log(`[WARNING] The event at ${filePath} is missing a required "name", "event" or "execute" property.`);
+        }
+    }
+
+    return events;
 }
