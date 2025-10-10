@@ -21,6 +21,7 @@
 
 import { Client, Events, GatewayIntentBits, type ClientEvents } from "discord.js";
 import { existsSync } from "node:fs";
+import { Metrics, metricsManager } from "./services/metrics/metrics.js";
 import { crawlEvents } from "./utility/crawler.js";
 import { loadDotenv } from "./utility/debug/dotenv.js";
 import logger from "./utility/logger.js";
@@ -62,9 +63,20 @@ const events = await crawlEvents();
 for (const event of events) {
     const wrapper = async (...args: unknown[]) => {
         logger.verbose(`Fired event: ${event.name} (${args})`);
+
+        // count execution time in milliseconds
+        const start = Date.now();
         await event.execute(...args as ClientEvents[typeof event.name]);
+        metricsManager.submitMetric<Metrics.EVENT_EXECUTED>(Metrics.EVENT_EXECUTED, {
+            event: event.name as Events,
+            durationMs: Date.now() - start
+        });
     };
-    (event.once ? client.once : client.on)(event.name, wrapper);
+    if (event.once) {
+        client.once(event.name, wrapper);
+    } else {
+        client.on(event.name, wrapper);
+    }
 }
 
 client.login(token);

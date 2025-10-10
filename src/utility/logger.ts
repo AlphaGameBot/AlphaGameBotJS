@@ -16,7 +16,11 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import { createLogger, format, transports } from "winston";
+import { createLogger, format, Logger, transports } from "winston";
+
+export enum LoggerNames {
+    METRICS = "metrics"
+}
 
 const logger = createLogger({
     level: process.env.NODE_ENV === "production" ? "info" : "debug",
@@ -24,13 +28,34 @@ const logger = createLogger({
     format: format.combine(
         process.env.NODE_ENV !== "production" ? format.colorize() : format.uncolorize(),
         format.timestamp(),
-        format.printf(({ timestamp, level, message }): string => {
-            return `[${timestamp}] [${level}]: ${message}`;
+        format.printf(({ timestamp, level, message, ...metadata }): string => {
+            const shouldIncludeTimestamp = process.env.NODE_ENV !== "production";
+
+            let msg = "";
+
+            if (shouldIncludeTimestamp) {
+                msg += `[${timestamp}] `;
+            }
+
+            let levelText = "";
+
+            if (metadata.label) {
+                levelText += `[${metadata.label}/${level}]`;
+            } else {
+                levelText += `[${level}]`;
+            }
+            msg += `${levelText}: ${message}`;
+
+            return msg;
         })
     ),
     transports: [
         new (transports.Console)()
     ]
 });
+
+export function getLogger(name: string): Logger {
+    return logger.child({ label: name });
+}
 
 export default logger;
