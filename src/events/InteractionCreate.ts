@@ -18,40 +18,19 @@
 
 import { ChatInputCommandInteraction, Events } from "discord.js";
 import type { EventHandler } from "../interfaces/Event.js";
-import { Metrics, metricsManager } from "../services/metrics/metrics.js";
-import { crawlCommands } from "../utility/crawler.js";
 import { getLogger } from "../utility/logger.js";
+import handleInteractionCommand from "./interactions/Command.js";
 
-const commands = await crawlCommands();
+const logger = getLogger("events/InteractionCreate");
 
 export default {
     name: Events.InteractionCreate,
     execute: async (interaction) => {
-        const logger = getLogger("events/InteractionCreate");
-        if (!interaction.isCommand()) {
-            logger.warn(`Received non-command interaction: ${interaction.type}`);
+        if (interaction.isCommand()) {
+            await handleInteractionCommand(interaction as ChatInputCommandInteraction);
             return;
-        }
-
-        const start = Date.now();
-        const command = commands.get(interaction.commandName);
-        if (!command) return;
-
-        try {
-            await command.execute(interaction as ChatInputCommandInteraction);
-            const durationMs = Date.now() - start;
-            metricsManager.submitMetric<Metrics.COMMAND_EXECUTED>(Metrics.COMMAND_EXECUTED, {
-                event: Events.InteractionCreate,
-                commandName: interaction.commandName,
-                durationMs: durationMs
-            });
-        } catch (error) {
-            if (interaction.replied || interaction.deferred) {
-                await interaction.followUp({ content: ":x: There was an error while executing this command!", ephemeral: true });
-            } else {
-                await interaction.reply({ content: ":x: There was an error while executing this command!", ephemeral: true });
-            }
-            logger.error(`Error executing command ${interaction.commandName}:`, error);
+        } else {
+            logger.warn(`Received unknown command interaction type: ${interaction.type}`);
         }
     }
 } as EventHandler<Events.InteractionCreate>;
