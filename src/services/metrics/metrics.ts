@@ -3,7 +3,7 @@
 //     AlphaGameBot - A Discord bot that's free and (hopefully) doesn't suck.
 //     Copyright (C) 2025  Damien Boisvert (AlphaGameDeveloper)
 // 
-//     AlphaGameBot is free softws are: you can redistribute it and/or modify
+//     AlphaGameBot is free software: you can redistribute it and/or modify
 //     it under the terms of the GNU General Public License as published by
 //     the Free Software Foundation, either version 3 of the License, or
 //     (at your option) any later version.
@@ -21,6 +21,7 @@ import { getLogger, LoggerNames } from "../../utility/logger.js";
 
 export enum Metrics {
     INTERACTIONS_RECEIVED = "interactions_received",
+    COMMAND_EXECUTED = "command_executed",
     EVENT_EXECUTED = "event_executed"
 }
 

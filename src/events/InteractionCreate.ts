@@ -3,7 +3,7 @@
 //     AlphaGameBot - A Discord bot that's free and (hopefully) doesn't suck.
 //     Copyright (C) 2025  Damien Boisvert (AlphaGameDeveloper)
 // 
-//     AlphaGameBot is free softws are: you can redistribute it and/or modify
+//     AlphaGameBot is free software: you can redistribute it and/or modify
 //     it under the terms of the GNU General Public License as published by
 //     the Free Software Foundation, either version 3 of the License, or
 //     (at your option) any later version.
@@ -18,22 +18,39 @@
 
 import { ChatInputCommandInteraction, Events } from "discord.js";
 import type { EventHandler } from "../interfaces/Event.js";
+import { Metrics, metricsManager } from "../services/metrics/metrics.js";
 import { crawlCommands } from "../utility/crawler.js";
-import logger from "../utility/logger.js";
+import { getLogger } from "../utility/logger.js";
 
 const commands = await crawlCommands();
 
 export default {
     name: Events.InteractionCreate,
     execute: async (interaction) => {
-        if (!interaction.isCommand()) return;
+        const logger = getLogger("events/InteractionCreate");
+        if (!interaction.isCommand()) {
+            logger.warn(`Received non-command interaction: ${interaction.type}`);
+            return;
+        }
 
+        const start = Date.now();
         const command = commands.get(interaction.commandName);
         if (!command) return;
 
         try {
             await command.execute(interaction as ChatInputCommandInteraction);
+            const durationMs = Date.now() - start;
+            metricsManager.submitMetric<Metrics.COMMAND_EXECUTED>(Metrics.COMMAND_EXECUTED, {
+                event: Events.InteractionCreate,
+                commandName: interaction.commandName,
+                durationMs: durationMs
+            });
         } catch (error) {
+            if (interaction.replied || interaction.deferred) {
+                await interaction.followUp({ content: ":x: There was an error while executing this command!", ephemeral: true });
+            } else {
+                await interaction.reply({ content: ":x: There was an error while executing this command!", ephemeral: true });
+            }
             logger.error(`Error executing command ${interaction.commandName}:`, error);
         }
     }
