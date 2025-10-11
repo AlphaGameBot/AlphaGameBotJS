@@ -5,12 +5,13 @@
   "description": "A Discord bot that's free and (hopefully) doesn't suck.",
   "main": "index.js",
   "scripts": {
-    "test": "tsc --build && node --loader ts-node/esm --experimental-vm-modules node_modules/jest/bin/jest.js dist/ --forceExit --silent",
+    "build:clean": "rm -rf ./dist && tsc --build --verbose",
+    "test": "npm run build:clean && tsc --build && node --loader ts-node/esm --experimental-vm-modules node_modules/jest/bin/jest.js dist/ --forceExit --silent",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
-    "build:start": "tsc --build --verbose && echo ---starting--- && node ./dist/main.js",
-    "build:deploy": "tsc --build --verbose && node ./dist/deploy-commands.js",
-    "build": "tsc --build --verbose && tsc-alias",
+    "build:start": "npm run build:clean && echo ---starting--- && node ./dist/main.js",
+    "build:deploy": "npm run build:clean && node ./dist/deploy-commands.js",
+    "build": "tsc --build --verbose",
     "start": "node ./dist/main.js",
     "deploy": "node ./dist/deploy-commands.js"
   },
