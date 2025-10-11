@@ -16,14 +16,11 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import type { Command } from "../../interfaces/Command.js";
-
-export default {
-    data: new SlashCommandBuilder()
-        .setName("helloworld")
-        .setDescription("Replies with Hello, World!"),
-    async execute(interaction: ChatInputCommandInteraction) {
-        await interaction.reply("Hello, World!");
-    }
-} as Command;
+/**
+ * Global teardown to clean up resources after all tests complete.
+ * This ensures Jest can exit cleanly by closing winston transports.
+ */
+export default async function globalTeardown(): Promise<void> {
+    // Give async operations a moment to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+}
