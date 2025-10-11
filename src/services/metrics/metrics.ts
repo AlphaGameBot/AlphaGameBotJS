@@ -34,7 +34,7 @@ interface MetricEntry<T extends Metrics> {
 
 const logger = getLogger(LoggerNames.METRICS);
 
-class MetricsManager {
+export class MetricsManager {
     private metrics = new Map<Metrics, Array<MetricEntry<Metrics>>>();
     private currentMetricID = 0;
     constructor() {
