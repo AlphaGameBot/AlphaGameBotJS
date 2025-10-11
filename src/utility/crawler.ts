@@ -17,7 +17,7 @@
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
 import { Collection, type ClientEvents } from "discord.js";
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import type { Command } from "../interfaces/Command.js";
@@ -36,32 +36,55 @@ const projectRoot = process.cwd();
 export async function crawlCommands() {
     // Prefer built files in `dist` when running the compiled output. Fall back to `src` during dev.
     const distCommandsPath = path.join(projectRoot, "dist", "commands");
-    const foldersPath = existsSync(distCommandsPath) ? distCommandsPath : ".";
-    const commandFolders = readdirSync(foldersPath);
+    const srcCommandsPath = path.join(projectRoot, "src", "commands");
+    const commandsPath = existsSync(distCommandsPath) ? distCommandsPath : srcCommandsPath;
+    const isDist = commandsPath.includes(path.join(path.sep, "dist", path.sep)) || commandsPath.endsWith(path.join(path.sep, "dist"));
+
     const commands = new Collection<string, Command>();
 
-    logger.debug(`Crawling commands in: ${foldersPath}`);
-    for (const folder of commandFolders) {
-        const commandsPath = path.join(foldersPath, folder);
-        const isDist = foldersPath.includes(path.join(path.sep, "dist", path.sep)) || foldersPath.endsWith(path.join(path.sep, "dist"));
-        // In dist we only want .js files. In src we may have .ts files.
-        const commandFiles = readdirSync(commandsPath).filter(file => isDist ? file.endsWith(".js") : file.endsWith(".ts") || file.endsWith(".js"));
-        logger.debug(`- ${folder} (Includes ${commandFiles.length} commands)`);
+    logger.debug(`Crawling commands in: ${commandsPath}`);
 
-        for (const file of commandFiles) {
-            const filePath = path.join(commandsPath, file);
-            // Build a file:// URL for Node to import the correct compiled JS when running from dist.
-            const importTarget = pathToFileURL(filePath).href;
-            // Dynamically import the command module
-            const commandModule = await import(importTarget);
-            // support both default and named exports
-            const command: Command = (commandModule && commandModule.default) ? commandModule.default : commandModule;
+    // Read category folders (e.g., test/, utility/)
+    const categoryFolders = readdirSync(commandsPath);
 
-            if ("data" in command && "execute" in command) {
-                commands.set(command.data.name, command);
-                logger.debug(`  - ${file} (Implements command: ${command.data.name})`);
-            } else {
-                logger.warn(`The command at ${filePath} is missing a required "data" or "execute" property.`);
+    for (const category of categoryFolders) {
+        const categoryPath = path.join(commandsPath, category);
+
+        // Skip if not a directory
+        if (!statSync(categoryPath).isDirectory()) continue;
+
+        // Read command folders within each category (e.g., hworld/, ping/)
+        const commandFolders = readdirSync(categoryPath).filter(folder => !folder.endsWith(".d.ts"));
+        logger.debug(`- Category: ${category} (${commandFolders.length} command folders)`);
+
+        for (const commandFolder of commandFolders) {
+            const commandFolderPath = path.join(categoryPath, commandFolder);
+
+            // Skip if not a directory
+            if (!statSync(commandFolderPath).isDirectory()) continue;
+
+            // Look for the command file inside the folder (e.g., hworld.ts or hworld.js)
+            const commandFiles = readdirSync(commandFolderPath).filter(file => {
+                if (file.includes('.test.')) return false;
+                if (isDist) return file.endsWith(".js");
+                else return file.endsWith(".ts") || file.endsWith(".js");
+            });
+
+            for (const file of commandFiles) {
+                const filePath = path.join(commandFolderPath, file);
+                // Build a file:// URL for Node to import the correct compiled JS when running from dist.
+                const importTarget = pathToFileURL(filePath).href;
+                // Dynamically import the command module
+                const commandModule = await import(importTarget);
+                // support both default and named exports
+                const command: Command = (commandModule && commandModule.default) ? commandModule.default : commandModule;
+
+                if ("data" in command && "execute" in command) {
+                    commands.set(command.data.name, command);
+                    logger.debug(`  - ${category}/${commandFolder}/${file} (Implements command: ${command.data.name})`);
+                } else {
+                    logger.warn(`The command at ${filePath} is missing a required "data" or "execute" property.`);
+                }
             }
         }
     }

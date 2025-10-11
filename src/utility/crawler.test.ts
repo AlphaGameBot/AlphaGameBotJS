@@ -52,15 +52,28 @@ describe("crawlCommands", () => {
         });
     });
 
-    it("should load the helloworld test command if it exists", async () => {
+    it("should load the hworld test command if it exists", async () => {
         const commands = await crawlCommands();
 
-        // Check if our test command is loaded (it should be in the test directory)
-        const helloworldCommand = commands.get("helloworld");
-        if (helloworldCommand) {
-            expect(helloworldCommand.data.name).toBe("helloworld");
-            expect(helloworldCommand.data.description).toBe("Replies with Hello, World!");
+        // Check if our test command is loaded (it should be in test/hworld/)
+        const hworldCommand = commands.get("hworld");
+        if (hworldCommand) {
+            expect(hworldCommand.data.name).toBe("hworld");
+            expect(hworldCommand.data.description).toBe("Replies with Hello, World!");
         }
+    });
+
+    it("should discover commands from nested category/commandname folders", async () => {
+        const commands = await crawlCommands();
+
+        // Verify we found at least some commands from the new structure
+        expect(commands.size).toBeGreaterThan(0);
+
+        // All commands should have valid names
+        commands.forEach((command) => {
+            expect(command.data.name).toBeTruthy();
+            expect(command.data.name.length).toBeGreaterThan(0);
+        });
     });
 });
 

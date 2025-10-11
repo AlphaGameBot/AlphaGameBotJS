@@ -45,7 +45,7 @@ describe("Logger", () => {
         it("should create different logger instances for different scopes", () => {
             const logger1 = getLogger("scope1");
             const logger2 = getLogger("scope2");
-            
+
             expect(logger1).not.toBe(logger2);
         });
 
