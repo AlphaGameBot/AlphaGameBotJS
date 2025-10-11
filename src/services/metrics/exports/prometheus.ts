@@ -1,0 +1,72 @@
+// This file is a part of AlphaGameBot.
+// 
+//     AlphaGameBot - A Discord bot that's free and (hopefully) doesn't suck.
+//     Copyright (C) 2025  Damien Boisvert (AlphaGameDeveloper)
+// 
+//     AlphaGameBot is free software: you can redistribute it and/or modify
+//     it under the terms of the GNU General Public License as published by
+//     the Free Software Foundation, either version 3 of the License, or
+//     (at your option) any later version.
+// 
+//     AlphaGameBot is distributed in the hope that it will be useful,
+//     but WITHOUT ANY WARRANTY; without even the implied warranty of
+//     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//     GNU General Public License for more details.
+// 
+//     You should have received a copy of the GNU General Public License
+//     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
+
+
+import { Gauge, Pushgateway, Registry } from "prom-client";
+import { Metrics, metricsManager } from "../metrics.js";
+const registry = new Registry();
+const pushgatewayUrl = process.env.PUSHGATEWAY_URL || "http://localhost:9091";
+const pushgateway = new Pushgateway(pushgatewayUrl, {}, registry);
+
+// Define gauges for each metric type
+const gauges: Record<Metrics, Gauge> = {
+    [Metrics.INTERACTIONS_RECEIVED]: new Gauge({
+        name: "alphagamebot_interactions_received",
+        help: "Number of interactions received",
+        labelNames: ["event"]
+    }),
+    [Metrics.EVENT_EXECUTED]: new Gauge({
+        name: "alphagamebot_event_executed_duration_ms",
+        help: "Duration of event execution in ms",
+        labelNames: ["event"]
+    }),
+    [Metrics.COMMAND_EXECUTED]: new Gauge({
+        name: "alphagamebot_command_executed_duration_ms",
+        help: "Duration of command execution in ms",
+        labelNames: ["event", "commandName"]
+    })
+};
+Object.values(gauges).forEach(g => registry.registerMetric(g));
+
+function exportMetricsToPrometheus() {
+    // Clear previous gauge values
+    Object.values(gauges).forEach(g => g.reset());
+    // Access private metrics map via type assertion
+    const metricsMap = (metricsManager as unknown as { metrics: Map<Metrics, Array<unknown>> }).metrics;
+    for (const [metric, entries] of metricsMap.entries()) {
+        for (const entry of entries) {
+            const metricEntry = entry as { data: unknown };
+            const data = (metricEntry.data ?? {}) as Record<string, unknown>;
+            if (metric === Metrics.INTERACTIONS_RECEIVED && gauges[metric]) {
+                gauges[metric].inc({ event: String(data.event) });
+            } else if (metric === Metrics.EVENT_EXECUTED && gauges[metric]) {
+                gauges[metric].set({ event: String(data.event) }, Number(data.durationMs));
+            } else if (metric === Metrics.COMMAND_EXECUTED && gauges[metric]) {
+                gauges[metric].set({ event: String(data.event), commandName: String(data.commandName) }, Number(data.durationMs));
+            }
+        }
+    }
+    pushgateway.pushAdd({ jobName: "alphagamebot" }).catch((err: unknown) => {
+        // eslint-disable-next-line no-console
+        console.warn("Failed to push metrics to Prometheus: " + String(err));
+    });
+}
+
+
+setInterval(exportMetricsToPrometheus, 60 * 1000);
+
