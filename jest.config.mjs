@@ -16,11 +16,19 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-/**
- * Global teardown to clean up resources after all tests complete.
- * This ensures Jest can exit cleanly by closing winston transports.
- */
-export default async function globalTeardown(): Promise<void> {
-    // Give async operations a moment to complete
-    await new Promise(resolve => setTimeout(resolve, 100));
-}
+export default {
+  preset: 'ts-jest/presets/default-esm',
+  testEnvironment: 'node',
+  extensionsToTreatAsEsm: ['.ts'],
+  transform: {
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        useESM: true,
+      },
+    ],
+  },
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+  },
+};

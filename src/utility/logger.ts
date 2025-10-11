@@ -50,7 +50,9 @@ const logger = createLogger({
         })
     ),
     transports: [
-        new (transports.Console)()
+        new (transports.Console)({
+            silent: process.env.NODE_ENV === "test"
+        })
     ]
 });
 
