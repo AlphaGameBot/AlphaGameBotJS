@@ -18,10 +18,13 @@
 
 
 import { Gauge, Pushgateway, Registry } from "prom-client";
+import { getLogger } from "../../../utility/logger.js";
 import { Metrics, metricsManager } from "../metrics.js";
+
 const registry = new Registry();
 const pushgatewayUrl = process.env.PUSHGATEWAY_URL || "http://localhost:9091";
 const pushgateway = new Pushgateway(pushgatewayUrl, {}, registry);
+const logger = getLogger("prometheus");
 
 // Define gauges for each metric type
 const gauges: Record<Metrics, Gauge> = {
@@ -46,6 +49,7 @@ Object.values(gauges).forEach(g => registry.registerMetric(g));
 function exportMetricsToPrometheus() {
     // Clear previous gauge values
     Object.values(gauges).forEach(g => g.reset());
+    logger.verbose("Firing metrics export to Prometheus Pushgateway at " + pushgatewayUrl);
     // Access private metrics map via type assertion
     const metricsMap = (metricsManager as unknown as { metrics: Map<Metrics, Array<unknown>> }).metrics;
     for (const [metric, entries] of metricsMap.entries()) {
@@ -55,6 +59,7 @@ function exportMetricsToPrometheus() {
             if (metric === Metrics.INTERACTIONS_RECEIVED && gauges[metric]) {
                 gauges[metric].inc({ event: String(data.event) });
             } else if (metric === Metrics.EVENT_EXECUTED && gauges[metric]) {
+                // For duration metrics, set the gauge value
                 gauges[metric].set({ event: String(data.event) }, Number(data.durationMs));
             } else if (metric === Metrics.COMMAND_EXECUTED && gauges[metric]) {
                 gauges[metric].set({ event: String(data.event), commandName: String(data.commandName) }, Number(data.durationMs));
@@ -68,5 +73,15 @@ function exportMetricsToPrometheus() {
 }
 
 
-setInterval(exportMetricsToPrometheus, 60 * 1000);
-
+export function startPrometheusExporter() {
+    const intervalMs = Number(process.env.PROMETHEUS_EXPORT_INTERVAL_MS || "15000");
+    if (isNaN(intervalMs) || intervalMs <= 0) {
+        logger.error("Invalid PROMETHEUS_EXPORT_INTERVAL_MS value, must be a positive number.");
+        return;
+    }
+    logger.info(`Starting Prometheus exporter, pushing to ${pushgatewayUrl} every ${intervalMs}ms`);
+    // Initial export
+    exportMetricsToPrometheus();
+    // Set interval for periodic exports
+    setInterval(exportMetricsToPrometheus, intervalMs);
+}

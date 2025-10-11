@@ -20,6 +20,7 @@
 import { Events, type ClientEvents } from "discord.js";
 import { existsSync } from "node:fs";
 import { client, gracefulExit } from "./client.js";
+import { startPrometheusExporter } from "./services/metrics/exports/prometheus.js";
 import { Metrics, metricsManager } from "./services/metrics/metrics.js";
 import { rotatingStatus } from "./subsystems/rotatingStatus.js";
 import { crawlEvents } from "./utility/crawler.js";
@@ -40,6 +41,7 @@ if (weHaveDist) {
 //       this is to make it accessible to other modules
 client.once(Events.ClientReady, async (readyClient) => {
     logger.info(`Ready! Logged in as ${readyClient.user.username}`);
+    startPrometheusExporter();
     await rotatingStatus();
 });
 

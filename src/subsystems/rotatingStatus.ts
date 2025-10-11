@@ -32,7 +32,7 @@ const statuses: StatusItem[] = [
     },
     {
         type: ActivityType.Watching,
-        text: "over {guilds} servers"
+        text: "over {{ guilds }} servers"
     },
     {
         type: ActivityType.Listening,
@@ -40,7 +40,7 @@ const statuses: StatusItem[] = [
     },
     {
         type: ActivityType.Playing,
-        text: "with version {version}"
+        text: "with version {{ version }}"
     },
     {
         type: ActivityType.Watching,
@@ -52,7 +52,7 @@ const statuses: StatusItem[] = [
     },
     {
         type: ActivityType.Watching,
-        text: "over {guilds} guilds."
+        text: "over {{ guilds }} guilds."
     },
     {
         type: ActivityType.Playing,
@@ -64,7 +64,7 @@ const statuses: StatusItem[] = [
     },
     {
         type: ActivityType.Watching,
-        text: "over my {users} users"
+        text: "over my {{ users }} users"
     },
     {
         type: ActivityType.Playing,
@@ -76,9 +76,9 @@ const statuses: StatusItem[] = [
     },
     {
         type: ActivityType.Listening,
-        text: "to my {commands} commands"
+        text: "to my {{ commands }} commands"
     }
-]
+];
 export async function rotatingStatus() {
     const logger = getLogger("rotatingStatus");
     logger.info("Setting rotating status...");
@@ -86,5 +86,16 @@ export async function rotatingStatus() {
         logger.error("Client user is not defined.");
         return;
     }
-    client.user?.setActivity('activity', { type: ActivityType.Playing });
+    statuses.forEach(status => {
+        const data = {
+            guilds: client.guilds.cache.size,
+            users: client.users.cache.size,
+            version: process.env.npm_package_version || "unknown",
+            commands: client.application?.commands.cache.size || 0
+        };
+        client.user?.setActivity(
+            status.text.replace(/{{\s*(\w+)\s*}}/g, (_, key) => String(data[key as keyof typeof data] || "")),
+            { type: status.type }
+        );
+    });
 }
