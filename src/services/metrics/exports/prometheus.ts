@@ -17,11 +17,12 @@
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import { Gauge, Pushgateway, Registry } from "prom-client";
+import { collectDefaultMetrics, Gauge, Pushgateway, Registry } from "prom-client";
 import { getLogger } from "../../../utility/logger.js";
 import { Metrics, metricsManager } from "../metrics.js";
 
 const registry = new Registry();
+collectDefaultMetrics({ register: registry, prefix: "alphagamebot_" });
 const pushgatewayUrl = process.env.PUSHGATEWAY_URL || "http://localhost:9091";
 const pushgateway = new Pushgateway(pushgatewayUrl, {}, registry);
 const logger = getLogger("prometheus");
@@ -66,6 +67,7 @@ function exportMetricsToPrometheus() {
             }
         }
     }
+
     pushgateway.pushAdd({ jobName: "alphagamebot" }).catch((err: unknown) => {
         // eslint-disable-next-line no-console
         console.warn("Failed to push metrics to Prometheus: " + String(err));

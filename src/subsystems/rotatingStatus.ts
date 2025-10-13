@@ -25,6 +25,8 @@ interface StatusItem {
     text: string
 }
 
+const intervalMs = 10000;
+
 const statuses: StatusItem[] = [
     {
         type: ActivityType.Playing,
@@ -79,23 +81,41 @@ const statuses: StatusItem[] = [
         text: "to my {{ commands }} commands"
     }
 ];
-export async function rotatingStatus() {
+
+/**
+ * Rotates the bot's status messages using recursive setTimeout calls.
+ *
+ * The status messages cycle through a predefined list, updating every 10 seconds.
+ * Each status can include dynamic data such as the number of guilds, users, bot version, and commands.
+ * 
+ * @param index - The current index in the status array (defaults to 0)
+ * @returns A promise that resolves after setting the current status and scheduling the next rotation.
+ */
+export async function rotatingStatus(index: number = 0): Promise<void> {
     const logger = getLogger("rotatingStatus");
-    logger.info("Setting rotating status...");
+
+    const advanceToNextStatus = () => { rotatingStatus(index + 1); };
     if (!client.user) {
         logger.error("Client user is not defined.");
         return;
     }
-    statuses.forEach(status => {
-        const data = {
-            guilds: client.guilds.cache.size,
-            users: client.users.cache.size,
-            version: process.env.npm_package_version || "unknown",
-            commands: client.application?.commands.cache.size || 0
-        };
-        client.user?.setActivity(
-            status.text.replace(/{{\s*(\w+)\s*}}/g, (_, key) => String(data[key as keyof typeof data] || "")),
-            { type: status.type }
-        );
-    });
+    const status = statuses[index % statuses.length];
+    if (!status) {
+        logger.warn("No status found for index " + index + " (With mod, that's " + (index % statuses.length) + ").  Scheduling next in " + intervalMs + "ms.");
+        setTimeout(advanceToNextStatus, intervalMs);
+        return;
+    }
+
+    logger.verbose("Setting status to: " + status.text);
+    const data = {
+        guilds: client.guilds.cache.size,
+        users: client.users.cache.size,
+        version: process.env.npm_package_version || "unknown",
+        commands: client.application?.commands.cache.size || 0
+    };
+    client.user?.setActivity(
+        status.text.replace(/{{\s*(\w+)\s*}}/g, (_, key) => String(data[key as keyof typeof data] || "")),
+        { type: status.type }
+    );
+    setTimeout(advanceToNextStatus, intervalMs);
 }
