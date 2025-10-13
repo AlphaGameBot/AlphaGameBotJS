@@ -27,6 +27,15 @@ import { crawlEvents } from "./utility/crawler.js";
 import { loadDotenv } from "./utility/debug/dotenv.js";
 import logger, { getLogger } from "./utility/logger.js";
 
+// Ensure the database is loaded before we do anything else
+// Pretty important!
+await import("./utility/database.js").then(() => {
+    logger.verbose("Database module loaded.");
+}).catch((e) => {
+    logger.error("Error loading database module:", e);
+    process.exit(1);
+});
+
 await loadDotenv();
 
 // is there the 'dist' folder in cwd?
@@ -50,6 +59,11 @@ client.once(Events.ClientReady, async (readyClient) => {
 // SIGTERM (Signal Terminate) is sent from terminal on kill command (or asking to stop politely)
 process.on("SIGINT", async () => { gracefulExit("SIGINT"); });
 process.on("SIGTERM", async () => { gracefulExit("SIGTERM"); });
+process.on("uncaughtException", async (e) => {
+    await client.destroy();
+    logger.error("Uncaught Exception:", e);
+    process.exit(1);
+});
 
 const token = process.env.TOKEN;
 if (!token) {

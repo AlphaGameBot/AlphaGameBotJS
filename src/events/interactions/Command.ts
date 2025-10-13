@@ -18,7 +18,7 @@
 
 import { Events, type ChatInputCommandInteraction } from "discord.js";
 import { Metrics, metricsManager } from "../../services/metrics/metrics.js";
-import { addCommand } from "../../subsystems/leveling/modifiers.js";
+import { addCommand } from "../../subsystems/leveling/dbhelper.js";
 import { crawlCommands } from "../../utility/crawler.js";
 import { getLogger } from "../../utility/logger.js";
 

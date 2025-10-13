@@ -18,7 +18,8 @@
 
 import { Events, type Message } from "discord.js";
 import type { EventHandler } from "../interfaces/Event.js";
-import { addMessage } from "../subsystems/leveling/modifiers.js";
+import { addMessage, getUserLevel } from "../subsystems/leveling/dbhelper.js";
+import { userNeedsLevelUpAnnouncement } from "../subsystems/leveling/utility.js";
 
 export default {
     name: Events.MessageCreate,
@@ -27,5 +28,30 @@ export default {
         if (message.author.bot) return;
 
         await addMessage(message.author.id, message.guildId ?? "0");
+
+        if (await userNeedsLevelUpAnnouncement(message.author.id, message.guildId ?? "0")) {
+            // Can only send announcements in guild text channels
+            const newLevel = await getUserLevel(message.author.id, message.guildId ?? "0");
+            if (!message.guild) return;
+
+            // Check if we have permission to send messages
+            if (message.channel.isTextBased() &&
+                !message.channel.isDMBased() &&
+                message.guild.members.me &&
+                message.channel.permissionsFor(message.guild.members.me)?.has("SendMessages")) {
+
+                const replyMessage = await message.reply(`:tada: Congrats, <@${message.author.id}>! You just advanced to level **${newLevel}**! Nice!`);
+                setTimeout(async () => { await replyMessage.delete().catch(() => {}); }, 15000);
+
+                await prisma.guild_user_stats.update({
+                    where: {
+                        user_id_guild_id: { user_id: message.author.id, guild_id: message.guildId ?? "0" }
+                    },
+                    data: {
+                        last_announced_level: newLevel
+                    }
+                });
+            }
+        }
     }
 } as EventHandler<Events.MessageCreate>;

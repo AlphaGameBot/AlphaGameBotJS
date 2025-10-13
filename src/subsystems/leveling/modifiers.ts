@@ -16,11 +16,7 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import { PrismaClient } from "@prisma/client";
 import logger from "../../utility/logger.js";
-
-
-const prisma = new PrismaClient();
 
 export async function addMessage(userId: string, guildId: string) {
     logger.verbose(`Adding message for user ${userId} in guild ${guildId}`);
