@@ -1,4 +1,3 @@
-// /* eslint-disable no-trailing-spaces */
 // This file is a part of AlphaGameBot.
 // 
 //     AlphaGameBot - A Discord bot that's free and (hopefully) doesn't suck.
@@ -16,15 +15,17 @@
 // 
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
-// /* eslint-enable no-trailing-spaces */
 
 
-import { Client, Events, GatewayIntentBits, type ClientEvents } from "discord.js";
+import { Events, type ClientEvents } from "discord.js";
 import { existsSync } from "node:fs";
+import { client, gracefulExit } from "./client.js";
+import { startPrometheusExporter } from "./services/metrics/exports/prometheus.js";
 import { Metrics, metricsManager } from "./services/metrics/metrics.js";
+import { rotatingStatus } from "./subsystems/rotatingStatus.js";
 import { crawlEvents } from "./utility/crawler.js";
 import { loadDotenv } from "./utility/debug/dotenv.js";
-import logger from "./utility/logger.js";
+import logger, { getLogger } from "./utility/logger.js";
 
 await loadDotenv();
 
@@ -36,28 +37,36 @@ if (weHaveDist) {
     process.chdir("./dist");
 }
 
-const client = new Client({
-    intents: [
-        GatewayIntentBits.Guilds
-    ]
-});
-
-client.once(Events.ClientReady, (readyClient) => {
+// Note, client is imported from client.ts
+//       this is to make it accessible to other modules
+client.once(Events.ClientReady, async (readyClient) => {
     logger.info(`Ready! Logged in as ${readyClient.user.username}`);
+    startPrometheusExporter();
+    await rotatingStatus();
 });
 
 // when quit signal is received, log out the bot
-process.on("SIGINT", async () => {
-    logger.info("SIGINT received, logging out...");
-    await client.destroy();
-    process.exit(0);
-});
+// SIGINT  (Signal Interrupt) is sent from terminal on Ctrl+C
+// SIGTERM (Signal Terminate) is sent from terminal on kill command (or asking to stop politely)
+process.on("SIGINT", async () => { gracefulExit("SIGINT"); });
+process.on("SIGTERM", async () => { gracefulExit("SIGTERM"); });
 
 const token = process.env.TOKEN;
 if (!token) {
     logger.error("Error: TOKEN environment variable is not set.");
     process.exit(1);
 }
+
+// client: on *any event*
+const allEvents = Object.values(Events);
+const eventLogger = getLogger("events");
+client.on("raw", (event) => {
+    if (allEvents.includes(event.t as Events)) {
+        eventLogger.verbose(`Raw event received: ${event.t} (${JSON.stringify(event.d)})`);
+    } else {
+        eventLogger.verbose(`Raw event received: ${event.t} (not in Events enum, data contains ${Object.keys(event.d).length} keys)`);
+    }
+});
 
 const events = await crawlEvents();
 for (const event of events) {

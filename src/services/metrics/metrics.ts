@@ -34,7 +34,7 @@ interface MetricEntry<T extends Metrics> {
 
 const logger = getLogger(LoggerNames.METRICS);
 
-class MetricsManager {
+export class MetricsManager {
     private metrics = new Map<Metrics, Array<MetricEntry<Metrics>>>();
     private currentMetricID = 0;
     constructor() {
@@ -85,6 +85,8 @@ class MetricsManager {
 
         const serialized = data instanceof Map ? JSON.stringify(Object.fromEntries(data)) : JSON.stringify(data);
         logger.verbose("Metric submitted: " + metric + " with data: " + serialized);
+
+
     }
 }
 

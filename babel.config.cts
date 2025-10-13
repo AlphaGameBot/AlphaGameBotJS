@@ -16,14 +16,9 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import type { Command } from "../../interfaces/Command.js";
-
 export default {
-    data: new SlashCommandBuilder()
-        .setName("helloworld")
-        .setDescription("Replies with Hello, World!"),
-    async execute(interaction: ChatInputCommandInteraction) {
-        await interaction.reply("Hello, World!");
-    }
-} as Command;
+    presets: [
+        ["@babel/preset-env", { targets: { node: "current" } }],
+        "@babel/preset-typescript",
+    ],
+};

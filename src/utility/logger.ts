@@ -29,7 +29,7 @@ const logger = createLogger({
         process.env.NODE_ENV !== "production" ? format.colorize() : format.uncolorize(),
         format.timestamp(),
         format.printf(({ timestamp, level, message, ...metadata }): string => {
-            const shouldIncludeTimestamp = process.env.NODE_ENV !== "production";
+            const shouldIncludeTimestamp = process.env.NODE_ENV === "production";
 
             let msg = "";
 
@@ -50,7 +50,9 @@ const logger = createLogger({
         })
     ),
     transports: [
-        new (transports.Console)()
+        new (transports.Console)({
+            silent: process.env.NODE_ENV === "test"
+        })
     ]
 });
 
