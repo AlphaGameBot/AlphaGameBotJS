@@ -16,16 +16,18 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import { Events, type Message } from "discord.js";
-import type { EventHandler } from "../interfaces/Event.js";
-import { addMessage } from "../subsystems/leveling/modifiers.js";
+import { getUserLevel } from "./dbhelper.js";
 
-export default {
-    name: Events.MessageCreate,
-    execute: async (message: Message) => {
-        // Ignore messages from bots
-        if (message.author.bot) return;
+export async function userNeedsLevelUpAnnouncement(userId: string, guildId: string): Promise<boolean> {
+    const level = await getUserLevel(userId, guildId);
 
-        await addMessage(message.author.id, message.guildId ?? "0");
-    }
-} as EventHandler<Events.MessageCreate>;
+    const data = await prisma.guild_user_stats.findUnique({
+        where: {
+            user_id_guild_id: { user_id: userId, guild_id: guildId }
+        }
+    });
+
+    if (!data) return false;
+
+    return data.last_announced_level < level;
+}

@@ -16,16 +16,16 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import { Events, type Message } from "discord.js";
-import type { EventHandler } from "../interfaces/Event.js";
-import { addMessage } from "../subsystems/leveling/modifiers.js";
+export function calculateRequiredPoints(level: number): number {
+    // XP needed = 5L^2 + 15L + 20
+    return 5 * level * level + 15 * level + 20;
+}
 
-export default {
-    name: Events.MessageCreate,
-    execute: async (message: Message) => {
-        // Ignore messages from bots
-        if (message.author.bot) return;
+export function calculateLevelFromPoints(points: number): number {
+    // L = ( -15 + sqrt(225 - 4 * (20 - XP)) ) / 10
+    return Math.floor((-15 + Math.sqrt(225 - 4 * (20 - points))) / 10);
+}
 
-        await addMessage(message.author.id, message.guildId ?? "0");
-    }
-} as EventHandler<Events.MessageCreate>;
+export function calculatePoints(messages: number, commands: number): number {
+    return messages + commands * 5;
+}

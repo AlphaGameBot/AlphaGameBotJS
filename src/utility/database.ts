@@ -16,16 +16,13 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import { Events, type Message } from "discord.js";
-import type { EventHandler } from "../interfaces/Event.js";
-import { addMessage } from "../subsystems/leveling/modifiers.js";
+import { PrismaClient } from "@prisma/client";
 
-export default {
-    name: Events.MessageCreate,
-    execute: async (message: Message) => {
-        // Ignore messages from bots
-        if (message.author.bot) return;
+declare global {
+    var prisma: PrismaClient;
+}
 
-        await addMessage(message.author.id, message.guildId ?? "0");
-    }
-} as EventHandler<Events.MessageCreate>;
+const prisma: PrismaClient = globalThis.prisma || new PrismaClient();
+if (process.env.NODE_ENV !== "production") globalThis.prisma = prisma;
+
+export default prisma;

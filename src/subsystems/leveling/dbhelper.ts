@@ -16,11 +16,9 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import { PrismaClient } from "@prisma/client";
 import logger from "../../utility/logger.js";
+import { calculateLevelFromPoints, calculatePoints } from "./math.js";
 
-
-const prisma = new PrismaClient();
 
 export async function addMessage(userId: string, guildId: string) {
     logger.verbose(`Adding message for user ${userId} in guild ${guildId}`);
@@ -69,4 +67,18 @@ export async function addCommand(userId: string, guildId: string) {
             commands_ran: 1
         }
     });
+}
+
+export async function getUserLevel(userId: string, guildId: string) {
+    logger.verbose(`Getting level for user ${userId} in guild ${guildId}`);
+    const user = await prisma.guild_user_stats.findUnique({
+        where: {
+            user_id_guild_id: { user_id: userId, guild_id: guildId }
+        }
+    });
+
+    if (!user) return -1;
+
+    const points = calculatePoints(user.messages_sent, user.commands_ran);
+    return calculateLevelFromPoints(points);
 }

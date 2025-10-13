@@ -35,7 +35,7 @@ export default async function handleInteractionCommand(interaction: ChatInputCom
     }
 
     try {
-        await addCommand(Number(interaction.user.id), Number(interaction.guildId ?? 0));
+        await addCommand(interaction.user.id, interaction.guildId ?? "0");
         await command.execute(interaction as ChatInputCommandInteraction);
         const durationMs = Date.now() - start;
         metricsManager.submitMetric<Metrics.COMMAND_EXECUTED>(Metrics.COMMAND_EXECUTED, {
