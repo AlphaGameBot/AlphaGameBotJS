@@ -13,7 +13,7 @@ model guild_user_stats {
   guild_id      BigInt
   messages_sent Int @default(0)
   commands_ran  Int @default(0)
-
+  last_announced_level Int @default(0)
   @@id([user_id, guild_id])
 }
 
