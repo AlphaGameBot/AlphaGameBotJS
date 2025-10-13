@@ -16,5 +16,5 @@
         "**/build": true
     },
     "licenser.license": "Custom",
-    "licenser.customHeaderFile": ".vscode/license-header.txt"
+    "licenser.customHeaderFile": "/home/damien/Documents/AlphaGameBotJS/.vscode/license-header.txt",
 }

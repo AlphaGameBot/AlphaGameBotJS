@@ -18,6 +18,7 @@
 
 import { Events, type ChatInputCommandInteraction } from "discord.js";
 import { Metrics, metricsManager } from "../../services/metrics/metrics.js";
+import { addCommand } from "../../subsystems/leveling/modifiers.js";
 import { crawlCommands } from "../../utility/crawler.js";
 import { getLogger } from "../../utility/logger.js";
 
@@ -34,6 +35,7 @@ export default async function handleInteractionCommand(interaction: ChatInputCom
     }
 
     try {
+        await addCommand(Number(interaction.user.id), Number(interaction.guildId ?? 0));
         await command.execute(interaction as ChatInputCommandInteraction);
         const durationMs = Date.now() - start;
         metricsManager.submitMetric<Metrics.COMMAND_EXECUTED>(Metrics.COMMAND_EXECUTED, {

@@ -1,9 +1,24 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model guild_user_stats {
+  user_id       BigInt
+  guild_id      BigInt
+  messages_sent Int @default(0)
+  commands_ran  Int @default(0)
+
+  @@id([user_id, guild_id])
+}
+
+model user_stats {
+  user_id       BigInt @id
+  messages_sent Int    @default(0)
+  commands_ran  Int    @default(0)
 }
