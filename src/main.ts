@@ -89,11 +89,15 @@ for (const event of events) {
 
         // count execution time in milliseconds
         const start = Date.now();
-        await event.execute(...args as ClientEvents[typeof event.name]);
-        metricsManager.submitMetric<Metrics.EVENT_EXECUTED>(Metrics.EVENT_EXECUTED, {
-            event: event.name as Events,
-            durationMs: Date.now() - start
-        });
+        try {
+            await event.execute(...args as ClientEvents[typeof event.name]);
+            metricsManager.submitMetric<Metrics.EVENT_EXECUTED>(Metrics.EVENT_EXECUTED, {
+                event: event.name as Events,
+                durationMs: Date.now() - start
+            });
+        } catch (e) {
+            logger.error(`Error executing event ${event.name}:`, e);
+        }
     };
     if (event.once) {
         client.once(event.name, wrapper);
