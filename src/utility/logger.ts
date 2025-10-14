@@ -22,11 +22,15 @@ export enum LoggerNames {
     METRICS = "metrics"
 }
 
+function shouldWeUseColors(): boolean {
+    return process.stdout.isTTY;
+}
+
 const logger = createLogger({
     level: process.env.NODE_ENV === "production" ? "info" : "debug",
     // [file:line] [level]: message
     format: format.combine(
-        process.env.NODE_ENV !== "production" ? format.colorize() : format.uncolorize(),
+        shouldWeUseColors() ? format.colorize() : format.uncolorize(),
         format.timestamp(),
         format.printf(({ timestamp, level, message, ...metadata }): string => {
             const shouldIncludeTimestamp = process.env.NODE_ENV === "production";
@@ -55,6 +59,8 @@ const logger = createLogger({
         })
     ]
 });
+
+if (!process.stdout.isTTY) logger.warn("Output doesn't seem to be a TTY.  Several features have been disabled.");
 
 export function getLogger(name: string): Logger {
     return logger.child({ label: name });

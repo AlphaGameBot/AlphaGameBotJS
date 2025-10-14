@@ -84,7 +84,7 @@ pipeline {
                 // conditionally deploy
                 sh "docker container stop alphagamebotjs || true"
                 sh "docker container rm alphagamebotjs -f || true"
-                sh "docker run -d \
+                sh "docker run -dt \
                                 -v /mnt/bigga/alphagamebot-cache.sqlite:/docker/request-handler.sqlite \
                                 --name alphagamebotjs \
                                 -e TOKEN -e WEBHOOK -e BUILD_NUMBER \
