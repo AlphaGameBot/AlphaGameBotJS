@@ -71,7 +71,7 @@ pipeline {
         }*/
         stage('deploy-commands') {
             steps {
-                sh "docker run --rm -i -e TOKEN -e DATABASE_URL --entrypoint bash alphagamedev/alphagamebot:$AGB_VERSION -c 'node ./dist/deploy-commands.js'"
+                sh "docker run --rm -i -e TOKEN -e DATABASE_URL --entrypoint sh alphagamedev/alphagamebot:$AGB_VERSION -c 'node ./dist/deploy-commands.js'"
             }
         }
         stage('deploy') {
