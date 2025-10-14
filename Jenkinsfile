@@ -71,7 +71,12 @@ pipeline {
         }*/
         stage('deploy-commands') {
             steps {
-                sh "docker run --rm -i -e TOKEN -e DATABASE_URL --entrypoint sh alphagamedev/alphagamebot:$AGB_VERSION -c 'node ./dist/deploy-commands.js'"
+                sh "docker run --rm -i --name agb-temp-deploy-cmds -e TOKEN -e DATABASE_URL --entrypoint sh alphagamedev/alphagamebot:$AGB_VERSION -c 'node ./dist/deploy-commands.js'"
+            }
+        }
+        stage('deploy-database') {
+            steps {
+                sh "docker run --rm -i --name agb-temp-migrate -e DATABASE_URL --entrypoint sh alphagamedev/alphagamebot:$AGB_VERSION -c 'npx prisma migrate deploy'"
             }
         }
         stage('deploy') {
