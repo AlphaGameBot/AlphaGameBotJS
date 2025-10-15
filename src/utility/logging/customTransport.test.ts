@@ -16,8 +16,8 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import { EngineeringOpsTransport } from "./customTransport.js";
 import { jest } from "@jest/globals";
+import { EngineeringOpsTransport } from "./customTransport.js";
 
 // Mock fetch globally
 global.fetch = jest.fn<(input: string | URL | Request, init?: RequestInit) => Promise<Response>>(
@@ -139,10 +139,11 @@ describe("EngineeringOpsTransport", () => {
             await transport.log(info, jest.fn());
 
             const fetchCall = (global.fetch as jest.Mock).mock.calls[0];
-            const body = JSON.parse(fetchCall[1].body);
+            expect(fetchCall).toBeDefined();
+            if (!fetchCall) return;
+            const body = JSON.parse((fetchCall[1] as RequestInit).body as string);
             expect(body.content).toBe(" <@123456789> ");
         });
-
         it("should not include ping for warnings", async () => {
             process.env.ENGINEERING_OPS_DISCORD_ID = "123456789";
             const info = { level: "warn", message: "test warning" };
@@ -150,31 +151,35 @@ describe("EngineeringOpsTransport", () => {
             await transport.log(info, jest.fn());
 
             const fetchCall = (global.fetch as jest.Mock).mock.calls[0];
-            const body = JSON.parse(fetchCall[1].body);
+            expect(fetchCall).toBeDefined();
+            if (!fetchCall) return;
+            const body = JSON.parse((fetchCall[1] as RequestInit).body as string);
             expect(body.content).toBe("");
         });
-
         it("should create embed with correct structure", async () => {
             const info = { level: "error", message: "test error", extra: "data" };
 
             await transport.log(info, jest.fn());
 
             const fetchCall = (global.fetch as jest.Mock).mock.calls[0];
-            const body = JSON.parse(fetchCall[1].body);
+            expect(fetchCall).toBeDefined();
+            if (!fetchCall) return;
+            const body = JSON.parse((fetchCall[1] as RequestInit).body as string);
             expect(body.embeds).toHaveLength(1);
             expect(body.embeds[0].title).toContain("ERROR");
             expect(body.embeds[0].description).toBe("test error");
             expect(body.embeds[0].fields).toHaveLength(1);
             expect(body.embeds[0].fields[0].name).toBe("Meta");
         });
-
         it("should include meta data in embed", async () => {
             const info = { level: "error", message: "test", foo: "bar", baz: 123 };
 
             await transport.log(info, jest.fn());
 
             const fetchCall = (global.fetch as jest.Mock).mock.calls[0];
-            const body = JSON.parse(fetchCall[1].body);
+            expect(fetchCall).toBeDefined();
+            if (!fetchCall) return;
+            const body = JSON.parse((fetchCall[1] as RequestInit).body as string);
             const metaField = JSON.parse(body.embeds[0].fields[0].value);
             expect(metaField.foo).toBe("bar");
             expect(metaField.baz).toBe(123);
