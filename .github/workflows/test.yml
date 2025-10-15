@@ -1,11 +1,12 @@
 name: CI
 
-on: [push]
+on: [push, pull_request]
 
 permissions:
   checks: write
   contents: read
   pull-requests: write
+  
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -25,3 +26,4 @@ jobs:
         with:
           test-script: node --loader ts-node/esm --no-warnings=ExperimentalWarning --experimental-vm-modules node_modules/jest/bin/jest.js src/ --forceExit --silent
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          output: comment, report-markdown
