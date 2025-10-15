@@ -31,7 +31,7 @@ describe("loadDotenv", () => {
             error: jest.fn(),
         } as unknown as Logger;
 
-        jest.unstable_mockModule("../logger.js", () => ({
+        jest.unstable_mockModule("../logging/logger.js", () => ({
             default: mockLogger,
         }));
     });

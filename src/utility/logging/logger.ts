@@ -17,6 +17,7 @@
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
 import { createLogger, format, Logger, transports } from "winston";
+import { EngineeringOpsTransport } from "./customTransport.js";
 
 export enum LoggerNames {
     METRICS = "metrics"
@@ -56,6 +57,14 @@ const logger = createLogger({
     transports: [
         new (transports.Console)({
             silent: process.env.NODE_ENV === "test"
+        }),
+        new (EngineeringOpsTransport)({
+            level: "warn",
+            format: format.uncolorize()
+        }),
+        new (EngineeringOpsTransport)({
+            level: "error",
+            format: format.uncolorize()
         })
     ]
 });
