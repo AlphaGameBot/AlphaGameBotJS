@@ -17,6 +17,7 @@
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
 import { createLogger, format, Logger, transports } from "winston";
+import LokiTransport from "winston-loki";
 import { EngineeringOpsTransport } from "./customTransport.js";
 
 export enum LoggerNames {
@@ -65,7 +66,17 @@ const logger = createLogger({
         new (EngineeringOpsTransport)({
             level: "error",
             format: format.uncolorize()
-        })
+        }),
+        ...(process.env.LOKI_URL ? [new LokiTransport({
+            host: process.env.LOKI_URL,
+            json: true,
+            format: format.json(),
+            replaceTimestamp: true,
+            labels: { job: "AlphaGameBot" },
+            onConnectionError: (err: unknown) => {
+                logger.error("Loki connection error:", err);
+            }
+        })] : [])
     ]
 });
 
