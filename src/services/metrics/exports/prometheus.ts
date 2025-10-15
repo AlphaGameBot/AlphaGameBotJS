@@ -43,6 +43,11 @@ const gauges: Record<Metrics, Gauge> = {
         name: "alphagamebot_command_executed_duration_ms",
         help: "Duration of command execution in ms",
         labelNames: ["event", "commandName"]
+    }),
+    [Metrics.RAW_EVENT_RECEIVED]: new Gauge({
+        name: "alphagamebot_raw_event_received",
+        help: "Number of raw events received",
+        labelNames: ["event"]
     })
 };
 Object.values(gauges).forEach(g => registry.registerMetric(g));
@@ -64,6 +69,10 @@ function exportMetricsToPrometheus() {
                 gauges[metric].set({ event: String(data.event) }, Number(data.durationMs));
             } else if (metric === Metrics.COMMAND_EXECUTED && gauges[metric]) {
                 gauges[metric].set({ event: String(data.event), commandName: String(data.commandName) }, Number(data.durationMs));
+            } else if (metric === Metrics.RAW_EVENT_RECEIVED && gauges[metric]) {
+                gauges[metric].inc({ event: String(data.event) });
+            } else {
+                logger.warn(`No gauge defined for metric type ${metric}`);
             }
         }
     }

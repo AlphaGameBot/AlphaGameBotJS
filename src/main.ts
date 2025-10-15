@@ -75,6 +75,10 @@ if (!token) {
 const allEvents = Object.values(Events);
 const eventLogger = getLogger("events");
 client.on("raw", (event) => {
+    metricsManager.submitMetric<Metrics.RAW_EVENT_RECEIVED>(Metrics.RAW_EVENT_RECEIVED, {
+        event: event.t as Events
+    });
+
     if (allEvents.includes(event.t as Events)) {
         eventLogger.verbose(`Raw event received: ${event.t} (${JSON.stringify(event.d)})`);
     } else {

@@ -22,7 +22,8 @@ import { getLogger, LoggerNames } from "../../utility/logging/logger.js";
 export enum Metrics {
     INTERACTIONS_RECEIVED = "interactions_received",
     COMMAND_EXECUTED = "command_executed",
-    EVENT_EXECUTED = "event_executed"
+    EVENT_EXECUTED = "event_executed",
+    RAW_EVENT_RECEIVED = "raw_event_received"
 }
 
 interface MetricEntry<T extends Metrics> {
