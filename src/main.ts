@@ -25,7 +25,7 @@ import { Metrics, metricsManager } from "./services/metrics/metrics.js";
 import { rotatingStatus } from "./subsystems/rotatingStatus.js";
 import { crawlEvents } from "./utility/crawler.js";
 import { loadDotenv } from "./utility/debug/dotenv.js";
-import logger, { getLogger } from "./utility/logger.js";
+import logger, { getLogger } from "./utility/logging/logger.js";
 
 // Ensure the database is loaded before we do anything else
 // Pretty important!

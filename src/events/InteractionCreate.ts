@@ -18,7 +18,7 @@
 
 import { ChatInputCommandInteraction, Events } from "discord.js";
 import type { EventHandler } from "../interfaces/Event.js";
-import { getLogger } from "../utility/logger.js";
+import { getLogger } from "../utility/logging/logger.js";
 import handleInteractionCommand from "./interactions/Command.js";
 
 const logger = getLogger("events/InteractionCreate");

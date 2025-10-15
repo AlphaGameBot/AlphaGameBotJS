@@ -22,7 +22,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import type { Command } from "../interfaces/Command.js";
 import type { EventHandler } from "../interfaces/Event.js";
-import logger from "./logger.js";
+import logger from "./logging/logger.js";
 
 // Cached project root for resolving src/dist paths
 const projectRoot = process.cwd();

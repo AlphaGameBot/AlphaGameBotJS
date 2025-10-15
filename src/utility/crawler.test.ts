@@ -28,7 +28,7 @@ import { crawlCommands, crawlEvents } from "./crawler.js";
 
 // Mock the logger to silence output during tests
 beforeAll(async () => {
-    const loggerModule = await import("./logger.js");
+    const loggerModule = await import("./logging/logger.js");
     jest.spyOn(loggerModule.default, "debug").mockImplementation(() => loggerModule.default);
     jest.spyOn(loggerModule.default, "info").mockImplementation(() => loggerModule.default);
     jest.spyOn(loggerModule.default, "warn").mockImplementation(() => loggerModule.default);

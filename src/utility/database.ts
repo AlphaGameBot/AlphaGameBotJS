@@ -17,7 +17,7 @@
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
 import { PrismaClient } from "@prisma/client";
-import logger from "./logger.js";
+import logger from "./logging/logger.js";
 
 const prisma: PrismaClient = new PrismaClient();
 

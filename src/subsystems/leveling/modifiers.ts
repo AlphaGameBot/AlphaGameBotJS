@@ -17,7 +17,7 @@
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
 import prisma from "../../utility/database.js";
-import logger from "../../utility/logger.js";
+import logger from "../../utility/logging/logger.js";
 
 export async function addMessage(userId: string, guildId: string) {
     logger.verbose(`Adding message for user ${userId} in guild ${guildId}`);

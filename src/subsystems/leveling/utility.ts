@@ -17,7 +17,7 @@
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
 import prisma from "../../utility/database.js";
-import logger from "../../utility/logger.js";
+import logger from "../../utility/logging/logger.js";
 import { calculateLevelFromPoints, calculatePoints } from "./math.js";
 
 export async function userNeedsLevelUpAnnouncement(userId: string, guildId: string): Promise<boolean> {

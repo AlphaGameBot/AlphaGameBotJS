@@ -17,7 +17,7 @@
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
 import { Client, GatewayIntentBits } from "discord.js";
-import logger from "./utility/logger.js";
+import logger from "./utility/logging/logger.js";
 
 const intents: GatewayIntentBits[] = [
     // default
@@ -28,6 +28,7 @@ const intents: GatewayIntentBits[] = [
 ];
 
 export const client = new Client({
+
     intents: intents
 });
 

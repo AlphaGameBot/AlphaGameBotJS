@@ -20,7 +20,7 @@ import { Events, type ChatInputCommandInteraction } from "discord.js";
 import { Metrics, metricsManager } from "../../services/metrics/metrics.js";
 import { addCommand } from "../../subsystems/leveling/dbhelper.js";
 import { crawlCommands } from "../../utility/crawler.js";
-import { getLogger } from "../../utility/logger.js";
+import { getLogger } from "../../utility/logging/logger.js";
 
 const commands = await crawlCommands();
 const logger = getLogger("command");

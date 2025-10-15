@@ -19,7 +19,7 @@
 import { REST, User } from "discord.js";
 import { crawlCommands } from "./utility/crawler.js";
 import { loadDotenv } from "./utility/debug/dotenv.js";
-import logger from "./utility/logger.js";
+import logger from "./utility/logging/logger.js";
 
 await loadDotenv();
 const commands = await crawlCommands();

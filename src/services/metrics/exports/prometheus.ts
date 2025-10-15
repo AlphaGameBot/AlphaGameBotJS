@@ -18,7 +18,7 @@
 
 
 import { collectDefaultMetrics, Gauge, Pushgateway, Registry } from "prom-client";
-import { getLogger } from "../../../utility/logger.js";
+import { getLogger } from "../../../utility/logging/logger.js";
 import { Metrics, metricsManager } from "../metrics.js";
 
 const registry = new Registry();

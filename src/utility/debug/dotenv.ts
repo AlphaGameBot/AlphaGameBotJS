@@ -16,7 +16,7 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import logger from "../logger.js";
+import logger from "../logging/logger.js";
 
 export async function loadDotenv(): Promise<void> {
     if (process.env.NODE_ENV !== "production") {

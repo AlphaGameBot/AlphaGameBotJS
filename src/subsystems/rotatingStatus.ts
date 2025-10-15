@@ -18,7 +18,7 @@
 
 import { ActivityType } from "discord.js";
 import { client } from "../client.js";
-import { getLogger } from "../utility/logger.js";
+import { getLogger } from "../utility/logging/logger.js";
 
 interface StatusItem {
     type: ActivityType,

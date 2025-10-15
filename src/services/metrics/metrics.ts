@@ -17,7 +17,7 @@
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
 import type { MetricDataMap } from "../../interfaces/metrics/MetricDataMap.js";
-import { getLogger, LoggerNames } from "../../utility/logger.js";
+import { getLogger, LoggerNames } from "../../utility/logging/logger.js";
 
 export enum Metrics {
     INTERACTIONS_RECEIVED = "interactions_received",
