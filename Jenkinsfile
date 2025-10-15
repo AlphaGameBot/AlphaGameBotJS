@@ -29,20 +29,18 @@ pipeline {
         JENKINS_NOTIFICATIONS_WEBHOOK = credentials('discord-jenkins-webhook')
         DOCKER_TOKEN = credentials('alphagamedev-docker-token')
         AGB_VERSION = sh(returnStdout: true, script: "cat package.json | jq '.version' -cMr").trim()
+        PUSHGATEWAY_URL = 'http://pushgateway:9091'
         COMMIT_MESSAGE = sh(script: 'git log -1 --pretty=%B ${GIT_COMMIT}', returnStdout: true).trim()
     
-        GITHUB_TOKEN = credentials('alphagamebot-github-token')
         // MySQL stuff
-        MYSQL_HOST = "hubby.internal"
-        MYSQL_DATABASE = "alphagamebotjs"
+        MYSQL_HOST = "mysql"
+        MYSQL_DATABASE = "alphagamebot"
         MYSQL_USER = "alphagamebot" 
-        MYSQL_PASSWORD = credentials('alphagamebot-mysql-password')
+        MYSQL_PASSWORD = credentials('alphagamebot-mysql-password-v2')
 
         ENGINEERING_OPS_DISCORD_ID = 420052952686919690
         ERROR_WEBHOOK_URL = credentials('alphagamebot-webhook')
         DATABASE_URL = "mysql://$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST/$MYSQL_DATABASE"
-        REDDIT_API_SECRET = credentials('alphagamebot-reddit-secret')
-        REDDIT_API_ID = "q2WqT5ZGLhdiyjKZO0P9Og"
     }
     stages {
         stage('build') {
@@ -86,12 +84,11 @@ pipeline {
                 // conditionally deploy
                 sh "docker container stop alphagamebotjs || true"
                 sh "docker container rm alphagamebotjs -f || true"
-                //              vv We use -dt to run in detached mode, but allocate a pseudo-TTY so the logger is comfortable with using colored output :3
-                sh "docker run -dt \
-                                -v /mnt/bigga/alphagamebot-cache.sqlite:/docker/request-handler.sqlite \
+                sh "docker run --detach --tty  \
                                 --name alphagamebotjs \
                                 -e TOKEN -e WEBHOOK -e BUILD_NUMBER -e ENGINEERING_OPS_DISCORD_ID -e ERROR_WEBHOOK_URL \
-                                -e DATABASE_URL --restart=always --net=host \
+                                -e DATABASE_URL -e PUSHGATEWAY_URL --restart=always \
+                                --network=alphagamebot-net --ip 10.7.1.64 --hostname alphagamebot \
                                 alphagamedev/alphagamebot:$AGB_VERSION" // add alphagamebot flags
             }
         }
