@@ -38,6 +38,8 @@ pipeline {
         MYSQL_USER = "alphagamebot" 
         MYSQL_PASSWORD = credentials('alphagamebot-mysql-password')
 
+        ENGINEERING_OPS_DISCORD_ID = 420052952686919690
+        ERROR_WEBHOOK_URL = credentials('alphagamebot-webhook')
         DATABASE_URL = "mysql://$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST/$MYSQL_DATABASE"
         REDDIT_API_SECRET = credentials('alphagamebot-reddit-secret')
         REDDIT_API_ID = "q2WqT5ZGLhdiyjKZO0P9Og"
@@ -84,10 +86,11 @@ pipeline {
                 // conditionally deploy
                 sh "docker container stop alphagamebotjs || true"
                 sh "docker container rm alphagamebotjs -f || true"
+                //              vv We use -dt to run in detached mode, but allocate a pseudo-TTY so the logger is comfortable with using colored output :3
                 sh "docker run -dt \
                                 -v /mnt/bigga/alphagamebot-cache.sqlite:/docker/request-handler.sqlite \
                                 --name alphagamebotjs \
-                                -e TOKEN -e WEBHOOK -e BUILD_NUMBER \
+                                -e TOKEN -e WEBHOOK -e BUILD_NUMBER -e ENGINEERING_OPS_DISCORD_ID -e ERROR_WEBHOOK_URL \
                                 -e DATABASE_URL --restart=always --net=host \
                                 alphagamedev/alphagamebot:$AGB_VERSION" // add alphagamebot flags
             }
