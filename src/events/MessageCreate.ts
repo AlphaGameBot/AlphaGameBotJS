@@ -20,6 +20,7 @@ import { Events, type Message } from "discord.js";
 import type { EventHandler } from "../interfaces/Event.js";
 import { addMessage, getUserLevel } from "../subsystems/leveling/dbhelper.js";
 import { userNeedsLevelUpAnnouncement } from "../subsystems/leveling/utility.js";
+import prisma from "../utility/database.js";
 import logger from "../utility/logger.js";
 
 export default {

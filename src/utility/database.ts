@@ -17,12 +17,9 @@
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
 import { PrismaClient } from "@prisma/client";
+import logger from "./logger.js";
 
-declare global {
-    var prisma: PrismaClient;
-}
+const prisma: PrismaClient = new PrismaClient();
 
-const prisma: PrismaClient = globalThis.prisma || new PrismaClient();
-if (process.env.NODE_ENV !== "production") globalThis.prisma = prisma;
-
+logger.info("Prisma Client initialized");
 export default prisma;

@@ -16,6 +16,7 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
+import prisma from "../../utility/database.js";
 import logger from "../../utility/logger.js";
 import { calculateLevelFromPoints, calculatePoints } from "./math.js";
 
