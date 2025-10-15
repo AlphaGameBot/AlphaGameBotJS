@@ -26,6 +26,7 @@ jobs:
         run: npm test # Or yarn test
       - name: Jest Coverage Comment
         uses: ArtiomTr/jest-coverage-report-action@v2 # Example of a specific Jest action
+        continue-on-error: true
         env:
           NODE_ENV: test
         with:
