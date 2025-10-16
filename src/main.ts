@@ -15,7 +15,8 @@
 // 
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
-
+import { loadDotenv } from "./utility/debug/dotenv.js";
+await loadDotenv();
 
 import { Events, type ClientEvents } from "discord.js";
 import { existsSync } from "node:fs";
@@ -24,7 +25,6 @@ import { startPrometheusExporter } from "./services/metrics/exports/prometheus.j
 import { Metrics, metricsManager } from "./services/metrics/metrics.js";
 import { rotatingStatus } from "./subsystems/rotatingStatus.js";
 import { crawlEvents } from "./utility/crawler.js";
-import { loadDotenv } from "./utility/debug/dotenv.js";
 import logger, { getLogger } from "./utility/logging/logger.js";
 
 // Ensure the database is loaded before we do anything else
@@ -36,7 +36,6 @@ await import("./utility/database.js").then(() => {
     process.exit(1);
 });
 
-await loadDotenv();
 
 // is there the 'dist' folder in cwd?
 const weHaveDist = existsSync("./dist");

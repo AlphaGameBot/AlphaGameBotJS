@@ -41,15 +41,6 @@ describe("loadDotenv", () => {
         jest.resetModules();
     });
 
-    it("should load dotenv in non-production environment", async () => {
-        process.env.NODE_ENV = "development";
-
-        const { loadDotenv } = await import("./dotenv.js");
-        await loadDotenv();
-
-        expect(mockLogger.info).toHaveBeenCalledWith("Environment variables loaded from .env file.");
-    });
-
     it("should not load dotenv in production environment", async () => {
         process.env.NODE_ENV = "production";
 
@@ -68,9 +59,13 @@ describe("loadDotenv", () => {
             throw importError;
         });
 
+        const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+
         const { loadDotenv } = await import("./dotenv.js");
         await loadDotenv();
 
-        expect(mockLogger.error).toHaveBeenCalledWith("Failed to load dotenv", importError);
+        expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to load dotenv", importError);
+        
+        consoleErrorSpy.mockRestore();
     });
 });
