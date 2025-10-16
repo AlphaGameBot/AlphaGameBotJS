@@ -23,7 +23,9 @@ export enum Metrics {
     INTERACTIONS_RECEIVED = "interactions_received",
     COMMAND_EXECUTED = "command_executed",
     EVENT_EXECUTED = "event_executed",
-    RAW_EVENT_RECEIVED = "raw_event_received"
+    RAW_EVENT_RECEIVED = "raw_event_received",
+    METRICS_QUEUE_LENGTH = "metrics_queue_length",
+    METRICS_GENERATION_TIME = "metrics_generation_time"
 }
 
 interface MetricEntry<T extends Metrics> {

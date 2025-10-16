@@ -35,5 +35,12 @@ export interface MetricDataMap {
     },
     [Metrics.RAW_EVENT_RECEIVED]: {
         event: Events
+    },
+    [Metrics.METRICS_QUEUE_LENGTH]: {
+        length: number
+    },
+    [Metrics.METRICS_GENERATION_TIME]: {
+        durationMs: number
     }
+    
 }

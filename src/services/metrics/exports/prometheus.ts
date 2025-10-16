@@ -48,12 +48,21 @@ const gauges: Record<Metrics, Gauge> = {
         name: "alphagamebot_raw_event_received",
         help: "Number of raw events received",
         labelNames: ["event"]
+    }),
+    [Metrics.METRICS_QUEUE_LENGTH]: new Gauge({
+        name: "alphagamebot_metrics_queue_length",
+        help: "Current length of the metrics queue"
+    }),
+    [Metrics.METRICS_GENERATION_TIME]: new Gauge({
+        name: "alphagamebot_metrics_generation_time_ms",
+        help: "Time taken to generate metrics in ms"
     })
 };
 Object.values(gauges).forEach(g => registry.registerMetric(g));
 
 function exportMetricsToPrometheus() {
     // Clear previous gauge values
+    const startTime = Date.now();
     Object.values(gauges).forEach(g => g.reset());
     logger.verbose("Firing metrics export to Prometheus Pushgateway at " + pushgatewayUrl);
     // Access private metrics map via type assertion
@@ -75,7 +84,13 @@ function exportMetricsToPrometheus() {
                 logger.warn(`No gauge defined for metric type ${metric}`);
             }
         }
+
+        if (metric === Metrics.METRICS_QUEUE_LENGTH && gauges[metric]) {
+            gauges[metric].set(entries.length);
+        }
     }
+
+    gauges[Metrics.METRICS_GENERATION_TIME].set(Date.now() - startTime);
 
     pushgateway.pushAdd({ jobName: "alphagamebot" }).catch((err: unknown) => {
         // eslint-disable-next-line no-console
