@@ -16,15 +16,14 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import logger from "../logging/logger.js";
-
 export async function loadDotenv(): Promise<void> {
     if (process.env.NODE_ENV !== "production") {
         try {
             await import("dotenv/config");
-            logger.info("Environment variables loaded from .env file.");
+            // block until the import is done
         } catch (err) {
-            logger.error("Failed to load dotenv", err);
+            // eslint-disable-next-line no-console
+            console.error("Failed to load dotenv", err);
         }
     }
 }

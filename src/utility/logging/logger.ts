@@ -18,7 +18,10 @@
 
 import { createLogger, format, Logger, transports } from "winston";
 import LokiTransport from "winston-loki";
+import { loadDotenv } from "../debug/dotenv.js";
 import { EngineeringOpsTransport } from "./customTransport.js";
+
+await loadDotenv();
 
 export enum LoggerNames {
     METRICS = "metrics"
@@ -27,6 +30,7 @@ export enum LoggerNames {
 function shouldWeUseColors(): boolean {
     return process.stdout.isTTY;
 }
+
 
 const logger = createLogger({
     level: process.env.NODE_ENV === "production" ? "info" : "debug",
@@ -71,8 +75,10 @@ const logger = createLogger({
             host: process.env.LOKI_URL,
             json: true,
             format: format.json(),
+            batching: false,
             replaceTimestamp: true,
-            labels: { job: "AlphaGameBot" },
+            labels: { service_name: "AlphaGameBot" },
+            useWinstonMetaAsLabels: true,
             onConnectionError: (err: unknown) => {
                 logger.error("Loki connection error:", err);
             }
@@ -80,6 +86,7 @@ const logger = createLogger({
     ]
 });
 
+logger.info("Using loki instance: " + (process.env.LOKI_URL ?? "none"));
 if (!process.stdout.isTTY) logger.warn("Output doesn't seem to be a TTY.  Several features have been disabled.");
 
 export function getLogger(name: string): Logger {
