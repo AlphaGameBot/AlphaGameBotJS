@@ -31,9 +31,7 @@ function shouldWeUseColors(): boolean {
     return process.stdout.isTTY;
 }
 
-const LOKI_URL = process.env.LOKI_URL;
 
-await fetch(LOKI_URL + "/ready");
 const logger = createLogger({
     level: process.env.NODE_ENV === "production" ? "info" : "debug",
     // [file:line] [level]: message
@@ -94,7 +92,7 @@ const logger = createLogger({
 
 logger.info("Using loki instance: " + (process.env.LOKI_URL ?? "none") + "  (THIS SHOULD NOT HAVE A TRAILING SLASH!)");
 if (!process.stdout.isTTY) logger.warn("Output doesn't seem to be a TTY.  Several features have been disabled.");
-if (!process.env.LOKI_URL) logger.warn("LOKI_URL is not set.  Loki logging is disabled.");
+if (!process.env.LOKI_URL && process.env.NODE_ENV === "production") logger.warn("LOKI_URL is not set.  Loki logging is disabled.");
 export function getLogger(name: string): Logger {
     return logger.child({ label: name });
 }
