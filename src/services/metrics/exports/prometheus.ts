@@ -43,6 +43,16 @@ const gauges: Record<Metrics, Gauge> = {
         name: "alphagamebot_command_executed_duration_ms",
         help: "Duration of command execution in ms",
         labelNames: ["event", "commandName"]
+    }),
+    [Metrics.EVENT_RECEIVED]: new Gauge({
+        name: "alphagamebot_event_received",
+        help: "Number of events received",
+        labelNames: ["event"]
+    }),
+    [Metrics.RAW_EVENT_RECEIVED]: new Gauge({
+        name: "alphagamebot_raw_event_received",
+        help: "Number of raw events received",
+        labelNames: ["event"]
     })
 };
 Object.values(gauges).forEach(g => registry.registerMetric(g));

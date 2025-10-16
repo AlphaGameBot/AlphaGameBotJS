@@ -75,6 +75,11 @@ if (!token) {
 const allEvents = Object.values(Events);
 const eventLogger = getLogger("events");
 client.on("raw", async (event) => {
+    metricsManager.submitMetric<Metrics.RAW_EVENT_RECEIVED>(Metrics.RAW_EVENT_RECEIVED, {
+        event: event.t
+    });
+
+    // if the event has a user ID, upsert it in the database
     if (event.user) {
         const user = event.user as User;
 
@@ -119,4 +124,13 @@ for (const event of events) {
     }
 }
 
+// for all events in the Events enum, count them
+for (const eventName of Object.values(Events)) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    client.on(eventName as keyof ClientEvents, (...args) => {
+        metricsManager.submitMetric<Metrics.EVENT_RECEIVED>(Metrics.EVENT_RECEIVED, {
+            event: eventName as Events
+        });
+    });
+}
 client.login(token);

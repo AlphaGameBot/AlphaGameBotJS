@@ -32,5 +32,11 @@ export interface MetricDataMap {
         event: Events,
         commandName: string,
         durationMs: number
+    },
+    [Metrics.EVENT_RECEIVED]: {
+        event: Events
+    },
+    [Metrics.RAW_EVENT_RECEIVED]: {
+        event: string
     }
 }
