@@ -22,3 +22,8 @@ model user_stats {
   messages_sent Int    @default(0)
   commands_ran  Int    @default(0)
 }
+
+model users {
+  id        String   @id @db.VarChar(20)
+  last_seen DateTime @default(now())
+}

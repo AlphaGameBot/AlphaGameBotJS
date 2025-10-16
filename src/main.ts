@@ -18,13 +18,14 @@
 import { loadDotenv } from "./utility/debug/dotenv.js";
 await loadDotenv();
 
-import { Events, type ClientEvents } from "discord.js";
+import { Events, User, type ClientEvents } from "discord.js";
 import { existsSync } from "node:fs";
 import { client, gracefulExit } from "./client.js";
 import { startPrometheusExporter } from "./services/metrics/exports/prometheus.js";
 import { Metrics, metricsManager } from "./services/metrics/metrics.js";
 import { rotatingStatus } from "./subsystems/rotatingStatus.js";
 import { crawlEvents } from "./utility/crawler.js";
+import prisma from "./utility/database.js";
 import logger, { getLogger } from "./utility/logging/logger.js";
 
 // Ensure the database is loaded before we do anything else
@@ -73,7 +74,20 @@ if (!token) {
 // client: on *any event*
 const allEvents = Object.values(Events);
 const eventLogger = getLogger("events");
-client.on("raw", (event) => {
+client.on("raw", async (event) => {
+    if (event.user) {
+        const user = event.user as User;
+
+        // prisma create user in Users if it doesn't exist
+        await prisma.users.upsert({
+            where: { id: user.id },
+            update: { last_seen: new Date() },
+            create: {
+                id: user.id,
+                last_seen: new Date(),
+            }
+        });
+    }
     if (allEvents.includes(event.t as Events)) {
         eventLogger.verbose(`Raw event received: ${event.t} (${JSON.stringify(event.d)})`);
     } else {
