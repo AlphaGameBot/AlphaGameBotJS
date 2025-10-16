@@ -31,7 +31,9 @@ function shouldWeUseColors(): boolean {
     return process.stdout.isTTY;
 }
 
+const LOKI_URL = process.env.LOKI_URL;
 
+await fetch(LOKI_URL + "/ready");
 const logger = createLogger({
     level: process.env.NODE_ENV === "production" ? "info" : "debug",
     // [file:line] [level]: message
@@ -74,21 +76,25 @@ const logger = createLogger({
         ...(process.env.LOKI_URL ? [new LokiTransport({
             host: process.env.LOKI_URL,
             json: true,
-            format: format.json(),
-            batching: false,
+            format: format.combine(
+                format.uncolorize(),
+                format.json()
+            ),
+            batching: true,
+            level: "info",
+            interval: 5,
             replaceTimestamp: true,
             labels: { service_name: "AlphaGameBot" },
-            useWinstonMetaAsLabels: true,
             onConnectionError: (err: unknown) => {
-                logger.error("Loki connection error:", err);
-            }
+                console.error("Loki connection error:", err);
+            },
         })] : [])
     ]
 });
 
-logger.info("Using loki instance: " + (process.env.LOKI_URL ?? "none"));
+logger.info("Using loki instance: " + (process.env.LOKI_URL ?? "none") + "  (THIS SHOULD NOT HAVE A TRAILING SLASH!)");
 if (!process.stdout.isTTY) logger.warn("Output doesn't seem to be a TTY.  Several features have been disabled.");
-
+if (!process.env.LOKI_URL) logger.warn("LOKI_URL is not set.  Loki logging is disabled.");
 export function getLogger(name: string): Logger {
     return logger.child({ label: name });
 }
