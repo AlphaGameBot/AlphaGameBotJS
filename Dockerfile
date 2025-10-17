@@ -19,16 +19,17 @@
 FROM node:20 AS build
 WORKDIR /app
 COPY . .
-RUN npm ci
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 RUN npx prisma generate
 RUN npm run build
 
 FROM node:20-alpine
 WORKDIR /app
 ENV NODE_ENV=production
-COPY --from=build /app/dist ./dist
 COPY --from=build /app/package*.json ./
-COPY --from=build /app/prisma ./prisma
-RUN npm ci --omit=dev dotenv prisma
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --omit=dev
+COPY --from=build /app/dist ./dist
 RUN npx prisma generate
 CMD ["node", "dist/main.js"]
