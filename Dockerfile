@@ -19,7 +19,7 @@
 FROM node:20 AS build
 WORKDIR /app
 COPY . .
-RUN npm install --include=dev
+RUN npm ci
 RUN npx prisma generate
 RUN npm run build
 
@@ -29,8 +29,6 @@ ENV NODE_ENV=production
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/package*.json ./
 COPY --from=build /app/prisma ./prisma
-COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
-RUN npm install --omit=dev dotenv
+RUN npm ci --omit=dev dotenv prisma
 RUN npx prisma generate
 CMD ["node", "dist/main.js"]
