@@ -56,19 +56,28 @@ const gauges: Record<Metrics, Gauge> = {
     [Metrics.METRICS_GENERATION_TIME]: new Gauge({
         name: "alphagamebot_metrics_generation_time_ms",
         help: "Time taken to generate metrics in ms"
+    }),
+    [Metrics.EVENT_RECEIVED]: new Gauge({
+        name: "alphagamebot_event_received",
+        help: "Events Received",
+        labelNames: ["event"]
     })
 };
+
 Object.values(gauges).forEach(g => registry.registerMetric(g));
 
 function exportMetricsToPrometheus() {
     // Clear previous gauge values
-    const startTime = Date.now();
+    const startTime = performance.now();
     Object.values(gauges).forEach(g => g.reset());
     logger.verbose("Firing metrics export to Prometheus Pushgateway at " + pushgatewayUrl);
     // Access private metrics map via type assertion
+    let queueLength = 0;
     const metricsMap = (metricsManager as unknown as { metrics: Map<Metrics, Array<unknown>> }).metrics;
     for (const [metric, entries] of metricsMap.entries()) {
+        logger.verbose(`Processing ${entries.length} entries for metric ${metric}`);
         for (const entry of entries) {
+            queueLength++;
             const metricEntry = entry as { data: unknown };
             const data = (metricEntry.data ?? {}) as Record<string, unknown>;
             if (metric === Metrics.INTERACTIONS_RECEIVED && gauges[metric]) {
@@ -80,25 +89,37 @@ function exportMetricsToPrometheus() {
                 gauges[metric].set({ event: String(data.event), commandName: String(data.commandName) }, Number(data.durationMs));
             } else if (metric === Metrics.RAW_EVENT_RECEIVED && gauges[metric]) {
                 gauges[metric].inc({ event: String(data.event) });
+            } else if (metric === Metrics.METRICS_QUEUE_LENGTH) {
+                // Handled after the loop
+            } else if (metric === Metrics.METRICS_GENERATION_TIME) {
+                // Handled after the loop
+            } else if (metric === Metrics.EVENT_RECEIVED && gauges[metric]) {
+                gauges[metric].inc({ event: String(data.event) });
             } else {
                 logger.warn(`No gauge defined for metric type ${metric}`);
             }
         }
-
-        if (metric === Metrics.METRICS_QUEUE_LENGTH && gauges[metric]) {
-            gauges[metric].set(entries.length);
-        }
     }
 
-    gauges[Metrics.METRICS_GENERATION_TIME].set(Date.now() - startTime);
-
+    const durationMs = performance.now() - startTime;
+    logger.verbose(`Metrics generation took ${durationMs}ms, queue length is ${queueLength}`);
+    gauges[Metrics.METRICS_GENERATION_TIME].set(durationMs);
+    gauges[Metrics.METRICS_QUEUE_LENGTH].set(queueLength);
     pushgateway.pushAdd({ jobName: "alphagamebot" }).catch((err: unknown) => {
         // eslint-disable-next-line no-console
         console.warn("Failed to push metrics to Prometheus: " + String(err));
+    }).then(() => {
+        logger.verbose("Successfully pushed metrics to Prometheus Pushgateway");
     });
 }
 
-
+function exportWrapper() {
+    try {
+        exportMetricsToPrometheus();
+    } catch (e) {
+        logger.error("Error exporting metrics to Prometheus:", e);
+    }
+}
 export function startPrometheusExporter() {
     const intervalMs = Number(process.env.PROMETHEUS_EXPORT_INTERVAL_MS || "15000");
     if (isNaN(intervalMs) || intervalMs <= 0) {
@@ -107,7 +128,7 @@ export function startPrometheusExporter() {
     }
     logger.info(`Starting Prometheus exporter, pushing to ${pushgatewayUrl} every ${intervalMs}ms`);
     // Initial export
-    exportMetricsToPrometheus();
+    exportWrapper();
     // Set interval for periodic exports
-    setInterval(exportMetricsToPrometheus, intervalMs);
+    setInterval(exportWrapper, intervalMs);
 }

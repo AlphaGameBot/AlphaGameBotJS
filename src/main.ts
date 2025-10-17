@@ -15,7 +15,8 @@
 // 
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
-
+import { loadDotenv } from "./utility/debug/dotenv.js";
+await loadDotenv();
 
 import { Events, type ClientEvents } from "discord.js";
 import { existsSync } from "node:fs";
@@ -24,7 +25,6 @@ import { startPrometheusExporter } from "./services/metrics/exports/prometheus.j
 import { Metrics, metricsManager } from "./services/metrics/metrics.js";
 import { rotatingStatus } from "./subsystems/rotatingStatus.js";
 import { crawlEvents } from "./utility/crawler.js";
-import { loadDotenv } from "./utility/debug/dotenv.js";
 import logger, { getLogger } from "./utility/logging/logger.js";
 
 // Ensure the database is loaded before we do anything else
@@ -36,7 +36,6 @@ await import("./utility/database.js").then(() => {
     process.exit(1);
 });
 
-await loadDotenv();
 
 // is there the 'dist' folder in cwd?
 const weHaveDist = existsSync("./dist");
@@ -76,7 +75,7 @@ const allEvents = Object.values(Events);
 const eventLogger = getLogger("events");
 client.on("raw", (event) => {
     metricsManager.submitMetric<Metrics.RAW_EVENT_RECEIVED>(Metrics.RAW_EVENT_RECEIVED, {
-        event: event.t as Events
+        event: event.t
     });
 
     if (allEvents.includes(event.t as Events)) {
@@ -95,12 +94,14 @@ for (const event of events) {
         const start = Date.now();
         try {
             await event.execute(...args as ClientEvents[typeof event.name]);
+        } catch (e) {
+            logger.error(`Error executing event ${event.name}:`, e);
+        } finally {
+            // Submit metric without the "event" label to match the initial labelset
             metricsManager.submitMetric<Metrics.EVENT_EXECUTED>(Metrics.EVENT_EXECUTED, {
                 event: event.name as Events,
                 durationMs: Date.now() - start
             });
-        } catch (e) {
-            logger.error(`Error executing event ${event.name}:`, e);
         }
     };
     if (event.once) {
@@ -110,4 +111,13 @@ for (const event of events) {
     }
 }
 
+// for all events in the Events enum, count them
+for (const eventName of Object.values(Events)) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    client.on(eventName as keyof ClientEvents, (...args) => {
+        metricsManager.submitMetric<Metrics.EVENT_RECEIVED>(Metrics.EVENT_RECEIVED, {
+            event: eventName as Events
+        });
+    });
+}
 client.login(token);

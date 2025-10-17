@@ -41,6 +41,8 @@ export interface MetricDataMap {
     },
     [Metrics.METRICS_GENERATION_TIME]: {
         durationMs: number
+    },
+    [Metrics.EVENT_RECEIVED]: {
+        event: string
     }
-    
 }

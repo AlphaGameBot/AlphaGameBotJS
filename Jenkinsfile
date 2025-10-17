@@ -30,6 +30,8 @@ pipeline {
         DOCKER_TOKEN = credentials('alphagamedev-docker-token')
         AGB_VERSION = sh(returnStdout: true, script: "cat package.json | jq '.version' -cMr").trim()
         PUSHGATEWAY_URL = 'http://pushgateway:9091'
+        LOKI_URL = "http://loki:3100"
+
         COMMIT_MESSAGE = sh(script: 'git log -1 --pretty=%B ${GIT_COMMIT}', returnStdout: true).trim()
     
         // MySQL stuff
@@ -87,7 +89,7 @@ pipeline {
                 sh "docker run --detach --tty  \
                                 --name alphagamebotjs \
                                 -e TOKEN -e WEBHOOK -e BUILD_NUMBER -e ENGINEERING_OPS_DISCORD_ID -e ERROR_WEBHOOK_URL \
-                                -e DATABASE_URL -e PUSHGATEWAY_URL --restart=always \
+                                -e DATABASE_URL -e PUSHGATEWAY_URL -e LOKI_URL --restart=always \
                                 --network=alphagamebot-net --ip 10.7.1.64 --hostname alphagamebot \
                                 alphagamedev/alphagamebot:$AGB_VERSION" // add alphagamebot flags
             }

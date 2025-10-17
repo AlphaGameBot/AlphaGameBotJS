@@ -17,7 +17,11 @@
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
 import { createLogger, format, Logger, transports } from "winston";
+import LokiTransport from "winston-loki";
+import { loadDotenv } from "../debug/dotenv.js";
 import { EngineeringOpsTransport } from "./customTransport.js";
+
+await loadDotenv();
 
 export enum LoggerNames {
     METRICS = "metrics"
@@ -26,6 +30,7 @@ export enum LoggerNames {
 function shouldWeUseColors(): boolean {
     return process.stdout.isTTY;
 }
+
 
 const logger = createLogger({
     level: process.env.NODE_ENV === "production" ? "info" : "debug",
@@ -65,12 +70,29 @@ const logger = createLogger({
         new (EngineeringOpsTransport)({
             level: "error",
             format: format.uncolorize()
-        })
+        }),
+        ...(process.env.LOKI_URL ? [new LokiTransport({
+            host: process.env.LOKI_URL,
+            json: true,
+            format: format.combine(
+                format.uncolorize(),
+                format.json()
+            ),
+            batching: true,
+            level: "info",
+            interval: 5,
+            replaceTimestamp: true,
+            labels: { service_name: "AlphaGameBot" },
+            onConnectionError: (err: unknown) => {
+                console.error("Loki connection error:", err);
+            },
+        })] : [])
     ]
 });
 
+logger.info("Using loki instance: " + (process.env.LOKI_URL ?? "none") + "  (THIS SHOULD NOT HAVE A TRAILING SLASH!)");
 if (!process.stdout.isTTY) logger.warn("Output doesn't seem to be a TTY.  Several features have been disabled.");
-
+if (!process.env.LOKI_URL && process.env.NODE_ENV === "production") logger.warn("LOKI_URL is not set.  Loki logging is disabled.");
 export function getLogger(name: string): Logger {
     return logger.child({ label: name });
 }
