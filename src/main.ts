@@ -25,7 +25,7 @@ import { startPrometheusExporter } from "./services/metrics/exports/prometheus.j
 import { Metrics, metricsManager } from "./services/metrics/metrics.js";
 import { rotatingStatus } from "./subsystems/rotatingStatus.js";
 import { crawlEvents } from "./utility/crawler.js";
-import logger, { getLogger } from "./utility/logging/logger.js";
+import logger, { getLogger, getLokiLogger } from "./utility/logging/logger.js";
 
 // Ensure the database is loaded before we do anything else
 // Pretty important!
@@ -84,6 +84,12 @@ client.on("raw", (event) => {
         eventLogger.verbose(`Raw event received: ${event.t} (not in Events enum, data contains ${Object.keys(event.d).length} keys)`);
     }
 });
+
+const djsLogger = getLokiLogger("discordjs");
+client
+    .on("debug", djsLogger.debug)
+    .on("error", djsLogger.error)
+    .on("warn", djsLogger.warn);
 
 const events = await crawlEvents();
 for (const event of events) {

@@ -31,6 +31,22 @@ function shouldWeUseColors(): boolean {
     return process.stdout.isTTY;
 }
 
+const loki = new LokiTransport({
+    host: process.env.LOKI_URL ? process.env.LOKI_URL : "",
+    json: true,
+    format: format.combine(
+        format.uncolorize(),
+        format.json()
+    ),
+    batching: true,
+    level: "info",
+    interval: 5,
+    replaceTimestamp: true,
+    labels: { service_name: "AlphaGameBot" },
+    onConnectionError: (err: unknown) => {
+        console.error("Loki connection error:", err);
+    },
+});
 
 const logger = createLogger({
     level: process.env.NODE_ENV === "production" ? "info" : "debug",
@@ -71,30 +87,30 @@ const logger = createLogger({
             level: "error",
             format: format.uncolorize()
         }),
-        ...(process.env.LOKI_URL ? [new LokiTransport({
-            host: process.env.LOKI_URL,
-            json: true,
-            format: format.combine(
-                format.uncolorize(),
-                format.json()
-            ),
-            batching: true,
-            level: "info",
-            interval: 5,
-            replaceTimestamp: true,
-            labels: { service_name: "AlphaGameBot" },
-            onConnectionError: (err: unknown) => {
-                console.error("Loki connection error:", err);
-            },
-        })] : [])
+        ...(process.env.LOKI_URL ? [loki] : [])
+    ]
+});
+
+const lokiLogger = createLogger({
+    format: format.combine(
+        format.uncolorize(),
+        format.timestamp(),
+        format.json()
+    ),
+    transports: [
+        loki
     ]
 });
 
 logger.info("Using loki instance: " + (process.env.LOKI_URL ?? "none") + "  (THIS SHOULD NOT HAVE A TRAILING SLASH!)");
 if (!process.stdout.isTTY) logger.warn("Output doesn't seem to be a TTY.  Several features have been disabled.");
 if (!process.env.LOKI_URL && process.env.NODE_ENV === "production") logger.warn("LOKI_URL is not set.  Loki logging is disabled.");
-export function getLogger(name: string): Logger {
-    return logger.child({ label: name });
+export function getLogger(name: string, ...options: unknown[]): Logger {
+    return logger.child({ label: name, ...options });
+}
+
+export function getLokiLogger(name: string, ...options: unknown[]): Logger {
+    return lokiLogger.child({ label: name, ...options });
 }
 
 export default logger;
