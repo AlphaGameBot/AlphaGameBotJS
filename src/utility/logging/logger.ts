@@ -31,22 +31,28 @@ function shouldWeUseColors(): boolean {
     return process.stdout.isTTY;
 }
 
-const loki = new LokiTransport({
-    host: process.env.LOKI_URL ? process.env.LOKI_URL : "",
-    json: true,
-    format: format.combine(
-        format.uncolorize(),
-        format.json()
-    ),
-    batching: true,
-    level: "info",
-    interval: 5,
-    replaceTimestamp: true,
-    labels: { service_name: "AlphaGameBot" },
-    onConnectionError: (err: unknown) => {
-        console.error("Loki connection error:", err);
-    },
-});
+let loki: LokiTransport | null = null;
+
+if (process.env.LOKI_URL) {
+    loki = new LokiTransport({
+        host: process.env.LOKI_URL ? process.env.LOKI_URL : "",
+        json: true,
+        format: format.combine(
+            format.uncolorize(),
+            format.json()
+        ),
+        batching: true,
+        level: "info",
+        interval: 5,
+        replaceTimestamp: true,
+        labels: { service_name: "AlphaGameBot" },
+        onConnectionError: (err: unknown) => {
+            // We shouldn't use the logger because it would exacerbate the issue
+            // eslint-disable-next-line no-console
+            console.error("Loki connection error:", err);
+        },
+    });
+}
 
 const logger = createLogger({
     level: process.env.NODE_ENV === "production" ? "info" : "debug",
@@ -87,7 +93,7 @@ const logger = createLogger({
             level: "error",
             format: format.uncolorize()
         }),
-        ...(process.env.LOKI_URL ? [loki] : [])
+        ...((process.env.LOKI_URL && loki) ? [loki] : [])
     ]
 });
 
@@ -98,7 +104,7 @@ const lokiLogger = createLogger({
         format.json()
     ),
     transports: [
-        loki
+        ...(loki ? [loki] : [])
     ]
 });
 

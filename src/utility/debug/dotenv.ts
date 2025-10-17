@@ -17,13 +17,14 @@
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
 export async function loadDotenv(): Promise<void> {
-    if (process.env.NODE_ENV !== "production") {
+    if (process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "deploy") {
         try {
             await import("dotenv/config");
             // block until the import is done
         } catch (err) {
             // eslint-disable-next-line no-console
-            console.error("Failed to load dotenv", err);
+            console.error("Failed to load dotenv",
+                err instanceof Error ? err.message : err);
         }
     }
 }
