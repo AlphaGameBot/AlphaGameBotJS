@@ -16,11 +16,22 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import logger from "../utility/logging/logger.js";
+import { loadDotenv } from "../utility/debug/dotenv.js";
+import logger, { getLokiLogger } from "../utility/logging/logger.js";
 
+await loadDotenv();
 logger.verbose("This is a verbose log message.");
 logger.debug("This is a debug log message.");
 logger.http("This is an http log message.");
 logger.info("This is an info log message.");
 logger.warn("This is a warn log message.");
 logger.error("This is an error log message.");
+
+const lokiLogger = getLokiLogger("test");
+
+lokiLogger.verbose("This is a verbose log message to Loki.");
+lokiLogger.debug("This is a debug log message to Loki.");
+lokiLogger.http("This is an http log message to Loki.");
+lokiLogger.info("This is an info log message to Loki.");
+lokiLogger.warn("This is a warn log message to Loki.");
+lokiLogger.error("This is an error log message to Loki.");

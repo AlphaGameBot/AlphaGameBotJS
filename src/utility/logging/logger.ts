@@ -17,7 +17,7 @@
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
 import { createLogger, format, Logger, transports } from "winston";
-import LokiTransport from "winston-loki";
+import LokiTransport from "winston-loki-strict";
 import { loadDotenv } from "../debug/dotenv.js";
 import { EngineeringOpsTransport } from "./customTransport.js";
 
@@ -36,21 +36,15 @@ let loki: LokiTransport | null = null;
 if (process.env.LOKI_URL) {
     loki = new LokiTransport({
         host: process.env.LOKI_URL ? process.env.LOKI_URL : "",
-        json: true,
+        json: false,
         format: format.combine(
             format.uncolorize(),
             format.json()
         ),
         batching: true,
-        level: "info",
-        interval: 5,
+        level: "debug",
         replaceTimestamp: true,
-        labels: { service_name: "AlphaGameBot" },
-        onConnectionError: (err: unknown) => {
-            // We shouldn't use the logger because it would exacerbate the issue
-            // eslint-disable-next-line no-console
-            console.error("Loki connection error:", err);
-        },
+        labels: { service_name: "AlphaGameBot" }
     });
 }
 
@@ -108,6 +102,8 @@ const lokiLogger = createLogger({
         ...(loki ? [loki] : [])
     ]
 });
+
+if (!loki) logger.warn("Loki logger is not configured.");
 
 logger.info("Using loki instance: " + (process.env.LOKI_URL ?? "none") + "  (THIS SHOULD NOT HAVE A TRAILING SLASH!)");
 if (!process.stdout.isTTY) logger.warn("Output doesn't seem to be a TTY.  Several features have been disabled.");
