@@ -98,6 +98,7 @@ const logger = createLogger({
 });
 
 const lokiLogger = createLogger({
+    level: "debug",
     format: format.combine(
         format.uncolorize(),
         format.timestamp(),

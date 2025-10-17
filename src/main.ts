@@ -85,14 +85,15 @@ client.on("raw", (event) => {
     }
 });
 
-const djsLogger = getLokiLogger("discordjs");
+const djsLogger = getLokiLogger("discordjs", { level: "debug" });
 client
-    .on("debug", djsLogger.debug)
-    .on("error", djsLogger.error)
-    .on("warn", djsLogger.warn);
+    .on("debug", (info) => { djsLogger.debug(info); })
+    .on("error", (info) => { djsLogger.error(info); })
+    .on("warn", (info) => { djsLogger.warn(info); });
 
 const events = await crawlEvents();
 for (const event of events) {
+    logger.debug(`Registering event handler for event: ${event.name}`);
     const wrapper = async (...args: unknown[]) => {
         logger.verbose(`Fired event: ${event.name} (${args})`);
 
@@ -126,4 +127,6 @@ for (const eventName of Object.values(Events)) {
         });
     });
 }
-client.login(token);
+
+logger.info("Logging in to Discord...");
+await client.login(token);
