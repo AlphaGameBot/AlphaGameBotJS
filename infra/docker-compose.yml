@@ -1,0 +1,111 @@
+# This file is a part of AlphaGameBot.
+# 
+#     AlphaGameBot - A Discord bot that's free and (hopefully) doesn't suck.
+#     Copyright (C) 2025  Damien Boisvert (AlphaGameDeveloper)
+# 
+#     AlphaGameBot is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+# 
+#     AlphaGameBot is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+# 
+#     You should have received a copy of the GNU General Public License
+#     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
+
+version: "3.9"
+volumes:
+    mysql_data:
+    prometheus_data:
+    loki_data:
+    
+networks:
+    # Note I learned from the old alphagamebot...
+    # Use f*cking docker networking instead of just mapping everything to the host.
+    # This will make things so much easier. (And yes, of course, I learned this the hard way,
+    # because so many services were fighting for the same ports on the host machine...)
+    # tl;dr use docker networking, it will be good for your health.
+
+    # When running AlphaGameBot (not included in this compose file), be sure to run this compose file first and
+    # add --network=alphagamebot-net to the AlphaGameBot docker run command.  When you need to reference one of these
+    # services from AlphaGameBot, just use the service name as the hostname (e.g. "mysql", "prometheus", etc).
+    # Also, we are using static IPs here to avoid any possible issues with service discovery.  In theory docker's DNS
+    # should handle this, but better safe than sorry.
+
+    # Finally, 
+    alphagamebot-net:
+        name: alphagamebot-net
+        driver: bridge
+        ipam:
+            config:
+                - subnet: 10.7.1.0/24
+                  gateway: 10.7.1.1
+                  # 10.7.1.200/29 is a range for:
+                  #   - 10.7.1.200 - 10.7.1.206 as automatically assigned IPs
+                  #   - Don't worry, everything else is statically assigned below.
+                  #   - All static IPs should be counting by 1, starting at 10.7.1.2 and going up.
+                  ip_range: 10.7.1.200/29
+
+services:
+    mysql:
+        image: mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+            MYSQL_USER: ${DB_USER}
+            MYSQL_PASSWORD: ${DB_USER_PASSWORD}
+            MYSQL_DATABASE: ${DB_NAME}
+        restart: always
+        networks:
+            alphagamebot-net:
+                ipv4_address: 10.7.1.2
+        volumes:
+            - mysql_data:/var/lib/mysql
+
+    prometheus:
+        image: prom/prometheus
+        restart: always
+        networks:
+            alphagamebot-net:
+                ipv4_address: 10.7.1.3
+        volumes:
+            - prometheus_data:/prometheus
+            - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+        ports:
+            - ${HOST_PROMETHEUS_PORT}:9090
+        depends_on:
+            - mysqld_exporter
+            - pushgateway
+            
+    pushgateway:
+        image: prom/pushgateway
+        restart: always
+        networks:
+            alphagamebot-net:
+                ipv4_address: 10.7.1.4
+
+    mysqld_exporter:
+        image: prom/mysqld-exporter
+        restart: always
+        networks:
+            alphagamebot-net:
+                ipv4_address: 10.7.1.5
+        volumes:
+            - ./mysqlexporter.cnf:/.my.cnf:ro
+        depends_on:
+            - mysql
+
+    loki:
+        image: grafana/loki
+        restart: always
+        networks:
+            alphagamebot-net:
+                ipv4_address: 10.7.1.6
+        volumes:
+            - ./loki.yaml:/etc/loki/local-config.yaml:ro
+            - loki_data:/loki
+        ports:
+            - ${HOST_LOKI_PORT}:3100
+        command: -config.file=/etc/loki/local-config.yaml
