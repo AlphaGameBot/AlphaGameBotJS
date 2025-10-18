@@ -111,7 +111,7 @@ pipeline {
                                         --build-arg COMMIT_MESSAGE="$COMMIT_MESSAGE" \
                                         --build-arg BUILD_NUMBER="$BUILD_NUMBER" \
                                         --build-arg BRANCH_NAME="$BRANCH_NAME" \
-                                        --no-cache .'
+                                        .'
                     }
                 }
             }
