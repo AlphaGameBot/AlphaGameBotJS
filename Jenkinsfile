@@ -16,6 +16,41 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
+def stageWithPost(String name, Closure body) {
+    stage(name) {
+        def start = System.currentTimeMillis()
+        try {
+            body()
+        } finally {
+            def end = System.currentTimeMillis()
+            def durationSec = (end - start) / 1000
+        
+            // Format duration as minutes and seconds if over 60 seconds
+            def durationStr
+            if (durationSec >= 60) {
+                def minutes = (int)(durationSec / 60)
+                def seconds = (int)(durationSec % 60)
+                durationStr = "${minutes} minutes, ${seconds} seconds"
+            } else {
+                durationStr = "${durationSec}s"
+            }
+        
+            // 💬 Send message to Discord webhook
+            def discordWebhookUrl = env.JENKINS_NOTIFICATIONS_WEBHOOK
+
+            // escape quotes for JSON
+            def message = ":jenkins: **${name}** done in ${durationStr}"
+
+            sh """
+            curl -H "Content-Type: application/json" \
+                 -X POST \
+                 -d '{"content": "${message}"}' \
+                 ${discordWebhookUrl}
+            """
+        }
+    }
+}
+
 pipeline {
     agent {
         docker {
@@ -44,8 +79,24 @@ pipeline {
         ERROR_WEBHOOK_URL = credentials('alphagamebot-webhook')
         DATABASE_URL = "mysql://$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST/$MYSQL_DATABASE"
     }
+    
     stages {
-        stage('build') {
+        stage('notify') {
+            steps {
+                script {
+                    def discordTitle = "${env.JOB_NAME} - Build #${env.BUILD_NUMBER} Started"
+                    def discordDescription = "Commit: ${env.GIT_COMMIT}\nBranch: ${env.BRANCH_NAME}\nBuild URL: ${env.BUILD_URL}"
+                    discordSend(
+                        webhookURL: env.JENKINS_NOTIFICATIONS_WEBHOOK,
+                        title: discordTitle,
+                        description: discordDescription,
+                        link: env.BUILD_URL,
+                        result: 'STARTED'
+                    )
+                }
+            }
+        }
+        stageWithPost('build') {
             steps {
                 // debug if necessary
                 // sh 'printenv'
@@ -71,17 +122,17 @@ pipeline {
                 sh 'docker logout'
             }
         }*/
-        stage('deploy-commands') {
+        stageWithPost('deploy-commands') {
             steps {
                 sh "docker run --rm -i --network=alphagamebot-net --name agb-temp-deploy-cmds -e NODE_ENV=deploy -e TOKEN -e DATABASE_URL --entrypoint sh alphagamedev/alphagamebot:$AGB_VERSION -c 'node ./dist/deploy-commands.js'"
             }
         }
-        stage('deploy-database') {
+        stageWithPost('deploy-database') {
             steps {
                 sh "docker run --rm -i --network=alphagamebot-net --name agb-temp-migrate -e NODE_ENV=deploy -e DATABASE_URL --entrypoint sh alphagamedev/alphagamebot:$AGB_VERSION -c 'npx prisma migrate deploy'"
             }
         }
-        stage('deploy') {
+        stageWithPost('deploy') {
             steps {
                 // conditionally deploy
                 sh "docker container stop alphagamebotjs || true"
