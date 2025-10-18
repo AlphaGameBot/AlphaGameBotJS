@@ -23,7 +23,8 @@ def stageWithPost(String name, Closure body) {
             body()
         } finally {
             def end = System.currentTimeMillis()
-            def durationSec = (end - start) / 1000
+            def durationMs = end - start
+            def durationSec = (durationMs / 1000) as Integer
         
             // Format duration as minutes and seconds if over 60 seconds
             def durationStr
