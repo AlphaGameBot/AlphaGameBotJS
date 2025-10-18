@@ -21,7 +21,9 @@ import type { EventHandler } from "../interfaces/Event.js";
 import { addMessage, getUserLevel } from "../subsystems/leveling/dbhelper.js";
 import { userNeedsLevelUpAnnouncement } from "../subsystems/leveling/utility.js";
 import prisma from "../utility/database.js";
-import logger from "../utility/logging/logger.js";
+import { getLogger } from "../utility/logging/logger.js";
+
+const logger = getLogger("events/MessageCreate");
 
 export default {
     name: Events.MessageCreate,
@@ -44,7 +46,11 @@ export default {
                 message.channel.permissionsFor(message.guild.members.me)?.has("SendMessages")) {
 
                 const replyMessage = await message.reply(`:tada: Congrats, <@${message.author.id}>! You just advanced to level **${newLevel}**! Nice!`);
-                setTimeout(async () => { await replyMessage.delete().catch(() => { }); }, 15000);
+                setTimeout(async () => {
+                    await replyMessage.delete().catch((error) => {
+                        logger.error("Failed to delete level up message", error);
+                    });
+                }, 15000);
 
                 await prisma.guild_user_stats.update({
                     where: {
