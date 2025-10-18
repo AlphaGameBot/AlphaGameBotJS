@@ -96,20 +96,23 @@ pipeline {
                 }
             }
         }
-        stageWithPost('build') {
+        stage('build') {
             steps {
-                // debug if necessary
-                // sh 'printenv'
+                script {
+                    stageWithPost('build') {
+                        // debug if necessary
+                        // sh 'printenv'
 
-                echo "Building"
-                // 8/1/2024 -> No Cache was added because of the fact that Pycord will never update :/
-                // ----------> If you know a better way, please make a pull request!
-                sh 'docker build -t alphagamedev/alphagamebot:$AGB_VERSION \
-                                --build-arg COMMIT_MESSAGE="$COMMIT_MESSAGE" \
-                                --build-arg BUILD_NUMBER="$BUILD_NUMBER" \
-                                --build-arg BRANCH_NAME="$BRANCH_NAME" \
-                                --no-cache .'
-
+                        echo "Building"
+                        // 8/1/2024 -> No Cache was added because of the fact that Pycord will never update :/
+                        // ----------> If you know a better way, please make a pull request!
+                        sh 'docker build -t alphagamedev/alphagamebot:$AGB_VERSION \
+                                        --build-arg COMMIT_MESSAGE="$COMMIT_MESSAGE" \
+                                        --build-arg BUILD_NUMBER="$BUILD_NUMBER" \
+                                        --build-arg BRANCH_NAME="$BRANCH_NAME" \
+                                        --no-cache .'
+                    }
+                }
             }
         }
         /*stage('push') {
@@ -122,27 +125,39 @@ pipeline {
                 sh 'docker logout'
             }
         }*/
-        stageWithPost('deploy-commands') {
+        stage('deploy-commands') {
             steps {
-                sh "docker run --rm -i --network=alphagamebot-net --name agb-temp-deploy-cmds -e NODE_ENV=deploy -e TOKEN -e DATABASE_URL --entrypoint sh alphagamedev/alphagamebot:$AGB_VERSION -c 'node ./dist/deploy-commands.js'"
+                script {
+                    stageWithPost('deploy-commands') {
+                        sh "docker run --rm -i --network=alphagamebot-net --name agb-temp-deploy-cmds -e NODE_ENV=deploy -e TOKEN -e DATABASE_URL --entrypoint sh alphagamedev/alphagamebot:$AGB_VERSION -c 'node ./dist/deploy-commands.js'"
+                    }
+                }
             }
         }
-        stageWithPost('deploy-database') {
+        stage('deploy-database') {
             steps {
-                sh "docker run --rm -i --network=alphagamebot-net --name agb-temp-migrate -e NODE_ENV=deploy -e DATABASE_URL --entrypoint sh alphagamedev/alphagamebot:$AGB_VERSION -c 'npx prisma migrate deploy'"
+                script {
+                    stageWithPost('deploy-database') {
+                        sh "docker run --rm -i --network=alphagamebot-net --name agb-temp-migrate -e NODE_ENV=deploy -e DATABASE_URL --entrypoint sh alphagamedev/alphagamebot:$AGB_VERSION -c 'npx prisma migrate deploy'"
+                    }
+                }
             }
         }
-        stageWithPost('deploy') {
+        stage('deploy') {
             steps {
-                // conditionally deploy
-                sh "docker container stop alphagamebotjs || true"
-                sh "docker container rm alphagamebotjs -f || true"
-                sh "docker run --detach --tty  \
-                                --name alphagamebotjs \
-                                -e TOKEN -e WEBHOOK -e BUILD_NUMBER -e ENGINEERING_OPS_DISCORD_ID -e ERROR_WEBHOOK_URL \
-                                -e DATABASE_URL -e PUSHGATEWAY_URL -e LOKI_URL --restart=always \
-                                --network=alphagamebot-net --ip 10.7.1.64 --hostname alphagamebot \
-                                alphagamedev/alphagamebot:$AGB_VERSION" // add alphagamebot flags
+                script {
+                    stageWithPost('deploy') {
+                        // conditionally deploy
+                        sh "docker container stop alphagamebotjs || true"
+                        sh "docker container rm alphagamebotjs -f || true"
+                        sh "docker run --detach --tty  \
+                                        --name alphagamebotjs \
+                                        -e TOKEN -e WEBHOOK -e BUILD_NUMBER -e ENGINEERING_OPS_DISCORD_ID -e ERROR_WEBHOOK_URL \
+                                        -e DATABASE_URL -e PUSHGATEWAY_URL -e LOKI_URL --restart=always \
+                                        --network=alphagamebot-net --ip 10.7.1.64 --hostname alphagamebot \
+                                        alphagamedev/alphagamebot:$AGB_VERSION" // add alphagamebot flags
+                    }
+                }
             }
         }
     }
