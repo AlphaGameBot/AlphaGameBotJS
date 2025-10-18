@@ -18,9 +18,10 @@
 
 FROM node:20 AS build
 WORKDIR /app
-COPY . .
+COPY package*.json ./
 RUN --mount=type=cache,target=/root/.npm \
     npm install --include=dev
+COPY . .
 RUN npx prisma generate
 RUN npm run build
 
