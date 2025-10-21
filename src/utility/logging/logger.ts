@@ -115,6 +115,7 @@ const rootLogger = createLogger({
 
 const lokiLogger = createLogger({
     level: "debug",
+    levels: logConfig.levels,
     format: format.combine(
         format.uncolorize(),
         format.timestamp(),
@@ -134,7 +135,7 @@ export function getLokiLogger(name: string, ...options: unknown[]): Logger {
 }
 const logger = getLogger("root");
 
-if (!loki) logger.warn("Loki logger is not configured.");
+if (!loki) logger.warn("Loki logger is not configured.  Logs sent will be black-holed.");
 
 logger.info("Using loki instance: " + (process.env.LOKI_URL ?? "none") + "  (THIS SHOULD NOT HAVE A TRAILING SLASH!)");
 if (!process.stdout.isTTY) logger.warn("Output doesn't seem to be a TTY.  Several features have been disabled.");
