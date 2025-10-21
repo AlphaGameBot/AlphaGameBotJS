@@ -16,13 +16,32 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import { createLogger, format, Logger, transports } from "winston";
+import winston, { createLogger, format, Logger, transports } from "winston";
 import LokiTransport from "winston-loki-strict";
 import { loadDotenv } from "../debug/dotenv.js";
 import { EngineeringOpsTransport } from "./customTransport.js";
 
 await loadDotenv();
 
+// Winston's default logger levels are bullshit.
+const logConfig = {
+    levels: {
+        error: 0,
+        warn: 1,
+        info: 2,
+        verbose: 4, // now comes before debug
+        debug: 3,
+        silly: 5,
+    },
+    colors: {
+        error: 'red',
+        warn: 'yellow',
+        info: 'green',
+        verbose: 'cyan',
+        debug: 'blue',
+        silly: 'magenta',
+    },
+};
 export enum LoggerNames {
     METRICS = "metrics"
 }
@@ -48,7 +67,10 @@ if (process.env.LOKI_URL) {
     });
 }
 
-const logger = createLogger({
+winston.addColors(logConfig.colors);
+
+const rootLogger = createLogger({
+    levels: logConfig.levels,
     level: process.env.NODE_ENV === "production" ? "info" : "debug",
     // [file:line] [level]: message
     format: format.combine(
@@ -103,17 +125,19 @@ const lokiLogger = createLogger({
     ]
 });
 
-if (!loki) logger.warn("Loki logger is not configured.");
-
-logger.info("Using loki instance: " + (process.env.LOKI_URL ?? "none") + "  (THIS SHOULD NOT HAVE A TRAILING SLASH!)");
-if (!process.stdout.isTTY) logger.warn("Output doesn't seem to be a TTY.  Several features have been disabled.");
-if (!process.env.LOKI_URL && process.env.NODE_ENV === "production") logger.warn("LOKI_URL is not set.  Loki logging is disabled.");
 export function getLogger(name: string, ...options: unknown[]): Logger {
-    return logger.child({ label: name, ...options });
+    return rootLogger.child({ label: name, ...options });
 }
 
 export function getLokiLogger(name: string, ...options: unknown[]): Logger {
     return lokiLogger.child({ label: name, ...options });
 }
+const logger = getLogger("root");
+
+if (!loki) logger.warn("Loki logger is not configured.");
+
+logger.info("Using loki instance: " + (process.env.LOKI_URL ?? "none") + "  (THIS SHOULD NOT HAVE A TRAILING SLASH!)");
+if (!process.stdout.isTTY) logger.warn("Output doesn't seem to be a TTY.  Several features have been disabled.");
+if (!process.env.LOKI_URL && process.env.NODE_ENV === "production") logger.warn("LOKI_URL is not set.  Loki logging is disabled.");
 
 export default logger;

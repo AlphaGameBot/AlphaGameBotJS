@@ -106,10 +106,10 @@ function exportMetricsToPrometheus() {
     gauges[Metrics.METRICS_GENERATION_TIME].set(durationMs);
     gauges[Metrics.METRICS_QUEUE_LENGTH].set(queueLength);
     pushgateway.pushAdd({ jobName: "alphagamebot" }).catch((err: unknown) => {
-        // eslint-disable-next-line no-console
-        console.warn("Failed to push metrics to Prometheus: " + String(err));
+
+        logger.error("Failed to push metrics to Prometheus: " + String(err));
     }).then(() => {
-        logger.verbose("Successfully pushed metrics to Prometheus Pushgateway");
+        logger.verbose("Successfully pushed metrics to Prometheus Pushgateway (generation time: " + durationMs.toPrecision(2) + "ms)");
     });
 }
 
