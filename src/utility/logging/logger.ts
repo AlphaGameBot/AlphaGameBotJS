@@ -29,7 +29,7 @@ const logConfig = {
         error: 0,
         warn: 1,
         info: 2,
-        verbose: 4, // now comes before debug
+        verbose: 4,
         debug: 3,
         silly: 5,
     },
@@ -47,7 +47,7 @@ export enum LoggerNames {
 }
 
 function shouldWeUseColors(): boolean {
-    return process.stdout.isTTY;
+    return process.stdout.isTTY && !(process.env.NO_COLOR);
 }
 
 let loki: LokiTransport | null = null;

@@ -16,9 +16,16 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-// Note: @prisma/client is generated. Make sure to run `npx prisma generate` after modifying the schema.
-import { PrismaClient } from "@prisma/client";
+import { Events } from "discord.js";
+import type { EventHandler } from "../interfaces/Event.js";
+import { getLogger } from "../utility/logging/logger.js";
 
-const prisma: PrismaClient = new PrismaClient();
-
-export default prisma;
+const logger = getLogger('gateway');
+export default {
+    name: Events.ShardDisconnect,
+    execute: async (event: CloseEvent, shardId: number) => {
+        // Log the shard disconnect event
+        const { code, reason } = event;
+        logger.warn(`Shard ${shardId} disconnected. Code: ${code}, Reason: ${reason}`);
+    },
+} as EventHandler<Events.ShardDisconnect>;
