@@ -42,6 +42,8 @@ networks:
         ipam:
             config:
                 - subnet: 10.7.1.0/24
+                  # Why 10.7.1.0/24?  Idk, but I saw networkchuck (peak youtuber) use this for his network
+                  # and also it's not in use on my home network. (10.0.0.0/24 and 192.168.0.0/24 are taken)
                   gateway: 10.7.1.1
                   # 10.7.1.200/29 is a range for:
                   #   - 10.7.1.200 - 10.7.1.206 as automatically assigned IPs
@@ -64,6 +66,7 @@ services:
         volumes:
             - mysql_data:/var/lib/mysql
 
+    # Metrics and monitoring stack.
     prometheus:
         image: prom/prometheus
         restart: always
@@ -79,6 +82,8 @@ services:
             - mysqld_exporter
             - pushgateway
             
+    # Normally, prometheus scrapes metrics from services, but sometimes it's easier for services to push metrics to prometheus.
+    # This is where pushgateway comes in--it allows services to push metrics to prometheus, instead of running a web server to be scraped.
     pushgateway:
         image: prom/pushgateway
         restart: always
@@ -86,6 +91,8 @@ services:
             alphagamebot-net:
                 ipv4_address: 10.7.1.4
 
+    # mysqld_exporter exports MySQL metrics for Prometheus to scrape.
+    # It provides SO MANY AWESOME METRICS about the MySQL server--Very nice to have.
     mysqld_exporter:
         image: prom/mysqld-exporter
         restart: always
@@ -97,6 +104,10 @@ services:
         depends_on:
             - mysql
 
+    # Loki is the log aggregation system used alongside Grafana for viewing logs.
+    # Basically, alphagamebot will send its logs to loki, and grafana will be used to view them.
+    # Do **NOT** expose loki to the internet. Only Grafana should be able to access it. (and of course
+    # all services that write logs to it, so ideally you'd add grafana to this network as well.)
     loki:
         image: grafana/loki
         restart: always

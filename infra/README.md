@@ -52,5 +52,9 @@ There are a few things that you have to configure in the `.env` file:
     1. I recommend setting `MYSQL_ROOT_PASSWORD` to something you can remember, as you'll need it to access the database for maintenance.
     2. You won't need to remember `MYSQL_USER_PASSWORD` unless you plan on accessing the database using the `alphagamebot` user (which is only used by the bot itself).
     3. I strongly recommend the [Random.org Password Generator](https://www.random.org/passwords/?num=5&len=16&format=html&rnd=new) for generating secure passwords.
-2. Next, you have to edit the `mysqlexporter.cnf` file to set the MySQL credentials for `mysqld_exporter`.
+2. Modify the `EXPORTER_DB_USER` and `EXPORTER_DB_PASSWORD` if you want to change the default MySQL user for `mysqld_exporter`.
+    1. Make sure to use a secure password for `EXPORTER_DB_PASSWORD`.
+3. Next, you have to edit the `mysqlexporter.cnf` file to set the MySQL credentials for `mysqld_exporter`.
     1. Set the `user` and `password` fields to match the `MYSQL_USER` and `MYSQL_USER_PASSWORD` environment variables in the `.env` file.
+
+*TODO: finish this. You get the idea though.  Or make a PR. that'd be nice :)*
