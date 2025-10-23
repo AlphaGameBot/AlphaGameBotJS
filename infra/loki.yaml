@@ -1,0 +1,59 @@
+# This file is a part of AlphaGameBot.
+# 
+#     AlphaGameBot - A Discord bot that's free and (hopefully) doesn't suck.
+#     Copyright (C) 2025  Damien Boisvert (AlphaGameDeveloper)
+# 
+#     AlphaGameBot is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+# 
+#     AlphaGameBot is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+# 
+#     You should have received a copy of the GNU General Public License
+#     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
+
+# sure, it's insecure, but to be honest I could not care less.
+# loki is *not* exposed to the internet, and it's only used in the docker network,
+# along with the grafana instance.
+# Plus, it's just the logging server, and this is a pet project after all.
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9095
+
+common:
+  path_prefix: /loki
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+storage_config:
+  boltdb_shipper:
+    active_index_directory: /loki/index
+    cache_location: /loki/cache
+  filesystem:
+    directory: /loki/chunks
+
+ingester:
+  wal:
+    dir: /loki/wal
+
+schema_config:
+  configs:
+    - from: 2020-10-24
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+limits_config:
+  ingestion_rate_mb: 6      # Older field name for rate limit (use MB/s)
+  ingestion_burst_size_mb: 8 # Older field name for burst size
