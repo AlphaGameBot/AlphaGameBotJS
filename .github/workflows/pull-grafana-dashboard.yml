@@ -7,7 +7,8 @@ name: Sync AlphaGameBot Metrics Dashboard
 
 on:
   schedule:
-    - cron: "0 0 * * *"  # everyday at midnight
+    - cron: "0 8 * 11,12,1,2,3 *"  # 00:00 PST (08:00 UTC): Nov–Mar
+    - cron: "0 7 * 4-10 *"         # 00:00 PDT (07:00 UTC): Apr–Oct (daylight saving time)
   workflow_dispatch:     # also allow manual triggering--Only for debugging.
 
 permissions:
