@@ -1,0 +1,39 @@
+# This here is my absolutely "what the heck am i doing" way of syncing
+# my grafana dashboard to this repo.
+
+# Why?
+#   Why not? And it's none of your beeswax, isn't it?
+name: Sync AlphaGameBot Metrics Dashboard
+
+on:
+  schedule:
+    - cron: "0 0 * * *"  # everyday at midnight
+  workflow_dispatch:     # also allow manual triggering--Only for debugging.
+
+permissions:
+  contents: write  # to push changes back to the repo
+
+jobs:
+  sync-dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pull dashboard from Grafana
+        run: |
+          mkdir -p infra/grafana
+          curl -s \
+            -H "Authorization: Bearer ${{ secrets.GRAFANA_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            https://grafana.alphagame.dev/api/dashboards/uid/abaff5e0-29c2-4fa5-8337-a89f7abaa907 \
+          | jq '.dashboard' > infra/grafana/alphagamebot-metrics.json
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "Grafana Sync [bot]"
+          git config user.email "grafana-sync@alphagame.dev"
+          git add infra/grafana/alphagamebot-metrics.json
+
+          # `git diff --cached --quiet` returns exit code 1 if there are changes, 0 otherwise.
+          git diff --cached --quiet || git commit -m "metrics: Sync AlphaGameBot Metrics dashboard [skip ci]"
+          git push
