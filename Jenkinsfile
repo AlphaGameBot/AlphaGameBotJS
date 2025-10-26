@@ -82,7 +82,28 @@ pipeline {
     }
     
     stages {
+        stage('precheck') {
+            steps {
+                script {
+                    def msg = sh(script: 'git log -1 --pretty=%B ${GIT_COMMIT}', returnStdout: true).trim()
+                    if (msg =~ /(?i)\[(no|skip)\s*ci\]/) {
+                        echo "No CI detected in commit message. Skipping build."
+                        currentBuild.result = 'SUCCESS'
+                        // Set a flag to skip remaining stages
+                        env.SKIP_REMAINING_STAGES = 'true'
+                        // Use 'return' to exit this stage early without erroring
+                        return
+                    } else {
+                        echo "CI will proceed."
+                    }
+                }
+            }
+        }
+
         stage('notify') {
+            when {
+                expression { env.SKIP_REMAINING_STAGES != 'true' }
+            }
             steps {
                 script {
                     def discordTitle = "${env.JOB_NAME} - Build #${env.BUILD_NUMBER} Started"
@@ -98,6 +119,9 @@ pipeline {
             }
         }
         stage('build') {
+            when {
+                expression { env.SKIP_REMAINING_STAGES != 'true' }
+            }
             steps {
                 script {
                     stageWithPost('build') {
@@ -127,6 +151,9 @@ pipeline {
             }
         }*/
         stage('deploy-commands') {
+            when {
+                expression { env.SKIP_REMAINING_STAGES != 'true' }
+            }
             steps {
                 script {
                     stageWithPost('deploy-commands') {
@@ -136,6 +163,9 @@ pipeline {
             }
         }
         stage('deploy-database') {
+            when {
+                expression { env.SKIP_REMAINING_STAGES != 'true' }
+            }
             steps {
                 script {
                     stageWithPost('deploy-database') {
@@ -145,6 +175,9 @@ pipeline {
             }
         }
         stage('deploy') {
+            when {
+                expression { env.SKIP_REMAINING_STAGES != 'true' }
+            }
             steps {
                 script {
                     stageWithPost('deploy') {
@@ -164,17 +197,22 @@ pipeline {
     }
     post {
         always {
+            // Only send notification if build was not skipped
             script {
-                def buildStatus = currentBuild.currentResult ?: 'SUCCESS'
-                def discordTitle = "${env.JOB_NAME} - Build #${env.BUILD_NUMBER} ${buildStatus}"
-                def discordDescription = "Commit: ${env.GIT_COMMIT}\nBranch: ${env.BRANCH_NAME}\nBuild URL: ${env.BUILD_URL}"
-                discordSend(
-                    webhookURL: env.JENKINS_NOTIFICATIONS_WEBHOOK,
-                    title: discordTitle,
-                    description: discordDescription,
-                    link: env.BUILD_URL,
-                    result: buildStatus
-                )
+                if (env.SKIP_REMAINING_STAGES != 'true') {
+                    def buildStatus = currentBuild.currentResult ?: 'SUCCESS'
+                    def discordTitle = "${env.JOB_NAME} - Build #${env.BUILD_NUMBER} ${buildStatus}"
+                    def discordDescription = "Commit: ${env.GIT_COMMIT}\nBranch: ${env.BRANCH_NAME}\nBuild URL: ${env.BUILD_URL}"
+                    discordSend(
+                        webhookURL: env.JENKINS_NOTIFICATIONS_WEBHOOK,
+                        title: discordTitle,
+                        description: discordDescription,
+                        link: env.BUILD_URL,
+                        result: buildStatus
+                    )
+                } else {
+                    echo "Build was skipped, not sending Discord notification."
+                }
             }
         }
     }
