@@ -34,6 +34,10 @@ jobs:
           git config user.email "grafana-sync@alphagame.dev"
           git add infra/grafana/alphagamebot-metrics.json
 
+          VERSION=$(jq -r '.version' infra/grafana/alphagamebot-metrics.json)
+
+          COMMIT_FILE=$(mktemp)
+          printf "metrics: Sync Grafana Metrics Dashboard to version %s [skip ci]\n\nDashboard version: %s" "$VERSION" "$VERSION" > "$COMMIT_FILE"
           # `git diff --cached --quiet` returns exit code 1 if there are changes, 0 otherwise.
-          git diff --cached --quiet || git commit -m "metrics: Sync AlphaGameBot Metrics dashboard [skip ci]"
+          git diff --cached --quiet || git commit -F "$COMMIT_FILE"
           git push
