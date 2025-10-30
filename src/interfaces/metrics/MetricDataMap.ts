@@ -44,5 +44,10 @@ export interface MetricDataMap {
     },
     [Metrics.EVENT_RECEIVED]: {
         event: string
+    },
+    [Metrics.APPLICATION_ERROR]: {
+        name: string,
+        message: string,
+        stack?: string
     }
 }

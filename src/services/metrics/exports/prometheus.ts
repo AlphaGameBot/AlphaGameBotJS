@@ -18,6 +18,7 @@
 
 
 import { collectDefaultMetrics, Gauge, Pushgateway, Registry } from "prom-client";
+import { client } from "../../../client.js";
 import { getLogger } from "../../../utility/logging/logger.js";
 import { Metrics, metricsManager } from "../metrics.js";
 
@@ -61,6 +62,15 @@ const gauges: Record<Metrics, Gauge> = {
         name: "alphagamebot_event_received",
         help: "Events Received",
         labelNames: ["event"]
+    }),
+    [Metrics.DISCORD_LATENCY]: new Gauge({
+        name: "alphagamebot_discord_latency_ms",
+        help: "Discord API Latency in ms"
+    }),
+    [Metrics.APPLICATION_ERROR]: new Gauge({
+        name: "alphagamebot_application_error",
+        help: "Number of application errors",
+        labelNames: ["event"]
     })
 };
 
@@ -72,6 +82,17 @@ function exportMetricsToPrometheus() {
     Object.values(gauges).forEach(g => g.reset());
     logger.verbose("Firing metrics export to Prometheus Pushgateway at " + pushgatewayUrl);
     // Access private metrics map via type assertion
+    // q: what is type assertion?
+    // a: It tells TypeScript to treat a value as a different type than it infers.
+    // q: how does this allow access to private members?
+    // a: TypeScript's access modifiers (like private) are only enforced at compile time.
+    //    At runtime, all properties are accessible. By asserting the type to include
+    //    the private member, we can access it in our code.
+    // q: is this safe? Isn't it better to have proper public methods?
+    // a: It's generally better to use public methods for encapsulation and maintainability.
+    //    However, in some cases, like this one, accessing private members may be necessary
+    //    for functionality not exposed by the class. Just be cautious as it can lead to
+    //    brittle code if the class implementation changes.
     let queueLength = 0;
     const metricsMap = (metricsManager as unknown as { metrics: Map<Metrics, Array<unknown>> }).metrics;
     for (const [metric, entries] of metricsMap.entries()) {
@@ -95,6 +116,8 @@ function exportMetricsToPrometheus() {
                 // Handled after the loop
             } else if (metric === Metrics.EVENT_RECEIVED && gauges[metric]) {
                 gauges[metric].inc({ event: String(data.event) });
+            } else if (metric === Metrics.APPLICATION_ERROR && gauges[metric]) {
+                gauges[metric].inc({ event: String(data.event) });
             } else {
                 logger.warn(`No gauge defined for metric type ${metric}`);
             }
@@ -103,8 +126,11 @@ function exportMetricsToPrometheus() {
 
     const durationMs = performance.now() - startTime;
     logger.verbose(`Metrics generation took ${durationMs}ms, queue length is ${queueLength}`);
+
     gauges[Metrics.METRICS_GENERATION_TIME].set(durationMs);
     gauges[Metrics.METRICS_QUEUE_LENGTH].set(queueLength);
+    gauges[Metrics.DISCORD_LATENCY].set(client.ws.ping);
+
     pushgateway.pushAdd({ jobName: "alphagamebot" }).catch((err: unknown) => {
 
         logger.error("Failed to push metrics to Prometheus: " + String(err));

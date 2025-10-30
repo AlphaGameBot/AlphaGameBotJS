@@ -26,10 +26,12 @@ export enum Metrics {
     RAW_EVENT_RECEIVED = "raw_event_received",
     METRICS_QUEUE_LENGTH = "metrics_queue_length",
     METRICS_GENERATION_TIME = "metrics_generation_time",
-    EVENT_RECEIVED = "event_received"
+    EVENT_RECEIVED = "event_received",
+    DISCORD_LATENCY = "discord_latency",
+    APPLICATION_ERROR = "application_error"
 }
 
-interface MetricEntry<T extends Metrics> {
+interface MetricEntry<T extends keyof MetricDataMap> {
     timestamp: number;
     id: number;
     type: T;
@@ -39,7 +41,7 @@ interface MetricEntry<T extends Metrics> {
 const logger = getLogger(LoggerNames.METRICS);
 
 export class MetricsManager {
-    private metrics = new Map<Metrics, Array<MetricEntry<Metrics>>>();
+    private metrics = new Map<keyof MetricDataMap, Array<MetricEntry<keyof MetricDataMap>>>();
     private currentMetricID = 0;
     constructor() {
         // every 10 minutes, clear metrics older than 1 hour (3600000 ms)
@@ -68,7 +70,14 @@ export class MetricsManager {
         }
     }
 
-    public submitMetric<T extends Metrics>(metric: T, data: MetricDataMap[T]) {
+    /**
+     * Submits a metric for tracking.
+     * Adds the metric entry to the queue, which will be sent next time metrics are flushed.
+     * 
+     * @param metric The metric to submit.
+     * @param data The data associated with the metric.
+     */
+    public submitMetric<T extends keyof MetricDataMap>(metric: T, data: MetricDataMap[T]) {
         if (!this.metrics.has(metric)) {
             this.metrics.set(metric, []);
         }
@@ -89,9 +98,46 @@ export class MetricsManager {
 
         const serialized = data instanceof Map ? JSON.stringify(Object.fromEntries(data)) : JSON.stringify(data);
         logger.verbose("Metric submitted: " + metric + " with data: " + serialized);
-
-
     }
 }
 
 export const metricsManager = new MetricsManager();
+
+process.on("unhandledRejection", (reason: unknown) => {
+    // Normalize to an Error-like object
+    const err = reason instanceof Error
+        ? reason
+        : new Error(
+            typeof reason === "string" ? reason
+                : reason === undefined ? "Unhandled rejection: undefined"
+                    : JSON.stringify(reason)
+        );
+
+    // Prepare a safe serializable payload
+    const payload = {
+        name: err.name,
+        message: err.message,
+        stack: err.stack ? err.stack : undefined
+    };
+
+    // Submit metric (cast to any if MetricDataMap shape doesn't match)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    metricsManager.submitMetric<Metrics.APPLICATION_ERROR>(Metrics.APPLICATION_ERROR, payload as any);
+
+    logger.error("Unhandled rejection caught", err);
+});
+
+process.on("uncaughtException", (err: Error) => {
+    // Prepare a safe serializable payload
+    const payload = {
+        name: err.name,
+        message: err.message,
+        stack: err.stack ? err.stack : undefined
+    };
+
+    // Submit metric (cast to any if MetricDataMap shape doesn't match)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    metricsManager.submitMetric<Metrics.APPLICATION_ERROR>(Metrics.APPLICATION_ERROR, payload as any);
+
+    logger.error("Uncaught exception caught", err);
+});
