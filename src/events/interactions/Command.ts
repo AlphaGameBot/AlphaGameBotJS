@@ -26,7 +26,7 @@ const commands = await crawlCommands();
 const logger = getLogger("command");
 
 export default async function handleInteractionCommand(interaction: ChatInputCommandInteraction): Promise<void> {
-    const start = Date.now();
+    const start = performance.now();
     const command = commands.get(interaction.commandName);
 
     if (!command) {
@@ -37,7 +37,7 @@ export default async function handleInteractionCommand(interaction: ChatInputCom
     try {
         await addCommand(interaction.user.id, interaction.guildId ?? "0");
         await command.execute(interaction as ChatInputCommandInteraction);
-        const durationMs = Date.now() - start;
+        const durationMs = performance.now() - start;
         metricsManager.submitMetric<Metrics.COMMAND_EXECUTED>(Metrics.COMMAND_EXECUTED, {
             event: Events.InteractionCreate,
             commandName: interaction.commandName,

@@ -28,7 +28,12 @@ export enum Metrics {
     METRICS_GENERATION_TIME = "metrics_generation_time",
     EVENT_RECEIVED = "event_received",
     DISCORD_LATENCY = "discord_latency",
-    APPLICATION_ERROR = "application_error"
+    APPLICATION_ERROR = "application_error",
+    FEATURE_USED = "feature_used"
+}
+
+export enum Features {
+    SAY_COMMAND = "say_command"
 }
 
 interface MetricEntry<T extends keyof MetricDataMap> {

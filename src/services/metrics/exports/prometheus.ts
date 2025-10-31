@@ -71,6 +71,11 @@ const gauges: Record<Metrics, Gauge> = {
         name: "alphagamebot_application_error",
         help: "Number of application errors",
         labelNames: ["event"]
+    }),
+    [Metrics.FEATURE_USED]: new Gauge({
+        name: "alphagamebot_feature_used",
+        help: "Features Used",
+        labelNames: ["feature"]
     })
 };
 
@@ -118,6 +123,8 @@ function exportMetricsToPrometheus() {
                 gauges[metric].inc({ event: String(data.event) });
             } else if (metric === Metrics.APPLICATION_ERROR && gauges[metric]) {
                 gauges[metric].inc({ event: String(data.event) });
+            } else if (metric === Metrics.FEATURE_USED && gauges[metric]) {
+                gauges[metric].inc({ feature: String(data.feature) });
             } else {
                 logger.warn(`No gauge defined for metric type ${metric}`);
             }
