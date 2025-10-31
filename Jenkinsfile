@@ -60,7 +60,7 @@ pipeline {
         }
     }
     environment {
-        TOKEN = credentials('alphagamebot-nightly-token')
+        TOKEN = credentials('alphagamebot-token')
         WEBHOOK = credentials('alphagamebot-webhook')
         JENKINS_NOTIFICATIONS_WEBHOOK = credentials('discord-jenkins-webhook')
         DOCKER_TOKEN = credentials('alphagamedev-docker-token')
