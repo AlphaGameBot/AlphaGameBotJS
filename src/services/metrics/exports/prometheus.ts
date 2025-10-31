@@ -91,22 +91,10 @@ function exportMetricsToPrometheus() {
     const startTime = performance.now();
     Object.values(gauges).forEach(g => g.reset());
     logger.verbose("Firing metrics export to Prometheus Pushgateway at " + pushgatewayUrl);
-    // Access private metrics map via type assertion
-    // q: what is type assertion?
-    // a: It tells TypeScript to treat a value as a different type than it infers.
-    // q: how does this allow access to private members?
-    // a: TypeScript's access modifiers (like private) are only enforced at compile time.
-    //    At runtime, all properties are accessible. By asserting the type to include
-    //    the private member, we can access it in our code.
-    // q: is this safe? Isn't it better to have proper public methods?
-    // a: It's generally better to use public methods for encapsulation and maintainability.
-    //    However, in some cases, like this one, accessing private members may be necessary
-    //    for functionality not exposed by the class. Just be cautious as it can lead to
-    //    brittle code if the class implementation changes.
     let queueLength = 0;
     const queueLengthByMetric: Map<Metrics, number> = new Map();
 
-    const metricsMap = (metricsManager as unknown as { metrics: Map<Metrics, Array<unknown>> }).metrics;
+    const metricsMap = metricsManager.getMetrics();
     for (const [metric, entries] of metricsMap.entries()) {
         queueLengthByMetric.set(metric, entries.length);
         gauges[Metrics.METRICS_QUEUE_LENGTH_BY_METRIC].set({ metric: metric }, entries.length);

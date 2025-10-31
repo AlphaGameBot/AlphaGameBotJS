@@ -105,6 +105,10 @@ export class MetricsManager {
         const serialized = data instanceof Map ? JSON.stringify(Object.fromEntries(data)) : JSON.stringify(data);
         logger.verbose("Metric submitted: " + metric + " with data: " + serialized);
     }
+
+    public getMetrics() {
+        return this.metrics;
+    }
 }
 
 export const metricsManager = new MetricsManager();
