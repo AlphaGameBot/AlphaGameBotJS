@@ -26,6 +26,7 @@ export enum Metrics {
     RAW_EVENT_RECEIVED = "raw_event_received",
     METRICS_QUEUE_LENGTH = "metrics_queue_length",
     METRICS_GENERATION_TIME = "metrics_generation_time",
+    METRICS_QUEUE_LENGTH_BY_METRIC = "metrics_queue_length_by_metric",
     EVENT_RECEIVED = "event_received",
     DISCORD_LATENCY = "discord_latency",
     APPLICATION_ERROR = "application_error",

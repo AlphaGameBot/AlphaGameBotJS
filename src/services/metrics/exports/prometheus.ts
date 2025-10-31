@@ -54,6 +54,11 @@ const gauges: Record<Metrics, Gauge> = {
         name: "alphagamebot_metrics_queue_length",
         help: "Current length of the metrics queue"
     }),
+    [Metrics.METRICS_QUEUE_LENGTH_BY_METRIC]: new Gauge({
+        name: "alphagamebot_metrics_queue_length_by_metric",
+        help: "Current length of the metrics queue by metric",
+        labelNames: ["metric"]
+    }),
     [Metrics.METRICS_GENERATION_TIME]: new Gauge({
         name: "alphagamebot_metrics_generation_time_ms",
         help: "Time taken to generate metrics in ms"
@@ -99,8 +104,12 @@ function exportMetricsToPrometheus() {
     //    for functionality not exposed by the class. Just be cautious as it can lead to
     //    brittle code if the class implementation changes.
     let queueLength = 0;
+    const queueLengthByMetric: Map<Metrics, number> = new Map();
+
     const metricsMap = (metricsManager as unknown as { metrics: Map<Metrics, Array<unknown>> }).metrics;
     for (const [metric, entries] of metricsMap.entries()) {
+        queueLengthByMetric.set(metric, entries.length);
+        gauges[Metrics.METRICS_QUEUE_LENGTH_BY_METRIC].set({ metric: metric }, entries.length);
         logger.verbose(`Processing ${entries.length} entries for metric ${metric}`);
         for (const entry of entries) {
             queueLength++;
