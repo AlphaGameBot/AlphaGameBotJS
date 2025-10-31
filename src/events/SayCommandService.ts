@@ -40,21 +40,22 @@ export default {
 
         const mentionRegex = new RegExp(`^<@!?${message.client.user?.id}>.`);
         if (!mentionRegex.test(message.content)) {
-            logger.info(`Message ${message.id} does not start with a mention of the bot, ignoring.`);
+            logger.verbose(`Message ${message.id} does not start with a mention of the bot, ignoring.`);
             return;
         }
 
-        logger.info(`Message ${message.id} starts with a mention of the bot, invoking say command.`);
+        logger.verbose(`Message ${message.id} starts with a mention of the bot, invoking say command.`);
         // now we know the bot was mentioned, so we can respond
         // strip initial mention
-        const commandContent = message.content.replace(mentionRegex, "").trim();
+        const messageToSay = message.content.replace(mentionRegex, "").trim();
 
-        if (commandContent.length === 0) {
+        if (messageToSay.length === 0) {
             logger.warn(`No command content after mention in message ${message.id}, ignoring.`);
             return;
         }
 
-        await message.channel.send(commandContent);
+        await message.channel.send(messageToSay);
+        logger.info(`Say command used by user ${message.author.id} - ${messageToSay}`);
         await message.delete();
     }
 } as EventHandler<Events.MessageCreate>;
