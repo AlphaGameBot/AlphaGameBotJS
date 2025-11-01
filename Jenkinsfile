@@ -116,7 +116,7 @@ pipeline {
                         result: 'STARTED'
                     )
 
-                    sh 'curl -X POST -H "Content-Type: application/json" $JENKINS_NOTIFICATIONS_WEBHOOK -d \'{"content": "<:jenkins:1428899392810909747> Build **#${BUILD_NUMBER}** started for **${JOB_NAME}** (Version: **${AGB_VERSION}**)"}\''
+                    sh 'curl -X POST -H "Content-Type: application/json" $JENKINS_NOTIFICATIONS_WEBHOOK -d \'{"content": "<:jenkins:1428899392810909747> Build **#$BUILD_NUMBER** started for **$JOB_NAME** (Version: **$AGB_VERSION**)"}\''
                 }
             }
         }
