@@ -71,7 +71,7 @@ winston.addColors(logConfig.colors);
 
 const rootLogger = createLogger({
     levels: logConfig.levels,
-    level: process.env.NODE_ENV === "production" ? "info" : "debug",
+    level: process.env.NODE_ENV === "production" ? "info" : (process.env.VERBOSE ? "verbose" : "debug"),
     // [file:line] [level]: message
     format: format.combine(
         shouldWeUseColors() ? format.colorize() : format.uncolorize(),
