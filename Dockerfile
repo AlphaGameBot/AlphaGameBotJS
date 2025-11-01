@@ -27,6 +27,8 @@ RUN npm run build
 FROM node:20-alpine
 WORKDIR /app
 ENV NODE_ENV=production
+ARG VERSION
+ENV VERSION=$VERSION
 COPY --from=build /app/package*.json ./
 RUN --mount=type=cache,target=/root/.npm \
     npm install --omit=dev
