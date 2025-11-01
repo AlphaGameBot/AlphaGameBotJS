@@ -40,7 +40,7 @@ def stageWithPost(String name, Closure body) {
             def discordWebhookUrl = env.JENKINS_NOTIFICATIONS_WEBHOOK
 
             // escape quotes for JSON
-            def message = ":jenkins: **${name}** done in ${durationStr}"
+            def message = "<:jenkins:1428899392810909747> **${name}** done in ${durationStr}"
 
             sh """
             curl -H "Content-Type: application/json" \
