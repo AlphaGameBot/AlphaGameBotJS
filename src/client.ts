@@ -33,13 +33,13 @@ export const client = new Client({
 });
 
 export async function gracefulExit(sig: string | null = null) {
-    const start = Date.now();
+    const start = performance.now();
     if (sig) {
         logger.info(`Received ${sig}, shutting down gracefully...`);
     } else {
         logger.info("Shutting down...");
     }
     await client.destroy();
-    logger.info(`Bot shut down in ${Date.now() - start}ms`);
+    logger.info(`Bot shut down in ${(performance.now() - start).toFixed(2)}ms`);
     process.exit(0);
 }
