@@ -71,6 +71,11 @@ const gauges: Record<Metrics, Gauge> = {
         name: "alphagamebot_application_error",
         help: "Number of application errors",
         labelNames: ["event"]
+    }),
+    [Metrics.INTERACTION_RECEIVED]: new Gauge({
+        name: "alphagamebot_interaction_received",
+        help: "Number of interactions received by type",
+        labelNames: ["interactionType"]
     })
 };
 

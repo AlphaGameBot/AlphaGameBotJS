@@ -49,5 +49,8 @@ export interface MetricDataMap {
         name: string,
         message: string,
         stack?: string
+    },
+    [Metrics.INTERACTION_RECEIVED]: {
+        interactionType: string
     }
 }
