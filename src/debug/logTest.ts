@@ -16,22 +16,40 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
+import { getRandomValues } from "node:crypto";
 import { loadDotenv } from "../utility/debug/dotenv.js";
 import logger, { getLokiLogger } from "../utility/logging/logger.js";
-
 await loadDotenv();
-logger.verbose("This is a verbose log message.");
-logger.debug("This is a debug log message.");
-logger.http("This is an http log message.");
-logger.info("This is an info log message.");
-logger.warn("This is a warn log message.");
-logger.error("This is an error log message.");
+
+const randomHex = (len = 8) =>
+    Array.from(getRandomValues(new Uint8Array(len / 2 || 4)))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("")
+        .slice(0, len);
+
+const createRandomMeta = (): Record<string, unknown> => ({
+    traceId: `trace-${randomHex(16)}`,
+    requestId: `req-${randomHex(12)}`,
+    sessionId: `sess-${randomHex(10)}`,
+    user: {
+        id: `u-${Math.floor(Math.random() * 1_000_000)}`,
+        name: `user${Math.floor(Math.random() * 10000)}`,
+    },
+    tags: ["debug", "random", `tag-${Math.floor(Math.random() * 100)}`],
+    timestamp: new Date().toISOString(),
+    samplingScore: Math.random(),
+});
+
+logger.verbose("This is a verbose log message.", createRandomMeta());
+logger.debug("This is a debug log message.", createRandomMeta());
+logger.info("This is an info log message.", createRandomMeta());
+logger.warn("This is a warn log message.", createRandomMeta());
+logger.error("This is an error log message.", createRandomMeta());
 
 const lokiLogger = getLokiLogger("test");
 
-lokiLogger.verbose("This is a verbose log message to Loki.");
-lokiLogger.debug("This is a debug log message to Loki.");
-lokiLogger.http("This is an http log message to Loki.");
-lokiLogger.info("This is an info log message to Loki.");
-lokiLogger.warn("This is a warn log message to Loki.");
-lokiLogger.error("This is an error log message to Loki.");
+lokiLogger.verbose("This is a verbose log message to Loki.", createRandomMeta());
+lokiLogger.debug("This is a debug log message to Loki.", createRandomMeta());
+lokiLogger.info("This is an info log message to Loki.", createRandomMeta());
+lokiLogger.warn("This is a warn log message to Loki.", createRandomMeta());
+lokiLogger.error("This is an error log message to Loki.", createRandomMeta());

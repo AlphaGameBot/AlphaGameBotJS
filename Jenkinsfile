@@ -40,7 +40,7 @@ def stageWithPost(String name, Closure body) {
             def discordWebhookUrl = env.JENKINS_NOTIFICATIONS_WEBHOOK
 
             // escape quotes for JSON
-            def message = ":jenkins: **${name}** done in ${durationStr}"
+            def message = "<:jenkins:1428899392810909747> **${name}** done in ${durationStr}"
 
             sh """
             curl -H "Content-Type: application/json" \
@@ -115,6 +115,8 @@ pipeline {
                         link: env.BUILD_URL,
                         result: 'STARTED'
                     )
+
+                    sh 'curl -X POST -H "Content-Type: application/json" $JENKINS_NOTIFICATIONS_WEBHOOK -d \'{"content": "<:jenkins:1428899392810909747> Build **#$BUILD_NUMBER** started for **$JOB_NAME** (Version: **$AGB_VERSION**)"}\''
                 }
             }
         }
@@ -125,9 +127,6 @@ pipeline {
             steps {
                 script {
                     stageWithPost('build') {
-                        // debug if necessary
-                        // sh 'printenv'
-
                         echo "Building"
                         // 8/1/2024 -> No Cache was added because of the fact that Pycord will never update :/
                         // ----------> If you know a better way, please make a pull request!
@@ -135,6 +134,7 @@ pipeline {
                                         --build-arg COMMIT_MESSAGE="$COMMIT_MESSAGE" \
                                         --build-arg BUILD_NUMBER="$BUILD_NUMBER" \
                                         --build-arg BRANCH_NAME="$BRANCH_NAME" \
+                                        --build-arg VERSION="$AGB_VERSION" \
                                         .'
                     }
                 }

@@ -34,7 +34,7 @@ export default {
         await addMessage(message.author.id, message.guildId ?? "0");
 
         if (await userNeedsLevelUpAnnouncement(message.author.id, message.guildId ?? "0")) {
-            logger.debug(`User ${message.author.id} in guild ${message.guildId} needs level up announcement.`);
+            logger.info(`User ${message.author.id} in guild ${message.guildId} needs level up announcement.`, { username: message.author.username, servername: message.guild?.name });
             // Can only send announcements in guild text channels
             const newLevel = await getUserLevel(message.author.id, message.guildId ?? "0");
             if (!message.guild) return;

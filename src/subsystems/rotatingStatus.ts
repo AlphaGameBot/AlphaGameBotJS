@@ -110,7 +110,7 @@ export async function rotatingStatus(index: number = 0): Promise<void> {
     const data = {
         guilds: client.guilds.cache.size,
         users: client.users.cache.size,
-        version: process.env.npm_package_version || "unknown",
+        version: process.env.npm_package_version || (process.env.VERSION ?? "unknown"),
         commands: client.application?.commands.cache.size || 0
     };
     client.user?.setActivity(
