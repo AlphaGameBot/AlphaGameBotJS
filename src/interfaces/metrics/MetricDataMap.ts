@@ -26,6 +26,7 @@ export interface MetricDataMap {
     },
     [Metrics.EVENT_EXECUTED]: {
         event: Events,
+        eventFile: string,
         durationMs: number
     },
     [Metrics.COMMAND_EXECUTED]: {

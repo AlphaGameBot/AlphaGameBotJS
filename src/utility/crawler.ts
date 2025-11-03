@@ -21,7 +21,7 @@ import { existsSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import type { Command } from "../interfaces/Command.js";
-import type { EventHandler } from "../interfaces/Event.js";
+import type { EventHandler, LoadedEventHandler } from "../interfaces/Event.js";
 import { getLogger } from "./logging/logger.js";
 
 // Cached project root for resolving src/dist paths
@@ -105,7 +105,7 @@ export async function crawlEvents() {
     const eventsPath = existsSync(distEventsPath) ? distEventsPath : srcEventsPath;
     const eventsIsDist = eventsPath.includes(path.join(path.sep, "dist", path.sep)) || eventsPath.endsWith(path.join(path.sep, "dist"));
     const eventFiles = readdirSync(eventsPath).filter(file => eventsIsDist ? file.endsWith(".js") : file.endsWith(".ts") || file.endsWith(".js"));
-    const events: Array<EventHandler<keyof ClientEvents>> = [];
+    const events: Array<LoadedEventHandler<keyof ClientEvents>> = [];
 
     logger.debug(`Crawling events in: ${eventsPath}`);
     for (const file of eventFiles) {
@@ -113,14 +113,17 @@ export async function crawlEvents() {
         const importTarget = pathToFileURL(filePath).href;
         // Dynamically import the event module
         const eventModule = await import(importTarget);
-        const event = (eventModule && eventModule.default) ? eventModule.default : eventModule;
+        const event = ((eventModule && eventModule.default) ? eventModule.default : eventModule) as EventHandler<keyof ClientEvents>;
+
         if ("name" in event && "execute" in event) {
+            const fileName = path.basename(filePath);
             logger.info("Loading event: " + event.name);
             events.push({
                 name: event.name,
                 once: event.once ? true : false,
+                eventFile: fileName,
                 execute: event.execute
-            } as EventHandler<keyof ClientEvents>);
+            } as LoadedEventHandler<keyof ClientEvents>);
             logger.debug(`- ${file} (Implements event: ${event.name})`);
 
         } else {

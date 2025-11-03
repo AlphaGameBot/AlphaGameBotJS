@@ -32,3 +32,7 @@ export interface EventHandler<K extends keyof ClientEvents> {
     once?: boolean;
     execute: (...args: ClientEvents[K]) => Promise<void> | void;
 }
+
+export interface LoadedEventHandler<K extends keyof ClientEvents = keyof ClientEvents> extends EventHandler<K> {
+    eventFile: string;
+}

@@ -13,7 +13,9 @@
     "files.exclude": {
         "**/node_modules": true,
         "**/dist": true,
-        "**/build": true
+        "**/build": true,
+        "**/coverage": true,
+        "**/*.tsbuildinfo": true
     },
     "licenser.license": "Custom",
     "licenser.customHeaderFile": "/home/damien/Documents/AlphaGameBotJS/.vscode/license-header.txt",

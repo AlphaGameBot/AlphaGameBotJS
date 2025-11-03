@@ -98,7 +98,7 @@ for (const event of events) {
         logger.verbose(`Fired event: ${event.name} (${args})`);
 
         // count execution time in milliseconds
-        const start = Date.now();
+        const start = performance.now();
         try {
             await event.execute(...args as ClientEvents[typeof event.name]);
         } catch (e) {
@@ -107,7 +107,8 @@ for (const event of events) {
             // Submit metric without the "event" label to match the initial labelset
             metricsManager.submitMetric<Metrics.EVENT_EXECUTED>(Metrics.EVENT_EXECUTED, {
                 event: event.name as Events,
-                durationMs: Date.now() - start
+                eventFile: event.eventFile,
+                durationMs: performance.now() - start
             });
         }
     };
