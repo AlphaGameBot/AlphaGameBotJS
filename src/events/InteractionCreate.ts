@@ -16,10 +16,11 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import { ChatInputCommandInteraction, Events } from "discord.js";
+import { ButtonInteraction, ChatInputCommandInteraction, Events } from "discord.js";
 import type { EventHandler } from "../interfaces/Event.js";
 import { getLogger } from "../utility/logging/logger.js";
 import handleInteractionCommand from "./interactions/Command.js";
+import handleInteractionButton from "./interactions/Button.js";
 
 const logger = getLogger("events/InteractionCreate");
 
@@ -28,6 +29,9 @@ export default {
     execute: async (interaction) => {
         if (interaction.isCommand()) {
             await handleInteractionCommand(interaction as ChatInputCommandInteraction);
+            return;
+        } if (interaction.isButton()) {
+            await handleInteractionButton(interaction as ButtonInteraction);
             return;
         } else {
             logger.warn(`Received unknown command interaction type: ${interaction.type}`);
