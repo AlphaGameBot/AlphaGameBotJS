@@ -140,7 +140,43 @@
           "unit": "none",
           "unitScale": true
         },
-        "overrides": []
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "cacheSweep",
+                  "messageCreate",
+                  "messageUpdate",
+                  "shardReconnecting",
+                  "shardResume",
+                  "threadCreate",
+                  "threadUpdate",
+                  "RAW_MESSAGE_CREATE",
+                  "RAW_MESSAGE_UPDATE",
+                  "RAW_RESUMED",
+                  "RAW_THREAD_CREATE",
+                  "RAW_THREAD_UPDATE"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 11,
@@ -191,7 +227,7 @@
           "hide": false,
           "includeNullMetadata": true,
           "instant": false,
-          "legendFormat": "{{event}}",
+          "legendFormat": "RAW_{{event}}",
           "range": true,
           "refId": "A",
           "useBackend": false
@@ -3032,7 +3068,7 @@
       "type": "row"
     }
   ],
-  "refresh": "",
+  "refresh": false,
   "schemaVersion": 39,
   "tags": [
     "discord",
@@ -3050,6 +3086,6 @@
   "timezone": "",
   "title": "AlphaGameBot",
   "uid": "abaff5e0-29c2-4fa5-8337-a89f7abaa907",
-  "version": 25,
+  "version": 26,
   "weekStart": ""
 }
