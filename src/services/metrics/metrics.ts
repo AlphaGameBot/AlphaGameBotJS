@@ -26,10 +26,16 @@ export enum Metrics {
     RAW_EVENT_RECEIVED = "raw_event_received",
     METRICS_QUEUE_LENGTH = "metrics_queue_length",
     METRICS_GENERATION_TIME = "metrics_generation_time",
+    METRICS_QUEUE_LENGTH_BY_METRIC = "metrics_queue_length_by_metric",
     EVENT_RECEIVED = "event_received",
     DISCORD_LATENCY = "discord_latency",
     APPLICATION_ERROR = "application_error",
-    INTERACTION_RECEIVED = "interaction_received"
+    INTERACTION_RECEIVED = "interaction_received",
+    FEATURE_USED = "feature_used"
+}
+
+export enum Features {
+    SAY_COMMAND = "say_command"
 }
 
 interface MetricEntry<T extends keyof MetricDataMap> {
@@ -99,6 +105,10 @@ export class MetricsManager {
 
         const serialized = data instanceof Map ? JSON.stringify(Object.fromEntries(data)) : JSON.stringify(data);
         logger.verbose("Metric submitted: " + metric + " with data: " + serialized);
+    }
+
+    public getMetrics() {
+        return this.metrics;
     }
 }
 

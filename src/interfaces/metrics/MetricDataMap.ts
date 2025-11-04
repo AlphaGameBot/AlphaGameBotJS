@@ -50,7 +50,12 @@ export interface MetricDataMap {
         message: string,
         stack?: string
     },
+<<<<<<< HEAD
     [Metrics.INTERACTION_RECEIVED]: {
         interactionType: string
+=======
+    [Metrics.FEATURE_USED]: {
+        feature: string
+>>>>>>> refs/remotes/origin/master
     }
 }

@@ -54,6 +54,11 @@ const gauges: Record<Metrics, Gauge> = {
         name: "alphagamebot_metrics_queue_length",
         help: "Current length of the metrics queue"
     }),
+    [Metrics.METRICS_QUEUE_LENGTH_BY_METRIC]: new Gauge({
+        name: "alphagamebot_metrics_queue_length_by_metric",
+        help: "Current length of the metrics queue by metric",
+        labelNames: ["metric"]
+    }),
     [Metrics.METRICS_GENERATION_TIME]: new Gauge({
         name: "alphagamebot_metrics_generation_time_ms",
         help: "Time taken to generate metrics in ms"
@@ -72,10 +77,17 @@ const gauges: Record<Metrics, Gauge> = {
         help: "Number of application errors",
         labelNames: ["event"]
     }),
+<<<<<<< HEAD
     [Metrics.INTERACTION_RECEIVED]: new Gauge({
         name: "alphagamebot_interaction_received",
         help: "Number of interactions received by type",
         labelNames: ["interactionType"]
+=======
+    [Metrics.FEATURE_USED]: new Gauge({
+        name: "alphagamebot_feature_used",
+        help: "Features Used",
+        labelNames: ["feature"]
+>>>>>>> refs/remotes/origin/master
     })
 };
 
@@ -86,21 +98,13 @@ function exportMetricsToPrometheus() {
     const startTime = performance.now();
     Object.values(gauges).forEach(g => g.reset());
     logger.verbose("Firing metrics export to Prometheus Pushgateway at " + pushgatewayUrl);
-    // Access private metrics map via type assertion
-    // q: what is type assertion?
-    // a: It tells TypeScript to treat a value as a different type than it infers.
-    // q: how does this allow access to private members?
-    // a: TypeScript's access modifiers (like private) are only enforced at compile time.
-    //    At runtime, all properties are accessible. By asserting the type to include
-    //    the private member, we can access it in our code.
-    // q: is this safe? Isn't it better to have proper public methods?
-    // a: It's generally better to use public methods for encapsulation and maintainability.
-    //    However, in some cases, like this one, accessing private members may be necessary
-    //    for functionality not exposed by the class. Just be cautious as it can lead to
-    //    brittle code if the class implementation changes.
     let queueLength = 0;
-    const metricsMap = (metricsManager as unknown as { metrics: Map<Metrics, Array<unknown>> }).metrics;
+    const queueLengthByMetric: Map<Metrics, number> = new Map();
+
+    const metricsMap = metricsManager.getMetrics();
     for (const [metric, entries] of metricsMap.entries()) {
+        queueLengthByMetric.set(metric, entries.length);
+        gauges[Metrics.METRICS_QUEUE_LENGTH_BY_METRIC].set({ metric: metric }, entries.length);
         logger.verbose(`Processing ${entries.length} entries for metric ${metric}`);
         for (const entry of entries) {
             queueLength++;
@@ -123,6 +127,8 @@ function exportMetricsToPrometheus() {
                 gauges[metric].inc({ event: String(data.event) });
             } else if (metric === Metrics.APPLICATION_ERROR && gauges[metric]) {
                 gauges[metric].inc({ event: String(data.event) });
+            } else if (metric === Metrics.FEATURE_USED && gauges[metric]) {
+                gauges[metric].inc({ feature: String(data.feature) });
             } else {
                 logger.warn(`No gauge defined for metric type ${metric}`);
             }

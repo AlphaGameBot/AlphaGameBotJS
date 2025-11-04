@@ -18,6 +18,7 @@
 
 import { Events } from "discord.js";
 import type { EventHandler } from "../interfaces/Event.js";
+import { Features, Metrics, metricsManager } from "../services/metrics/metrics.js";
 import { getLogger } from "../utility/logging/logger.js";
 
 const logger = getLogger("events/SayCommandService");
@@ -47,6 +48,10 @@ export default {
         logger.verbose(`Message ${message.id} starts with a mention of the bot, invoking say command.`);
         // now we know the bot was mentioned, so we can respond
         // strip initial mention
+        metricsManager.submitMetric<Metrics.FEATURE_USED>(Metrics.FEATURE_USED, {
+            feature: Features.SAY_COMMAND
+        });
+        
         const messageToSay = message.content.replace(mentionRegex, "").trim();
 
         if (messageToSay.length === 0) {
