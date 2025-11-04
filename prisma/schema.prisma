@@ -27,3 +27,11 @@ model users {
   id        String   @id @db.VarChar(20)
   last_seen DateTime @default(now())
 }
+
+model error_reports {
+  id         Int      @id @default(autoincrement())
+  user_id    String   @db.VarChar(20)
+  guild_id   String?  @db.VarChar(20)
+  error_msg  String   @db.Text
+  created_at DateTime @default(now())
+}

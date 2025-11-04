@@ -24,6 +24,7 @@ export default {
         .setName("helloworld")
         .setDescription("Replies with Hello, World!"),
     async execute(interaction: ChatInputCommandInteraction) {
+        throw new Error("Simulated command error for testing purposes.");
         await interaction.reply("Hello, World!");
     }
 } as Command;
