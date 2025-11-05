@@ -19,14 +19,15 @@
 import { ButtonInteraction, ChatInputCommandInteraction, Events } from "discord.js";
 import type { EventHandler } from "../interfaces/Event.js";
 import { getLogger } from "../utility/logging/logger.js";
-import handleInteractionCommand from "./interactions/Command.js";
 import handleInteractionButton from "./interactions/Button.js";
+import handleInteractionCommand from "./interactions/Command.js";
 
 const logger = getLogger("events/InteractionCreate");
 
 export default {
     name: Events.InteractionCreate,
     execute: async (interaction) => {
+        logger.info(`Received interaction of type: ${interaction.type}`);
         if (interaction.isCommand()) {
             await handleInteractionCommand(interaction as ChatInputCommandInteraction);
             return;

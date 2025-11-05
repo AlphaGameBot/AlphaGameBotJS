@@ -16,31 +16,15 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, Guild, User, type ChatInputCommandInteraction } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, type ChatInputCommandInteraction } from "discord.js";
 import { v4 as uuidv4 } from "uuid";
-import { GitHubReporter } from "../../../integrations/github.js";
+import type InternalErrorInfo from "../../../interfaces/InternalError.js";
+import reportIssueViaGitHub from "../../../subsystems/error-reporting/issue.js";
 import prisma from "../../../utility/database.js";
 import { getLogger } from "../../../utility/logging/logger.js";
 
 const logger = getLogger("events/CommandError");
-const ghLogger = getLogger("github");
 
-const GH_PAT = process.env.GITHUB_PAT;
-if (!GH_PAT) {
-    logger.warn("GitHub Personal Access Token (GITHUB_PAT) is not set. Error reporting via GitHub will be disabled.");
-}
-
-const github = new GitHubReporter({
-    owner: "AlphaGameBot",
-    repo: "Issues",
-    token: GH_PAT || ""
-});
-interface InternalErrorInfo {
-    error: unknown;
-    caller: User;
-    guild?: Guild | null;
-    timestamp: number;
-}
 
 const internalErrorCache = new Map<string, InternalErrorInfo>();
 /**
@@ -123,56 +107,18 @@ export async function handleButtonPressReportError(interaction: ButtonInteractio
                 return JSON.stringify(obj, (_k, v) =>
                     typeof v === "bigint" ? v.toString() : v, 2);
             } catch {
-                try { return String(obj); } catch { return "<unserializable>"; }
+                try {
+                    return String(obj);
+                } catch { return "<unserializable>"; }
             }
         };
 
-        const errorObj: any = errorInfo.error;
-        const errorType = errorObj?.name ?? typeof errorInfo.error;
-        const errorMessage = errorObj?.message ?? (typeof errorInfo.error === "string" ? errorInfo.error : safeStringify(errorInfo.error));
-        const errorStack = errorObj?.stack ?? (typeof errorInfo.error === "object" ? safeStringify(errorInfo.error) : "No stack available");
-
-        const reporterTag = `${errorInfo.caller.username}#${errorInfo.caller.discriminator}`;
-        const guildDesc = errorInfo.guild ? `${errorInfo.guild.name} (ID: ${errorInfo.guild.id})` : "Direct Message (no guild)";
-
-        const issue = {
-            title: `${issueID} Error Report from ${reporterTag}`,
-            body: [
-                `## ${issueID} — Automatic Error Report`,
-                ``,
-                `**Reporter:** ${reporterTag} (ID: ${errorInfo.caller.id})`,
-                `**Guild:** ${guildDesc}`,
-                `**Timestamp:** ${new Date(errorInfo.timestamp).toISOString()}`,
-                `**Database Record ID:** ${query.id}`,
-                ``,
-                `### Error Summary`,
-                `- **Type:** ${errorType}`,
-                `- **Message:** ${errorMessage}`,
-                ``,
-                `### Stack Trace`,
-                "```stack",
-                errorStack,
-                "```",
-                ``,
-                `### Raw Payload`,
-                "```json",
-                safeStringify(errorInfo.error),
-                "```",
-                ``,
-                `### Environment`,
-                `- Node: ${process.version}`,
-                `- NODE_ENV: ${process.env.NODE_ENV ?? "unknown"}`,
-                ``,
-                `### Notes`,
-                `- This issue was created automatically via the in-app error reporter button.`,
-                `- Steps to reproduce: Not provided by reporter.`,
-                ``,
-                `---`,
-                `Please investigate the stack trace and raw payload above. If more context is needed, contact the reporter (ID: ${errorInfo.caller.id}).`
-            ].join("\n")
-        };
-
-        await github.createIssue(issue.title, issue.body);
+        await reportIssueViaGitHub({
+            databaseRow: query,
+            user: errorInfo.caller,
+            guild: errorInfo.guild ?? null,
+            error: safeStringify(errorInfo.error),
+        });
 
         await interaction.editReply({
             content: ":white_check_mark: Thank you! The error has been reported to the development team.",
@@ -187,6 +133,7 @@ export async function handleButtonPressReportError(interaction: ButtonInteractio
             } else {
                 await interaction.reply({ content: ":x: Failed to report the error. Please try again later.", ephemeral: true });
             }
+            logger.error("Also failed to notify user about reporting failure:" + e);
         } catch (inner) {
             logger.error("Also failed to notify user about reporting failure:", inner);
         }
