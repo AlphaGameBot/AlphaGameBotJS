@@ -17,12 +17,17 @@
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
 import { Octokit } from "@octokit/rest";
+import { getLogger } from "../utility/logging/logger.js";
 
 export interface GitHubReporterOptions {
     owner: string;
     repo: string;
     token: string;
 }
+
+const ghLogger = getLogger("github");
+const logger = getLogger("integrations/GitHubReporter");
+
 export class GitHubReporter {
     private owner: string;
     private repo: string;
@@ -34,10 +39,17 @@ export class GitHubReporter {
         this.octokit = new Octokit({
             auth: token,
             userAgent: "AlphaGameBot (spam@alphagamebot.com); curl/8.4.0",
+            log: {
+                debug: (msg: string) => ghLogger.debug(msg),
+                info: (msg: string) => ghLogger.info(msg),
+                warn: (msg: string) => ghLogger.warn(msg),
+                error: (msg: string) => ghLogger.error(msg),
+            }
         });
     }
 
     async createIssue(title: string, body: string, labels: string[] = ["auto-report"]): Promise<{ number: number; url: string }> {
+        logger.debug(`Creating GitHub issue: ${title}`);
         const { data } = await this.octokit.rest.issues.create({
             owner: this.owner,
             repo: this.repo,
@@ -45,7 +57,7 @@ export class GitHubReporter {
             body,
             labels,
         });
-
+        logger.info(`Created GitHub issue #${data.number}: "${data.title}" - ${data.html_url}`, { metadata: data });
         return {
             number: data.number,
             url: data.html_url,
