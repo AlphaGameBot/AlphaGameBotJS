@@ -16,9 +16,9 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import { Octokit } from "@octokit/rest";
 import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, Guild, User, type ChatInputCommandInteraction } from "discord.js";
 import { v4 as uuidv4 } from "uuid";
+import { GitHubReporter } from "../../../integrations/github.js";
 import prisma from "../../../utility/database.js";
 import { getLogger } from "../../../utility/logging/logger.js";
 
@@ -27,23 +27,14 @@ const ghLogger = getLogger("github");
 
 const GH_PAT = process.env.GITHUB_PAT;
 if (!GH_PAT) {
-    logger.warning("GitHub Personal Access Token (GITHUB_PAT) is not set. Error reporting via GitHub will be disabled.");
+    logger.warn("GitHub Personal Access Token (GITHUB_PAT) is not set. Error reporting via GitHub will be disabled.");
 }
 
-const octokit = new Octokit({
-    auth: GH_PAT,
-    userAgent: 'AlphaGameBot/4.0.0',
-    timeZone: "America/Los_Angeles",
-    baseUrl: 'https://api.github.com',
-
-    log: {
-        debug: (...args: unknown[]) => (ghLogger.debug as any)(...args),
-        info: (...args: unknown[]) => (ghLogger.info as any)(...args),
-        warn: (...args: unknown[]) => (ghLogger.warn as any)(...args),
-        error: (...args: unknown[]) => (ghLogger.error as any)(...args),
-    }
+const github = new GitHubReporter({
+    owner: "AlphaGameBot",
+    repo: "Issues",
+    token: GH_PAT || ""
 });
-
 interface InternalErrorInfo {
     error: unknown;
     caller: User;
@@ -126,21 +117,62 @@ export async function handleButtonPressReportError(interaction: ButtonInteractio
         // for id, add padding like [AGB-0001]
         const issueID = `[AGB-${query.id.toString().padStart(4, '0')}]`;
 
-        const issue = {
-            title: `${issueID} Error Report from ${errorInfo.caller.username}#${errorInfo.caller.discriminator}`,
-            body: `**User:** ${errorInfo.caller.username}#${errorInfo.caller.discriminator} (ID: ${errorInfo.caller.id})\n` +
-                `**Guild:** ${errorInfo.guild ? `${errorInfo.guild.name} (ID: ${errorInfo.guild.id})` : "DM"}\n` +
-                `**Timestamp:** <t:${Math.floor(errorInfo.timestamp / 1000)}:F>\n\n` +
-                `**Error Details:**\n\`\`\`json\n${typeof errorInfo.error === "string" ? errorInfo.error : JSON.stringify(errorInfo.error, null, 2)}\n\`\`\``
-
+        const safeStringify = (obj: unknown) => {
+            try {
+                if (typeof obj === "string") return obj;
+                return JSON.stringify(obj, (_k, v) =>
+                    typeof v === "bigint" ? v.toString() : v, 2);
+            } catch {
+                try { return String(obj); } catch { return "<unserializable>"; }
+            }
         };
 
-        await octokit.issues.create({
-            owner: 'AlphaGameDeveloper',
-            repo: 'AlphaGameBotJS',
-            title: issue.title,
-            body: issue.body
-        });
+        const errorObj: any = errorInfo.error;
+        const errorType = errorObj?.name ?? typeof errorInfo.error;
+        const errorMessage = errorObj?.message ?? (typeof errorInfo.error === "string" ? errorInfo.error : safeStringify(errorInfo.error));
+        const errorStack = errorObj?.stack ?? (typeof errorInfo.error === "object" ? safeStringify(errorInfo.error) : "No stack available");
+
+        const reporterTag = `${errorInfo.caller.username}#${errorInfo.caller.discriminator}`;
+        const guildDesc = errorInfo.guild ? `${errorInfo.guild.name} (ID: ${errorInfo.guild.id})` : "Direct Message (no guild)";
+
+        const issue = {
+            title: `${issueID} Error Report from ${reporterTag}`,
+            body: [
+                `## ${issueID} — Automatic Error Report`,
+                ``,
+                `**Reporter:** ${reporterTag} (ID: ${errorInfo.caller.id})`,
+                `**Guild:** ${guildDesc}`,
+                `**Timestamp:** ${new Date(errorInfo.timestamp).toISOString()}`,
+                `**Database Record ID:** ${query.id}`,
+                ``,
+                `### Error Summary`,
+                `- **Type:** ${errorType}`,
+                `- **Message:** ${errorMessage}`,
+                ``,
+                `### Stack Trace`,
+                "```stack",
+                errorStack,
+                "```",
+                ``,
+                `### Raw Payload`,
+                "```json",
+                safeStringify(errorInfo.error),
+                "```",
+                ``,
+                `### Environment`,
+                `- Node: ${process.version}`,
+                `- NODE_ENV: ${process.env.NODE_ENV ?? "unknown"}`,
+                ``,
+                `### Notes`,
+                `- This issue was created automatically via the in-app error reporter button.`,
+                `- Steps to reproduce: Not provided by reporter.`,
+                ``,
+                `---`,
+                `Please investigate the stack trace and raw payload above. If more context is needed, contact the reporter (ID: ${errorInfo.caller.id}).`
+            ].join("\n")
+        };
+
+        await github.createIssue(issue.title, issue.body);
 
         await interaction.editReply({
             content: ":white_check_mark: Thank you! The error has been reported to the development team.",
