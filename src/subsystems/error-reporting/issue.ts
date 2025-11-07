@@ -22,7 +22,7 @@ import { fileURLToPath } from "node:url";
 import nunjucks from "nunjucks";
 import { GitHubReporter } from "../../integrations/github.js";
 import { getLogger } from "../../utility/logging/logger.js";
-import type { ErrorReportOptions } from "./interfaces.js";
+import type { ErrorReportOptions, TemplateOptions } from "./interfaces.js";
 
 const logger = getLogger("subsystems/error-reporting");
 
@@ -31,7 +31,7 @@ function findTemplateFile(): string {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
     const templatePath = path.resolve(__dirname, "../../../assets/error-report-template.md.njk");
-    logger.debug("[debug] looking for: " + templatePath);
+    logger.verbose("Looking for: " + templatePath);
 
     if (!existsSync(templatePath)) {
         throw new Error(`Error report template not found at path: ${templatePath}`);
@@ -83,17 +83,54 @@ export default async function reportIssueViaGitHub(args: ErrorReportOptions): Pr
         throw new Error(`Error report template fimle not found at path: ${ERROR_REPORT_TEMPLATE_FILE}`);
     }
 
-    const templateContent = await nunjucks.render("error-report-template.md.njk", {
-        report: args.databaseRow,
-        user: args.user,
-        guild: args.guild,
-        error: args.error,
-        comments: args.userComments
-    });
+    let payload: Record<string, unknown>;
+    if (args.interaction) {
+        payload = (args.interaction.toJSON ? args.interaction.toJSON() : args.interaction) as Record<string, unknown>;
+        // fix all BigInt values to strings
+        for (const key in payload) {
+            if (typeof payload[key] === "bigint") {
+                payload[key] = payload[key].toString();
+            }
+        }
+    } else {
+        payload = { warning: "No interaction data provided" };
+    }
+    // report id format [AGB-0069]
+    const reportId = `[AGB-${String(args.databaseRow.id).padStart(4, "0")}]`;
+    const templateContent = nunjucks.render("error-report-template.md.njk", {
+        report: {
+            id: reportId
+        },
+        reporter: {
+            username: args.user.username,
+            discriminator: args.user.discriminator,
+            id: args.user.id
+        },
+        guild: {
+            de: args.guild?.name || "Unknown Guild"
+        },
+        payload: payload,
+        timestamp: new Date(args.databaseRow.created_at).toISOString(),
+        databaseRecordId: String(args.databaseRow.id),
+        errorType: args.error instanceof Error ? args.error.constructor.name : typeof args.error,
+        errorMessage: args.error instanceof Error ? args.error.message : String(args.error),
+        errorStack: args.error instanceof Error ? (args.error.stack || "No stack trace available") : String(args.error),
+        environment: {
+            nodeVersion: process.version,
+            nodeEnv: process.env.NODE_ENV || "undefined",
+            discordJsVersion: (await import("discord.js")).version
+        },
+        userComments: args.userComments || {}
+    } as TemplateOptions);
 
     logger.info(`Reporting issue to GitHub for error report ID: ${args.databaseRow.id}`);
-    logger.info(templateContent);
+
+    const issue = await github.createIssue(
+        `${reportId} Automatic Error Report - ${args.error instanceof Error ? args.error.message : String(args.error)}`,
+        templateContent,
+        ["bug", "auto-generated"]
+    );
 
     // dummy return
-    return { number: 0, url: "" };
+    return issue;
 }

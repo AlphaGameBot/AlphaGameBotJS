@@ -22,6 +22,7 @@ export default interface InternalErrorInfo {
     error: unknown;
     caller: User;
     guild?: Guild | null;
+    originalInteraction?: Record<string, unknown>;
     timestamp: number;
-// eslint-disable-next-line semi
+    // eslint-disable-next-line semi
 };

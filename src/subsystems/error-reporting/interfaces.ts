@@ -17,7 +17,7 @@
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
 import type { error_reports } from "@prisma/client";
-import type { Guild, User } from "discord.js";
+import type { Guild, Interaction, User } from "discord.js";
 
 export interface UserComments {
     whatHappened?: string;
@@ -28,7 +28,33 @@ export interface UserComments {
 export interface ErrorReportOptions {
     databaseRow: error_reports,
     user: User,
+    interaction?: Interaction | undefined,
     guild?: Guild | null,
     error: unknown,
     userComments?: UserComments
+}
+
+export interface TemplateOptions {
+    report: {
+        id: string;
+    };
+    reporter: {
+        username: string;
+        discriminator: string;
+        id: string;
+    };
+    guild: {
+        de: string;
+    };
+    environment: {
+        nodeVersion: string;
+        nodeEnv: string;
+        discordJsVersion: string;
+    };
+    userComments: UserComments;
+    timestamp: string;
+    databaseRecordId: string;
+    errorType: string;
+    errorMessage: string;
+    errorStack: string;
 }

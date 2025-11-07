@@ -16,7 +16,7 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, type ChatInputCommandInteraction } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, type ChatInputCommandInteraction, type Interaction } from "discord.js";
 import { v4 as uuidv4 } from "uuid";
 import type InternalErrorInfo from "../../../interfaces/InternalError.js";
 import reportIssueViaGitHub from "../../../subsystems/error-reporting/issue.js";
@@ -24,9 +24,9 @@ import prisma from "../../../utility/database.js";
 import { getLogger } from "../../../utility/logging/logger.js";
 
 const logger = getLogger("events/CommandError");
-
-
 const internalErrorCache = new Map<string, InternalErrorInfo>();
+
+
 /**
  * Handles errors that occur during command execution.
  * 
@@ -41,12 +41,18 @@ export async function handleCommandError(interaction: ChatInputCommandInteractio
 
     const errorId = uuidv4();
 
-    internalErrorCache.set(errorId, {
+    const errorInfo: InternalErrorInfo = {
         error,
         caller: interaction.user,
         guild: interaction.guild ?? null,
         timestamp: Date.now()
-    });
+    };
+
+    if (interaction.toJSON) {
+        errorInfo.originalInteraction = interaction.toJSON() as Record<string, unknown>;
+    }
+
+    internalErrorCache.set(errorId, errorInfo);
 
     const buttonID = `report-error-button_${errorId}`;
     logger.debug("Generated error report button ID: " + buttonID, { errorId, commandName: interaction.commandName, userId: interaction.user.id });
@@ -88,18 +94,15 @@ export async function handleButtonPressReportError(interaction: ButtonInteractio
     // Defer the interaction immediately to avoid hitting the 3s acknowledgement window
     // while we perform DB / GitHub calls.
     try {
-        await interaction.deferReply({ ephemeral: true });
-
         const query = await prisma.error_reports.create({
             data: {
                 user_id: errorInfo.caller.id,
                 guild_id: errorInfo.guild?.id ?? null,
-                error_msg: typeof errorInfo.error === "string" ? errorInfo.error : JSON.stringify(errorInfo.error),
+                error_msg: typeof errorInfo.error === "string"
+                    ? errorInfo.error
+                    : JSON.stringify(errorInfo.error),
             }
         });
-
-        // for id, add padding like [AGB-0001]
-        const issueID = `[AGB-${query.id.toString().padStart(4, '0')}]`;
 
         const safeStringify = (obj: unknown) => {
             try {
@@ -117,11 +120,24 @@ export async function handleButtonPressReportError(interaction: ButtonInteractio
             databaseRow: query,
             user: errorInfo.caller,
             guild: errorInfo.guild ?? null,
+            interaction: errorInfo.originalInteraction
+                ? errorInfo.originalInteraction as unknown as Interaction
+                : undefined,
             error: safeStringify(errorInfo.error),
         });
 
-        await interaction.editReply({
-            content: ":white_check_mark: Thank you! The error has been reported to the development team.",
+        // Edit the original message's button to show it was reported
+        const currentButton = ButtonBuilder.from(interaction.component)
+            .setLabel("✅ Error Reported")
+            .setStyle(ButtonStyle.Success)
+            .setDisabled(true);
+
+
+        const updatedRow = new ActionRowBuilder<ButtonBuilder>()
+            .addComponents(currentButton);
+
+        await interaction.update({
+            components: [updatedRow]
         });
     } catch (e) {
         logger.error(`Failed to report error ID ${errorId}:`, e);
@@ -140,5 +156,5 @@ export async function handleButtonPressReportError(interaction: ButtonInteractio
     }
 
     // Log the error details for developers to review.
-    logger.error(`User ${interaction.user.tag} reported an error (ID: ${errorId}) from guild ${errorInfo.guild?.name ?? "DM"}:`, errorInfo.error);
+    logger.info(`User ${interaction.user.tag} reported an error (ID: ${errorId}) from guild ${errorInfo.guild?.name ?? "DM"}:`, errorInfo.error);
 }
