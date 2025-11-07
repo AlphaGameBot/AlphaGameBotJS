@@ -39,15 +39,20 @@ export class EngineeringOpsTransport extends TransportStream {
         super(opts);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
     async log(info: { level: string; message: string; meta?: Record<string, unknown> }, callback: () => void): Promise<void> {
         this.emit('logged', info);
 
         const { level, message, ...meta } = info;
 
+        // Only attempt webhook for warn/error in production when URL is set
         if (level.includes("error") || level.includes("warn")) {
-            if (!process.env.ERROR_WEBHOOK_URL) return;
-            if (process.env.NODE_ENV !== "production") return;
+            if (!process.env.ERROR_WEBHOOK_URL || process.env.NODE_ENV !== "production") {
+                // Still signal completion to Winston
+                callback();
+                return;
+            }
+
             let ping = "";
             if (process.env.ENGINEERING_OPS_DISCORD_ID && level.includes('error')) {
                 ping = ` <@${process.env.ENGINEERING_OPS_DISCORD_ID}> `;
@@ -60,17 +65,33 @@ export class EngineeringOpsTransport extends TransportStream {
                 )
                 .toJSON();
 
-            await fetch(process.env.ERROR_WEBHOOK_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    // fire off the embed
-                    embeds: [embed],
-                    content: ping
-                })
-            });
+            try {
+                await fetch(process.env.ERROR_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        // fire off the embed 
+                        embeds: [embed],
+                        content: ping
+                    })
+                });
+            } catch (err) {
+                // Prevent transport errors from breaking the app/logging pipeline
+                // eslint-disable-next-line no-console
+                console.error("EngineeringOpsTransport: webhook send failed:", err);
+            } finally {
+                // Always call the callback so Winston knows the transport finished
+                try { callback(); } catch {
+                    /* noop */
+                }
+            }
+        } else {
+            // For non-warn/error levels, just finish immediately
+            try { callback(); } catch {
+                /* noop */
+            }
         }
     }
 }

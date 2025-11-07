@@ -109,7 +109,8 @@ for (const event of events) {
             // Submit metric without the "event" label to match the initial labelset
             metricsManager.submitMetric<Metrics.EVENT_EXECUTED>(Metrics.EVENT_EXECUTED, {
                 event: event.name as Events,
-                durationMs: durationMs
+                durationMs: durationMs,
+                eventFile: event.eventFile
             });
 
             if (durationMs > 1000) {

@@ -26,6 +26,7 @@ export interface MetricDataMap {
     },
     [Metrics.EVENT_EXECUTED]: {
         event: Events,
+        eventFile: string,
         durationMs: number
     },
     [Metrics.COMMAND_EXECUTED]: {
@@ -50,12 +51,10 @@ export interface MetricDataMap {
         message: string,
         stack?: string
     },
-<<<<<<< HEAD
     [Metrics.INTERACTION_RECEIVED]: {
         interactionType: string
-=======
+    },
     [Metrics.FEATURE_USED]: {
         feature: string
->>>>>>> refs/remotes/origin/master
     }
 }

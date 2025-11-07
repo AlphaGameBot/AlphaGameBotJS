@@ -77,17 +77,15 @@ const gauges: Record<Metrics, Gauge> = {
         help: "Number of application errors",
         labelNames: ["event"]
     }),
-<<<<<<< HEAD
     [Metrics.INTERACTION_RECEIVED]: new Gauge({
         name: "alphagamebot_interaction_received",
         help: "Number of interactions received by type",
         labelNames: ["interactionType"]
-=======
+    }),
     [Metrics.FEATURE_USED]: new Gauge({
         name: "alphagamebot_feature_used",
         help: "Features Used",
         labelNames: ["feature"]
->>>>>>> refs/remotes/origin/master
     })
 };
 
