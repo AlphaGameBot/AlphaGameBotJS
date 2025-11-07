@@ -98,17 +98,24 @@ for (const event of events) {
         logger.verbose(`Fired event: ${event.name} (${args})`);
 
         // count execution time in milliseconds
-        const start = Date.now();
+        const start = performance.now();
         try {
             await event.execute(...args as ClientEvents[typeof event.name]);
         } catch (e) {
             logger.error(`Error executing event ${event.name}:`, e);
         } finally {
+            const durationMs = performance.now() - start;
+            logger.verbose(`Event ${event.name} executed in ${durationMs.toFixed(2)}ms`);
             // Submit metric without the "event" label to match the initial labelset
             metricsManager.submitMetric<Metrics.EVENT_EXECUTED>(Metrics.EVENT_EXECUTED, {
                 event: event.name as Events,
-                durationMs: Date.now() - start
+                durationMs: durationMs,
+                eventFile: event.eventFile
             });
+
+            if (durationMs > 1000) {
+                logger.warn(`Event ${event.name} took a long time to execute: ${durationMs.toFixed(2)}ms (${(durationMs / 1000).toFixed(2)}s)`, { event, duration: durationMs, eventExecData: args });
+            }
         }
     };
     if (event.once) {

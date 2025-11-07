@@ -1,0 +1,46 @@
+## {{ report.id }} — Automatic Error Report
+
+**Reporter:** {{ reporter.username }}#{{ reporter.discriminator }} (ID: {{ reporter.id }})
+**Guild:** {{ guild.de }}
+**Timestamp:** {{ timestamp }}
+**Database Record ID:** {{ databaseRecordId }}
+
+### Error Summary
+- **Type:** {{ errorType }}
+- **Message:** {{ errorMessage }}
+
+### Stack Trace
+```stack
+{{ errorStack }}
+```
+
+### Raw Payload
+
+<details>
+<summary>Click to expand</summary>
+
+```json
+{{ payload | dump(2)}}
+```
+
+</details>
+
+### Environment
+- **Node:** {{ environment.nodeVersion }}
+- **Node Environment:** {{ environment.nodeEnv }}
+- **Discord.js:** {{ environment.discordJsVersion }}
+
+### Notes
+- This issue was created automatically by the error reporting system.
+
+#### What Happened
+{{ userComments.whatHappened | default("No additional information provided by the user.") }}
+
+#### Steps to Reproduce
+{{ userComments.whatHappened | default("Steps to reproduce not provided.") }}
+
+#### Additional Information
+{{ userComments.additionalInfo | default("No additional information provided by the user.") }}
+
+---
+Please investigate the stack trace and raw payload above. If more context is needed, contact the reporter (`{{ reporter.username }}#{{ reporter.discriminator }}`, ID: `{{ reporter.id }}`) for further details.

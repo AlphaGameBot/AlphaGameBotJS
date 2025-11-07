@@ -64,6 +64,7 @@ pipeline {
         WEBHOOK = credentials('alphagamebot-webhook')
         JENKINS_NOTIFICATIONS_WEBHOOK = credentials('discord-jenkins-webhook')
         DOCKER_TOKEN = credentials('alphagamedev-docker-token')
+        GITHUB_PAT = credentials('github-token-alphagamebotqa')
         AGB_VERSION = sh(returnStdout: true, script: "cat package.json | jq '.version' -cMr").trim()
         PUSHGATEWAY_URL = 'http://pushgateway:9091'
         LOKI_URL = "http://loki:3100"
@@ -194,7 +195,7 @@ pipeline {
                         sh "docker run --detach --tty  \
                                         --name alphagamebotjs \
                                         -e TOKEN -e WEBHOOK -e BUILD_NUMBER -e ENGINEERING_OPS_DISCORD_ID -e ERROR_WEBHOOK_URL \
-                                        -e DATABASE_URL -e PUSHGATEWAY_URL -e LOKI_URL --restart=always \
+                                        -e DATABASE_URL -e PUSHGATEWAY_URL -e LOKI_URL -e GITHUB_PAT --restart=always \
                                         --network=alphagamebot-net --ip 10.7.1.64 --hostname alphagamebot \
                                         alphagamedev/alphagamebot:$AGB_VERSION" // add alphagamebot flags
                     }

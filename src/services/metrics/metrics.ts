@@ -30,6 +30,7 @@ export enum Metrics {
     EVENT_RECEIVED = "event_received",
     DISCORD_LATENCY = "discord_latency",
     APPLICATION_ERROR = "application_error",
+    INTERACTION_RECEIVED = "interaction_received",
     FEATURE_USED = "feature_used"
 }
 

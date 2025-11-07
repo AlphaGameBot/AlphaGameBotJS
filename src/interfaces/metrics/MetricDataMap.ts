@@ -26,6 +26,7 @@ export interface MetricDataMap {
     },
     [Metrics.EVENT_EXECUTED]: {
         event: Events,
+        eventFile: string,
         durationMs: number
     },
     [Metrics.COMMAND_EXECUTED]: {
@@ -49,6 +50,9 @@ export interface MetricDataMap {
         name: string,
         message: string,
         stack?: string
+    },
+    [Metrics.INTERACTION_RECEIVED]: {
+        interactionType: string
     },
     [Metrics.FEATURE_USED]: {
         feature: string

@@ -21,14 +21,15 @@ import { Metrics, metricsManager } from "../../services/metrics/metrics.js";
 import { addCommand } from "../../subsystems/leveling/dbhelper.js";
 import { crawlCommands } from "../../utility/crawler.js";
 import { getLogger } from "../../utility/logging/logger.js";
+import { handleCommandError } from "./command/CommandError.js";
 
 const commands = await crawlCommands();
-const logger = getLogger("command");
+const logger = getLogger("interactions/Command");
 
 export default async function handleInteractionCommand(interaction: ChatInputCommandInteraction): Promise<void> {
     const start = performance.now();
     const command = commands.get(interaction.commandName);
-
+    logger.info(`Executing command: ${interaction.commandName} by user ${interaction.user.tag} (${interaction.user.id}) in guild ${interaction.guildId ?? "DM"}`);
     if (!command) {
         logger.error(`No command matching ${interaction.commandName} was found.  What the hell.`);
         return;
@@ -49,6 +50,8 @@ export default async function handleInteractionCommand(interaction: ChatInputCom
         } else {
             await interaction.reply({ content: ":x: There was an error while executing this command!", ephemeral: true });
         }
+
         logger.error(`Error executing command ${interaction.commandName}:`, error);
+        await handleCommandError(interaction, error);
     }
 }
