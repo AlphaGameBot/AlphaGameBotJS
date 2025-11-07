@@ -19,8 +19,9 @@
 FROM node:20 AS build
 WORKDIR /app
 COPY package*.json ./
+COPY prisma ./prisma
 RUN --mount=type=cache,target=/root/.npm \
-    npm install --include=dev
+    npm install
 COPY . .
 RUN npm run build
 
@@ -30,10 +31,9 @@ ENV NODE_ENV=production
 ARG VERSION
 ENV VERSION=$VERSION
 COPY --from=build /app/package*.json ./
+COPY prisma ./prisma
 RUN --mount=type=cache,target=/root/.npm \
     npm install --omit=dev
 COPY --from=build /app/dist ./dist
-COPY prisma ./prisma
 
-RUN npx prisma generate
 CMD ["node", "dist/main.js"]
