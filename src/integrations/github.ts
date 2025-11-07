@@ -41,7 +41,11 @@ export class GitHubReporter {
             userAgent: "AlphaGameBot (spam@alphagamebot.com); curl/8.4.0",
             log: {
                 debug: (msg: string) => ghLogger.debug(msg),
-                info: (msg: string) => ghLogger.info(msg),
+                // Reasoning for using 'http' level for info:
+                // The only thing I've seen Octokit log at 'info' level are HTTP requests/responses,
+                // such as POST /repos/AlphaGameBot/Issues/issues - 201... etc
+                // so HTTP is more appropriate here.
+                info: (msg: string) => ghLogger.http(msg),
                 warn: (msg: string) => ghLogger.warn(msg),
                 error: (msg: string) => ghLogger.error(msg),
             }
@@ -57,7 +61,7 @@ export class GitHubReporter {
             body,
             labels,
         });
-        logger.info(`Created GitHub issue #${data.number}: "${data.title}" - ${data.html_url}`, { metadata: data });
+        logger.http(`Created GitHub issue #${data.number}: "${data.title}" - ${data.html_url}`, { metadata: data });
         return {
             number: data.number,
             url: data.html_url,
