@@ -140,7 +140,7 @@ pipeline {
                 }
             }
         }
-        /*stage('push') {
+        stage('push') {
             steps {
                 echo "Pushing image to Docker Hub"
                 sh 'echo $DOCKER_TOKEN | docker login -u alphagamedev --password-stdin'
@@ -149,7 +149,7 @@ pipeline {
                 sh 'docker push alphagamedev/alphagamebot:latest' // push tag latest
                 sh 'docker logout'
             }
-        }*/
+        }
         stage('deploy-commands') {
             when {
                 expression { env.SKIP_REMAINING_STAGES != 'true' }
