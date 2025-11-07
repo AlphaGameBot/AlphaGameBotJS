@@ -141,13 +141,20 @@ pipeline {
             }
         }
         stage('push') {
+            when {
+                expression { env.SKIP_REMAINING_STAGES != 'true' }
+            }
             steps {
-                echo "Pushing image to Docker Hub"
-                sh 'echo $DOCKER_TOKEN | docker login -u alphagamedev --password-stdin'
-                sh 'docker tag  alphagamedev/alphagamebot:$AGB_VERSION alphagamedev/alphagamebot:latest' // point tag latest to most recent version
-                sh 'docker push alphagamedev/alphagamebot:$AGB_VERSION' // push tag latest version
-                sh 'docker push alphagamedev/alphagamebot:latest' // push tag latest
-                sh 'docker logout'
+                script {
+                    stageWithPost('push') {
+                        echo "Pushing image to Docker Hub"
+                        sh 'echo $DOCKER_TOKEN | docker login -u alphagamedev --password-stdin'
+                        sh 'docker tag  alphagamedev/alphagamebot:$AGB_VERSION alphagamedev/alphagamebot:latest' // point tag latest to most recent version
+                        sh 'docker push alphagamedev/alphagamebot:$AGB_VERSION' // push tag latest version
+                        sh 'docker push alphagamedev/alphagamebot:latest' // push tag latest
+                        sh 'docker logout'
+                    }
+                }
             }
         }
         stage('deploy-commands') {
