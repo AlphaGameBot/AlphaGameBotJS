@@ -17,16 +17,19 @@
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import { collectDefaultMetrics, Gauge, Pushgateway, Registry } from "prom-client";
+import { readFileSync } from "node:fs";
+import { createServer } from "node:http";
+import { collectDefaultMetrics, Gauge, Registry } from "prom-client";
 import { client } from "../../../client.js";
+import { formatTime } from "../../../utility/formatTime.js";
 import { getLogger } from "../../../utility/logging/logger.js";
 import { Metrics, metricsManager } from "../metrics.js";
 
 const registry = new Registry();
 collectDefaultMetrics({ register: registry, prefix: "alphagamebot_" });
-const pushgatewayUrl = process.env.PUSHGATEWAY_URL || "http://localhost:9091";
-const pushgateway = new Pushgateway(pushgatewayUrl, {}, registry);
 const logger = getLogger("prometheus");
+const METRICS_HTTP_SERVER_PORT = process.env.METRICS_HTTP_SERVER_PORT || "5000";
+
 
 // Define gauges for each metric type
 const gauges: Record<Metrics, Gauge> = {
@@ -91,11 +94,11 @@ const gauges: Record<Metrics, Gauge> = {
 
 Object.values(gauges).forEach(g => registry.registerMetric(g));
 
-function exportMetricsToPrometheus() {
+async function exportMetricsToPrometheus() {
     // Clear previous gauge values
     const startTime = performance.now();
     Object.values(gauges).forEach(g => g.reset());
-    logger.verbose("Firing metrics export to Prometheus Pushgateway at " + pushgatewayUrl);
+    logger.verbose("Exporting metrics...");
     let queueLength = 0;
     const queueLengthByMetric: Map<Metrics, number> = new Map();
 
@@ -140,30 +143,64 @@ function exportMetricsToPrometheus() {
     gauges[Metrics.METRICS_QUEUE_LENGTH].set(queueLength);
     gauges[Metrics.DISCORD_LATENCY].set(client.ws.ping);
 
-    pushgateway.pushAdd({ jobName: "alphagamebot" }).catch((err: unknown) => {
+    // return data for prometheus, as a string
+    return await registry.metrics();
+}
 
-        logger.error("Failed to push metrics to Prometheus: " + String(err));
-    }).then(() => {
-        logger.verbose("Successfully pushed metrics to Prometheus Pushgateway (generation time: " + durationMs.toPrecision(2) + "ms)");
+const httpLogger = getLogger("metrics/http");
+const server = createServer(async (req, res) => {
+    httpLogger.verbose(`${req.method} ${req.url} from ${req.socket.remoteAddress || "unknown address"}`);
+    // set Server header
+    res.setHeader("Server", `AlphaGameBot/${process.env.VERSION || "unknown"}; NodeJS/${process.version}; node-http`);
+    const startTime = performance.now();
+
+    if (req.method === "GET" && req.url === "/metrics") {
+        try {
+            const metrics = await exportMetricsToPrometheus();
+            res.writeHead(200, {
+                "Content-Type": registry.contentType,
+            });
+            res.end(metrics);
+        } catch (err) {
+            logger.error("Error collecting metrics:", err);
+            res.writeHead(500);
+            res.end("Error collecting metrics");
+        }
+    } else {
+        httpLogger.warn(`Unknown request: ${req.method} ${req.url}`);
+        res.writeHead(404, { "Content-Type": "text/html" });
+        const pageContent = readFileSync(process.env.NODE_ENV === "production"
+            ? "./assets/metrics-server-404.html"
+            : "../assets/metrics-server-404.html");
+
+        // in pageContent, replace {{SERVER}} with the server header value
+        res.getHeader("Server");
+        const serverHeader = res.getHeader("Server") || "AlphaGameBot/unknown; NodeJS/unknown; node-http";
+        const finalPageContent = pageContent.toString()
+            .replace("{{SERVER}}", String(serverHeader))
+            .replace("{{PATH}}", req.url || "/unknown")
+            .replace("{{RENDER_TIME}}", formatTime(performance.now() - startTime));
+        res.end(finalPageContent);
+    }
+
+    // format time like 120us or 1.23ms, etc
+
+    const duration = performance.now() - startTime;
+    httpLogger.debug(`${req.method} ${req.url} ${req.headers["user-agent"] || "UnknownUserAgent/0.0"} - ${res.statusCode} ${formatTime(duration)}`, {
+        method: req.method,
+        url: req.url,
+        userAgent: req.headers["user-agent"] || "UnknownUserAgent/0.0",
+        statusCode: res.statusCode,
+        durationMs: duration
     });
-}
+});
 
-function exportWrapper() {
-    try {
-        exportMetricsToPrometheus();
-    } catch (e) {
-        logger.error("Error exporting metrics to Prometheus:", e);
-    }
-}
 export function startPrometheusExporter() {
-    const intervalMs = Number(process.env.PROMETHEUS_EXPORT_INTERVAL_MS || "15000");
-    if (isNaN(intervalMs) || intervalMs <= 0) {
-        logger.error("Invalid PROMETHEUS_EXPORT_INTERVAL_MS value, must be a positive number.");
-        return;
-    }
-    logger.info(`Starting Prometheus exporter, pushing to ${pushgatewayUrl} every ${intervalMs}ms`);
-    // Initial export
-    exportWrapper();
-    // Set interval for periodic exports
-    setInterval(exportWrapper, intervalMs);
+    logger.info(`Starting Prometheus metrics HTTP server on port ${METRICS_HTTP_SERVER_PORT}`);
+    server.listen(Number(METRICS_HTTP_SERVER_PORT), () => {
+        httpLogger.info(`Prometheus metrics HTTP server is running on port ${METRICS_HTTP_SERVER_PORT}. Time since start: ${formatTime(performance.now())}`);
+        if (process.env.NODE_ENV !== "production") {
+            httpLogger.info(`You can view metrics at http://localhost:${METRICS_HTTP_SERVER_PORT}/metrics`);
+        }
+    });
 }
