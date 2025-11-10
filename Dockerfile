@@ -36,4 +36,6 @@ RUN --mount=type=cache,target=/root/.npm \
     npm install --omit=dev
 COPY --from=build /app/dist ./dist
 
+COPY assets ./assets
+
 CMD ["node", "dist/main.js"]
