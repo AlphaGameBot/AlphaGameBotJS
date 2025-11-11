@@ -133,6 +133,8 @@ async function exportMetricsToPrometheus() {
                 gauges[metric].inc({ event: String(data.event) });
             } else if (metric === Metrics.FEATURE_USED && gauges[metric]) {
                 gauges[metric].inc({ feature: String(data.feature) });
+            } else if (metric === Metrics.METRICS_HTTP_SERVER_REQUESTS && gauges[metric]) {
+                gauges[metric].inc({ method: String(data.method), url: String(data.url), remoteAddress: String(data.remoteAddress), statusCode: String(data.statusCode) });
             } else {
                 logger.warn(`No gauge defined for metric type ${metric}`);
             }
