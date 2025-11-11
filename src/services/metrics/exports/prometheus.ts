@@ -16,19 +16,17 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-
-import { readFileSync } from "node:fs";
-import { createServer } from "node:http";
 import { collectDefaultMetrics, Gauge, Registry } from "prom-client";
 import { client } from "../../../client.js";
 import { formatTime } from "../../../utility/formatTime.js";
 import { getLogger } from "../../../utility/logging/logger.js";
 import { Metrics, metricsManager } from "../metrics.js";
+import { MetricsHTTPServer } from "./http/MetricsHTTPServer.js";
 
 const registry = new Registry();
 collectDefaultMetrics({ register: registry, prefix: "alphagamebot_" });
 const logger = getLogger("prometheus");
-const METRICS_HTTP_SERVER_PORT = process.env.METRICS_HTTP_SERVER_PORT || "5000";
+const METRICS_HTTP_SERVER_PORT = process.env.METRICS_HTTP_SERVER_PORT || "9100";
 
 
 // Define gauges for each metric type
@@ -89,6 +87,11 @@ const gauges: Record<Metrics, Gauge> = {
         name: "alphagamebot_feature_used",
         help: "Features Used",
         labelNames: ["feature"]
+    }),
+    [Metrics.METRICS_HTTP_SERVER_REQUESTS]: new Gauge({
+        name: "alphagamebot_metrics_http_server_requests",
+        help: "HTTP server requests for metrics",
+        labelNames: ["method", "url", "remoteAddress", "statusCode"]
     })
 };
 
@@ -148,56 +151,12 @@ async function exportMetricsToPrometheus() {
 }
 
 const httpLogger = getLogger("metrics/http");
-const server = createServer(async (req, res) => {
-    httpLogger.verbose(`${req.method} ${req.url} from ${req.socket.remoteAddress || "unknown address"}`);
-    // set Server header
-    res.setHeader("Server", `AlphaGameBot/${process.env.VERSION || "unknown"}; NodeJS/${process.version}; node-http`);
-    const startTime = performance.now();
 
-    if (req.method === "GET" && req.url === "/metrics") {
-        try {
-            const metrics = await exportMetricsToPrometheus();
-            res.writeHead(200, {
-                "Content-Type": registry.contentType,
-            });
-            res.end(metrics);
-        } catch (err) {
-            logger.error("Error collecting metrics:", err);
-            res.writeHead(500);
-            res.end("Error collecting metrics");
-        }
-    } else {
-        httpLogger.warn(`Unknown request: ${req.method} ${req.url}`);
-        res.writeHead(404, { "Content-Type": "text/html" });
-        const pageContent = readFileSync(process.env.NODE_ENV === "production"
-            ? "./assets/metrics-server-404.html"
-            : "../assets/metrics-server-404.html");
-
-        // in pageContent, replace {{SERVER}} with the server header value
-        res.getHeader("Server");
-        const serverHeader = res.getHeader("Server") || "AlphaGameBot/unknown; NodeJS/unknown; node-http";
-        const finalPageContent = pageContent.toString()
-            .replace("{{SERVER}}", String(serverHeader))
-            .replace("{{PATH}}", req.url || "/unknown")
-            .replace("{{RENDER_TIME}}", formatTime(performance.now() - startTime));
-        res.end(finalPageContent);
-    }
-
-    // format time like 120us or 1.23ms, etc
-
-    const duration = performance.now() - startTime;
-    httpLogger.debug(`${req.method} ${req.url} ${req.headers["user-agent"] || "UnknownUserAgent/0.0"} - ${res.statusCode} ${formatTime(duration)}`, {
-        method: req.method,
-        url: req.url,
-        userAgent: req.headers["user-agent"] || "UnknownUserAgent/0.0",
-        statusCode: res.statusCode,
-        durationMs: duration
-    });
-});
 
 export function startPrometheusExporter() {
     logger.info(`Starting Prometheus metrics HTTP server on port ${METRICS_HTTP_SERVER_PORT}`);
-    server.listen(Number(METRICS_HTTP_SERVER_PORT), () => {
+    const server = new MetricsHTTPServer(exportMetricsToPrometheus);
+    server.startServer(Number(METRICS_HTTP_SERVER_PORT), () => {
         httpLogger.info(`Prometheus metrics HTTP server is running on port ${METRICS_HTTP_SERVER_PORT}. Time since start: ${formatTime(performance.now())}`);
         if (process.env.NODE_ENV !== "production") {
             httpLogger.info(`You can view metrics at http://localhost:${METRICS_HTTP_SERVER_PORT}/metrics`);

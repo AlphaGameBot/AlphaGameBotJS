@@ -20,6 +20,7 @@ import type { MetricDataMap } from "../../interfaces/metrics/MetricDataMap.js";
 import { getLogger, LoggerNames } from "../../utility/logging/logger.js";
 
 export enum Metrics {
+    METRICS_HTTP_SERVER_REQUESTS = "metrics_http_server_requests",
     INTERACTIONS_RECEIVED = "interactions_received",
     COMMAND_EXECUTED = "command_executed",
     EVENT_EXECUTED = "event_executed",

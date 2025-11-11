@@ -21,6 +21,7 @@ await loadDotenv();
 import { Events, type ClientEvents } from "discord.js";
 import { existsSync } from "node:fs";
 import { client, gracefulExit } from "./client.js";
+import type { WebhookMetadata } from "./interfaces/WebhookMetadata.js";
 import { startPrometheusExporter } from "./services/metrics/exports/prometheus.js";
 import { Metrics, metricsManager } from "./services/metrics/metrics.js";
 import { rotatingStatus } from "./subsystems/rotatingStatus.js";
@@ -52,6 +53,17 @@ client.once(Events.ClientReady, async (readyClient) => {
     startPrometheusExporter();
     await rotatingStatus();
 });
+
+if (process.env.ERROR_WEBHOOK_URL) {
+    fetch(process.env.ERROR_WEBHOOK_URL).then(async (res) => {
+        const json: WebhookMetadata = await res.json() as unknown as WebhookMetadata;
+        logger.info(`ERROR_WEBHOOK_URL is set up, and is working. Name: ${json.name}, ID: ${json.id}`);
+    }).catch((e) => {
+        logger.error("Error fetching webhook metadata:", e);
+    });
+} else {
+    logger.warn("ERROR_WEBHOOK_URL is not set, error logging via Discord webhook is disabled.");
+}
 
 // when quit signal is received, log out the bot
 // SIGINT  (Signal Interrupt) is sent from terminal on Ctrl+C
