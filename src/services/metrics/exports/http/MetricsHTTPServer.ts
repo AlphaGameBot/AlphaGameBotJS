@@ -58,7 +58,12 @@ export class MetricsHTTPServer {
         } else {
             await this.routeNotFound(req, res);
         }
-        logger.info(`${req.method} ${req.url} - ${res.statusCode} - ${formatTime(performance.now() - startTime)}`, {
+        // Above 200, inclusive, and below 400, exclusive, is considered successful (200 to 399 per HTTP spec)
+        // realistically we only serve 200 and 404 here, but future-proofing.
+        (res.statusCode >= 200 && res.statusCode < 400
+            ? logger.info
+            : logger.warn
+        )(`${req.method} ${req.url} - ${res.statusCode} - ${formatTime(performance.now() - startTime)}`, {
             method: req.method,
             url: req.url,
             statusCode: res.statusCode,
