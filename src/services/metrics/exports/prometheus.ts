@@ -16,17 +16,18 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-
-import { collectDefaultMetrics, Gauge, Pushgateway, Registry } from "prom-client";
+import { collectDefaultMetrics, Gauge, Registry } from "prom-client";
 import { client } from "../../../client.js";
+import { formatTime } from "../../../utility/formatTime.js";
 import { getLogger } from "../../../utility/logging/logger.js";
 import { Metrics, metricsManager } from "../metrics.js";
+import { MetricsHTTPServer } from "./http/MetricsHTTPServer.js";
 
 const registry = new Registry();
 collectDefaultMetrics({ register: registry, prefix: "alphagamebot_" });
-const pushgatewayUrl = process.env.PUSHGATEWAY_URL || "http://localhost:9091";
-const pushgateway = new Pushgateway(pushgatewayUrl, {}, registry);
 const logger = getLogger("prometheus");
+const METRICS_HTTP_SERVER_PORT = process.env.METRICS_HTTP_SERVER_PORT || "9100";
+
 
 // Define gauges for each metric type
 const gauges: Record<Metrics, Gauge> = {
@@ -86,16 +87,21 @@ const gauges: Record<Metrics, Gauge> = {
         name: "alphagamebot_feature_used",
         help: "Features Used",
         labelNames: ["feature"]
+    }),
+    [Metrics.METRICS_HTTP_SERVER_REQUESTS]: new Gauge({
+        name: "alphagamebot_metrics_http_server_requests",
+        help: "HTTP server requests for metrics",
+        labelNames: ["method", "url", "remoteAddress", "statusCode"]
     })
 };
 
 Object.values(gauges).forEach(g => registry.registerMetric(g));
 
-function exportMetricsToPrometheus() {
+async function exportMetricsToPrometheus() {
     // Clear previous gauge values
     const startTime = performance.now();
     Object.values(gauges).forEach(g => g.reset());
-    logger.verbose("Firing metrics export to Prometheus Pushgateway at " + pushgatewayUrl);
+    logger.verbose("Exporting metrics...");
     let queueLength = 0;
     const queueLengthByMetric: Map<Metrics, number> = new Map();
 
@@ -127,6 +133,8 @@ function exportMetricsToPrometheus() {
                 gauges[metric].inc({ event: String(data.event) });
             } else if (metric === Metrics.FEATURE_USED && gauges[metric]) {
                 gauges[metric].inc({ feature: String(data.feature) });
+            } else if (metric === Metrics.METRICS_HTTP_SERVER_REQUESTS && gauges[metric]) {
+                gauges[metric].inc({ method: String(data.method), url: String(data.url), remoteAddress: String(data.remoteAddress), statusCode: String(data.statusCode) });
             } else {
                 logger.warn(`No gauge defined for metric type ${metric}`);
             }
@@ -140,30 +148,20 @@ function exportMetricsToPrometheus() {
     gauges[Metrics.METRICS_QUEUE_LENGTH].set(queueLength);
     gauges[Metrics.DISCORD_LATENCY].set(client.ws.ping);
 
-    pushgateway.pushAdd({ jobName: "alphagamebot" }).catch((err: unknown) => {
-
-        logger.error("Failed to push metrics to Prometheus: " + String(err));
-    }).then(() => {
-        logger.verbose("Successfully pushed metrics to Prometheus Pushgateway (generation time: " + durationMs.toPrecision(2) + "ms)");
-    });
+    // return data for prometheus, as a string
+    return await registry.metrics();
 }
 
-function exportWrapper() {
-    try {
-        exportMetricsToPrometheus();
-    } catch (e) {
-        logger.error("Error exporting metrics to Prometheus:", e);
-    }
-}
+const httpLogger = getLogger("metrics/http");
+
+
 export function startPrometheusExporter() {
-    const intervalMs = Number(process.env.PROMETHEUS_EXPORT_INTERVAL_MS || "15000");
-    if (isNaN(intervalMs) || intervalMs <= 0) {
-        logger.error("Invalid PROMETHEUS_EXPORT_INTERVAL_MS value, must be a positive number.");
-        return;
-    }
-    logger.info(`Starting Prometheus exporter, pushing to ${pushgatewayUrl} every ${intervalMs}ms`);
-    // Initial export
-    exportWrapper();
-    // Set interval for periodic exports
-    setInterval(exportWrapper, intervalMs);
+    logger.info(`Starting Prometheus metrics HTTP server on port ${METRICS_HTTP_SERVER_PORT}`);
+    const server = new MetricsHTTPServer(exportMetricsToPrometheus);
+    server.startServer(Number(METRICS_HTTP_SERVER_PORT), () => {
+        httpLogger.info(`Prometheus metrics HTTP server is running on port ${METRICS_HTTP_SERVER_PORT}. Time since start: ${formatTime(performance.now())}`);
+        if (process.env.NODE_ENV !== "production") {
+            httpLogger.info(`You can view metrics at http://localhost:${METRICS_HTTP_SERVER_PORT}/metrics`);
+        }
+    });
 }

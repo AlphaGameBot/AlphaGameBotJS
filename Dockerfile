@@ -36,6 +36,9 @@ RUN --mount=type=cache,target=/root/.npm \
     npm install --omit=dev
 COPY --from=build /app/dist ./dist
 
+# Metrics HTTP server
+EXPOSE 9100
+
 COPY assets ./assets
 
 CMD ["node", "dist/main.js"]

@@ -56,5 +56,12 @@ export interface MetricDataMap {
     },
     [Metrics.FEATURE_USED]: {
         feature: string
+    },
+    [Metrics.METRICS_HTTP_SERVER_REQUESTS]: {
+        method: string,
+        url: string,
+        remoteAddress: string,
+        statusCode: number,
+        durationMs: number
     }
 }

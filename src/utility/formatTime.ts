@@ -16,33 +16,13 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import { Client, GatewayIntentBits } from "discord.js";
-import { formatTime } from "./utility/formatTime.js";
-import logger from "./utility/logging/logger.js";
-
-const intents: GatewayIntentBits[] = [
-    // default
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.GuildMessageReactions,
-    GatewayIntentBits.DirectMessages,
-];
-
-export const client = new Client({
-
-    intents: intents
-});
-
-export async function gracefulExit(sig: string | null = null) {
-    const start = performance.now();
-    if (sig) {
-        logger.info(`Received ${sig}, shutting down gracefully...`);
+export function formatTime(duration: number): string {
+    const absDuration = Math.abs(duration);
+    if (absDuration < 1) {
+        return `${(duration * 1000).toFixed(0)}μs`;
+    } else if (absDuration < 1000) {
+        return `${duration.toFixed(2)}ms`;
     } else {
-        logger.info("Shutting down...");
+        return `${(duration / 1000).toFixed(2)}s`;
     }
-    await client.destroy();
-
-    const duration = performance.now() - start;
-    logger.info(`Bot shut down in ${formatTime(duration)}`);
-    process.exit(0);
-}
+};
