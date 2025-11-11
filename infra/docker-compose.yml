@@ -81,15 +81,6 @@ services:
         depends_on:
             - mysqld_exporter
             - pushgateway
-            
-    # Normally, prometheus scrapes metrics from services, but sometimes it's easier for services to push metrics to prometheus.
-    # This is where pushgateway comes in--it allows services to push metrics to prometheus, instead of running a web server to be scraped.
-    pushgateway:
-        image: prom/pushgateway
-        restart: always
-        networks:
-            alphagamebot-net:
-                ipv4_address: 10.7.1.4
 
     # mysqld_exporter exports MySQL metrics for Prometheus to scrape.
     # It provides SO MANY AWESOME METRICS about the MySQL server--Very nice to have.
