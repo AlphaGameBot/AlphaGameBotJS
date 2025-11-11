@@ -80,7 +80,6 @@ services:
             - ${HOST_PROMETHEUS_PORT}:9090
         depends_on:
             - mysqld_exporter
-            - pushgateway
 
     # mysqld_exporter exports MySQL metrics for Prometheus to scrape.
     # It provides SO MANY AWESOME METRICS about the MySQL server--Very nice to have.

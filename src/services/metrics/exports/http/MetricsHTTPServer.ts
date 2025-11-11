@@ -72,7 +72,7 @@ export class MetricsHTTPServer {
             statusCode: res.statusCode || 0,
             durationMs: performance.now() - startTime
         });
-    }                                                                              
+    }
 
 
     registerRoute(method: string, route: string, handler: (req: IncomingMessage, res: ServerResponse) => Promise<void>) {

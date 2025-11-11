@@ -56,6 +56,10 @@ client.once(Events.ClientReady, async (readyClient) => {
 
 if (process.env.ERROR_WEBHOOK_URL) {
     fetch(process.env.ERROR_WEBHOOK_URL).then(async (res) => {
+        if (!res.ok) {
+            logger.error(`Failed to fetch webhook metadata: HTTP ${res.status} ${res.statusText}`);
+            return;
+        }
         const json: WebhookMetadata = await res.json() as unknown as WebhookMetadata;
         logger.info(`ERROR_WEBHOOK_URL is set up, and is working. Name: ${json.name}, ID: ${json.id}`);
     }).catch((e) => {
