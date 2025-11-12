@@ -16,6 +16,16 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
+/**
+ * Formats a time duration into a human-readable string.
+ * 
+ * - Durations less than 1 ms are shown in microseconds (μs).
+ * - Durations from 1 ms to less than 1000 ms are shown in milliseconds (ms) with two decimal places.
+ * - Durations of 1000 ms and above are shown in seconds (s) with two decimal places.
+ * 
+ * @param duration Time, in milliseconds. (floating-point allowed)
+ * @returns A formatted time string.
+ */
 export function formatTime(duration: number): string {
     const absDuration = Math.abs(duration);
     if (absDuration < 1) {
