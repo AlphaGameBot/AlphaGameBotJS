@@ -18,7 +18,23 @@
 
 // Note: @prisma/client is generated. Make sure to run `npx prisma generate` after modifying the schema.
 import { PrismaClient } from "@prisma/client";
+import { formatTime } from "./formatTime.js";
+import { getLogger } from "./logging/logger.js";
 
-const prisma: PrismaClient = new PrismaClient();
+const logger = getLogger("prisma/client");
+const base: PrismaClient = new PrismaClient();
 
+
+const prisma = base.$extends({
+    query: {
+        async $allOperations({ operation, model, args, query }) {
+            const start = performance.now();
+            const result = await query(args);
+            const end = performance.now();
+            const time = end - start;
+            logger.verbose(`Executed Prisma query: ${operation} on ${model} in ${formatTime(time)}ms`, { operation, model, args, duration: time });
+            return result;
+        },
+    }
+});
 export default prisma;
