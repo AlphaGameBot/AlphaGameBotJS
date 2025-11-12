@@ -358,6 +358,204 @@
               "viz": false
             },
             "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unitScale": true
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "id": 39,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "c1c2ce68-b1d1-431a-a3cb-fc84e1126479"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "expr": "sum by(method, url, statusCode) (alphagamebot_metrics_http_server_requests)",
+          "fullMetaSearch": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "legendFormat": "{{method}} {{url}} {{statusCode}}",
+          "range": true,
+          "refId": "A",
+          "useBackend": false
+        }
+      ],
+      "title": "Prometheus Metrics HTTP Server",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "c1c2ce68-b1d1-431a-a3cb-fc84e1126479"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "semi-dark-orange",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unitScale": true
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 17,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "id": 35,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "c1c2ce68-b1d1-431a-a3cb-fc84e1126479"
+          },
+          "editorMode": "builder",
+          "expr": "alphagamebot_metrics_queue_length",
+          "instant": false,
+          "legendFormat": "{{__name__}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Metrics Queue Length",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "c1c2ce68-b1d1-431a-a3cb-fc84e1126479"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd",
+            "seriesBy": "min"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
             "lineInterpolation": "smooth",
             "lineWidth": 1,
             "pointSize": 1,
@@ -371,7 +569,7 @@
               "mode": "none"
             },
             "thresholdsStyle": {
-              "mode": "off"
+              "mode": "dashed"
             }
           },
           "mappings": [
@@ -477,10 +675,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
+        "h": 11,
         "w": 12,
         "x": 12,
-        "y": 24
+        "y": 32
       },
       "id": 37,
       "options": {
@@ -491,8 +689,8 @@
           "showLegend": true
         },
         "tooltip": {
-          "mode": "single",
-          "sort": "none"
+          "mode": "multi",
+          "sort": "asc"
         }
       },
       "targets": [
@@ -580,7 +778,7 @@
         "h": 6,
         "w": 12,
         "x": 12,
-        "y": 30
+        "y": 43
       },
       "id": 1,
       "options": {
@@ -673,106 +871,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 12,
-        "w": 12,
-        "x": 0,
-        "y": 32
-      },
-      "id": 35,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "c1c2ce68-b1d1-431a-a3cb-fc84e1126479"
-          },
-          "editorMode": "builder",
-          "expr": "alphagamebot_metrics_queue_length",
-          "instant": false,
-          "legendFormat": "{{__name__}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Metrics Queue Length",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "c1c2ce68-b1d1-431a-a3cb-fc84e1126479"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unitScale": true
-        },
-        "overrides": []
-      },
-      "gridPos": {
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 36
+        "y": 49
       },
       "id": 36,
       "options": {
@@ -810,7 +912,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 44
+        "y": 57
       },
       "id": 8,
       "panels": [],
@@ -882,7 +984,7 @@
         "h": 11,
         "w": 7,
         "x": 0,
-        "y": 45
+        "y": 58
       },
       "id": 2,
       "options": {
@@ -926,7 +1028,8 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "fixedColor": "semi-dark-purple",
+            "mode": "continuous-GrYlRd"
           },
           "custom": {
             "axisBorderShow": false,
@@ -983,7 +1086,7 @@
         "h": 11,
         "w": 9,
         "x": 7,
-        "y": 45
+        "y": 58
       },
       "id": 6,
       "options": {
@@ -1087,7 +1190,7 @@
         "h": 11,
         "w": 8,
         "x": 16,
-        "y": 45
+        "y": 58
       },
       "id": 4,
       "options": {
@@ -1183,7 +1286,7 @@
         "h": 8,
         "w": 7,
         "x": 0,
-        "y": 56
+        "y": 69
       },
       "id": 3,
       "options": {
@@ -1279,7 +1382,7 @@
         "h": 8,
         "w": 9,
         "x": 7,
-        "y": 56
+        "y": 69
       },
       "id": 5,
       "options": {
@@ -1370,7 +1473,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 56
+        "y": 69
       },
       "id": 7,
       "options": {
@@ -1417,7 +1520,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 64
+        "y": 77
       },
       "id": 12,
       "panels": [
@@ -1426,7 +1529,7 @@
             "h": 5,
             "w": 4,
             "x": 0,
-            "y": 62
+            "y": 70
           },
           "id": 22,
           "libraryPanel": {
@@ -1463,7 +1566,7 @@
             "h": 5,
             "w": 4,
             "x": 4,
-            "y": 62
+            "y": 70
           },
           "id": 28,
           "options": {
@@ -1527,7 +1630,7 @@
             "h": 9,
             "w": 8,
             "x": 0,
-            "y": 67
+            "y": 75
           },
           "id": 18,
           "options": {
@@ -1589,7 +1692,7 @@
             "h": 5,
             "w": 6,
             "x": 0,
-            "y": 76
+            "y": 84
           },
           "id": 17,
           "options": {
@@ -1646,7 +1749,7 @@
             "h": 5,
             "w": 5,
             "x": 6,
-            "y": 76
+            "y": 84
           },
           "id": 32,
           "options": {
@@ -1724,7 +1827,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 81
+            "y": 89
           },
           "id": 14,
           "options": {
@@ -1786,7 +1889,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 89
+            "y": 97
           },
           "id": 13,
           "options": {
@@ -1887,7 +1990,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 97
+            "y": 105
           },
           "id": 15,
           "options": {
@@ -1993,7 +2096,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 105
+            "y": 113
           },
           "id": 16,
           "options": {
@@ -2098,7 +2201,7 @@
             "h": 10,
             "w": 24,
             "x": 0,
-            "y": 113
+            "y": 121
           },
           "id": 19,
           "options": {
@@ -2155,7 +2258,7 @@
             "h": 18,
             "w": 6,
             "x": 0,
-            "y": 123
+            "y": 131
           },
           "id": 20,
           "options": {
@@ -2257,7 +2360,7 @@
             "h": 8,
             "w": 18,
             "x": 6,
-            "y": 123
+            "y": 131
           },
           "id": 30,
           "options": {
@@ -2373,7 +2476,7 @@
             "h": 10,
             "w": 18,
             "x": 6,
-            "y": 131
+            "y": 139
           },
           "id": 29,
           "options": {
@@ -2452,7 +2555,7 @@
             "h": 16,
             "w": 7,
             "x": 0,
-            "y": 141
+            "y": 149
           },
           "id": 26,
           "options": {
@@ -2527,7 +2630,7 @@
             "h": 16,
             "w": 7,
             "x": 7,
-            "y": 141
+            "y": 149
           },
           "id": 27,
           "options": {
@@ -2628,7 +2731,7 @@
             "h": 13,
             "w": 7,
             "x": 0,
-            "y": 157
+            "y": 165
           },
           "id": 33,
           "options": {
@@ -2755,7 +2858,7 @@
             "h": 13,
             "w": 17,
             "x": 7,
-            "y": 157
+            "y": 165
           },
           "id": 31,
           "options": {
@@ -2816,7 +2919,7 @@
             "h": 13,
             "w": 7,
             "x": 0,
-            "y": 170
+            "y": 178
           },
           "id": 25,
           "options": {
@@ -2916,7 +3019,7 @@
             "h": 13,
             "w": 10,
             "x": 7,
-            "y": 170
+            "y": 178
           },
           "id": 23,
           "options": {
@@ -3032,7 +3135,7 @@
             "h": 11,
             "w": 10,
             "x": 0,
-            "y": 183
+            "y": 191
           },
           "id": 24,
           "options": {
@@ -3086,6 +3189,6 @@
   "timezone": "",
   "title": "AlphaGameBot",
   "uid": "abaff5e0-29c2-4fa5-8337-a89f7abaa907",
-  "version": 26,
+  "version": 28,
   "weekStart": ""
 }
