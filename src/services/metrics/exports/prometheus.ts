@@ -39,7 +39,7 @@ const gauges: Record<Metrics, Gauge> = {
     [Metrics.EVENT_EXECUTED]: new Gauge({
         name: "alphagamebot_event_executed_duration_ms",
         help: "Duration of event execution in ms",
-        labelNames: ["event"]
+        labelNames: ["event", "eventFile"]
     }),
     [Metrics.COMMAND_EXECUTED]: new Gauge({
         name: "alphagamebot_command_executed_duration_ms",
