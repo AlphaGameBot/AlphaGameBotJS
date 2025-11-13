@@ -111,17 +111,21 @@ const events = await crawlEvents();
 for (const event of events) {
     logger.debug(`Registering event handler for event: ${event.name}`);
     const wrapper = async (...args: unknown[]) => {
-        logger.verbose(`Fired event: ${event.name} (${args})`);
+        // Avoid forcing string coercion of potentially circular event args (can cause deep recursion).
+        logger.verbose(`Fired event: ${event.name}`, { args });
 
         // count execution time in milliseconds
         const start = performance.now();
         try {
             await event.execute(...args as ClientEvents[typeof event.name]);
         } catch (e) {
-            logger.error(`Error executing event ${event.name}:`, e);
+            // Log stack explicitly to avoid any implicit coercion of complex objects
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const errAny = e as any;
+            logger.error(`Error executing event ${event.name}: ${errAny && errAny.stack ? errAny.stack : String(e)}`);
         } finally {
             const durationMs = performance.now() - start;
-            logger.verbose(`Event ${event.name} executed in ${durationMs.toFixed(2)}ms`);
+            logger.verbose(`Event ${event.name} executed in ${durationMs.toFixed(2)}ms`, { durationMs });
             // Submit metric without the "event" label to match the initial labelset
             metricsManager.submitMetric<Metrics.EVENT_EXECUTED>(Metrics.EVENT_EXECUTED, {
                 event: event.name as Events,

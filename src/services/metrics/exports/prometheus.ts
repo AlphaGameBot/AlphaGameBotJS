@@ -16,7 +16,7 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import { collectDefaultMetrics, Gauge, Registry } from "prom-client";
+import { collectDefaultMetrics, Gauge, Histogram, Registry } from "prom-client";
 import { client } from "../../../client.js";
 import { formatTime } from "../../../utility/formatTime.js";
 import { getLogger } from "../../../utility/logging/logger.js";
@@ -28,9 +28,25 @@ collectDefaultMetrics({ register: registry, prefix: "alphagamebot_" });
 const logger = getLogger("prometheus");
 const METRICS_HTTP_SERVER_PORT = process.env.METRICS_HTTP_SERVER_PORT || "9100";
 
+type MetricTypeMap = {
+    [Metrics.INTERACTIONS_RECEIVED]: Gauge,
+    [Metrics.EVENT_EXECUTED]: Gauge,
+    [Metrics.COMMAND_EXECUTED]: Gauge,
+    [Metrics.RAW_EVENT_RECEIVED]: Gauge,
+    [Metrics.METRICS_QUEUE_LENGTH]: Gauge,
+    [Metrics.METRICS_QUEUE_LENGTH_BY_METRIC]: Gauge,
+    [Metrics.METRICS_GENERATION_TIME]: Gauge,
+    [Metrics.EVENT_RECEIVED]: Gauge,
+    [Metrics.DISCORD_LATENCY]: Gauge,
+    [Metrics.APPLICATION_ERROR]: Gauge,
+    [Metrics.INTERACTION_RECEIVED]: Gauge,
+    [Metrics.FEATURE_USED]: Gauge,
+    [Metrics.METRICS_HTTP_SERVER_REQUESTS]: Gauge,
+    [Metrics.DATABASE_OPERATION]: Histogram
+}
 
 // Define gauges for each metric type
-const gauges: Record<Metrics, Gauge> = {
+const gauges: { [K in keyof MetricTypeMap]: MetricTypeMap[K] } = {
     [Metrics.INTERACTIONS_RECEIVED]: new Gauge({
         name: "alphagamebot_interactions_received",
         help: "Number of interactions received",
@@ -92,7 +108,13 @@ const gauges: Record<Metrics, Gauge> = {
         name: "alphagamebot_metrics_http_server_requests",
         help: "HTTP server requests for metrics",
         labelNames: ["method", "url", "remoteAddress", "statusCode"]
-    })
+    }),
+    [Metrics.DATABASE_OPERATION]: new Histogram({
+        name: "alphagamebot_database_operation_duration_seconds",
+        help: "Database operation duration in seconds",
+        labelNames: ["model", "operation"],
+        buckets: [0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 5]
+    }),
 };
 
 Object.values(gauges).forEach(g => registry.registerMetric(g));
@@ -103,6 +125,7 @@ async function exportMetricsToPrometheus() {
     Object.values(gauges).forEach(g => g.reset());
     logger.verbose("Exporting metrics...");
     let queueLength = 0;
+    let someMetricsFailed = false;
     const queueLengthByMetric: Map<Metrics, number> = new Map();
 
     const metricsMap = metricsManager.getMetrics();
@@ -114,35 +137,93 @@ async function exportMetricsToPrometheus() {
             queueLength++;
             const metricEntry = entry as { data: unknown };
             const data = (metricEntry.data ?? {}) as Record<string, unknown>;
-            if (metric === Metrics.INTERACTIONS_RECEIVED && gauges[metric]) {
-                gauges[metric].inc({ event: String(data.event) });
-            } else if (metric === Metrics.EVENT_EXECUTED && gauges[metric]) {
-                // For duration metrics, set the gauge value
-                gauges[metric].set({ event: String(data.event) }, Number(data.durationMs));
-            } else if (metric === Metrics.COMMAND_EXECUTED && gauges[metric]) {
-                gauges[metric].set({ event: String(data.event), commandName: String(data.commandName) }, Number(data.durationMs));
-            } else if (metric === Metrics.RAW_EVENT_RECEIVED && gauges[metric]) {
-                gauges[metric].inc({ event: String(data.event) });
-            } else if (metric === Metrics.METRICS_QUEUE_LENGTH) {
-                // Handled after the loop
-            } else if (metric === Metrics.METRICS_GENERATION_TIME) {
-                // Handled after the loop
-            } else if (metric === Metrics.EVENT_RECEIVED && gauges[metric]) {
-                gauges[metric].inc({ event: String(data.event) });
-            } else if (metric === Metrics.APPLICATION_ERROR && gauges[metric]) {
-                gauges[metric].inc({ event: String(data.event) });
-            } else if (metric === Metrics.FEATURE_USED && gauges[metric]) {
-                gauges[metric].inc({ feature: String(data.feature) });
-            } else if (metric === Metrics.METRICS_HTTP_SERVER_REQUESTS && gauges[metric]) {
-                gauges[metric].inc({ method: String(data.method), url: String(data.url), remoteAddress: String(data.remoteAddress), statusCode: String(data.statusCode) });
-            } else {
-                logger.warn(`No gauge defined for metric type ${metric}`);
+
+            switch (metric) {
+                case Metrics.INTERACTIONS_RECEIVED: {
+                    (gauges[metric] as Gauge).inc({ event: String(data.event) });
+                    break;
+                }
+
+                case Metrics.EVENT_EXECUTED: {
+                    (gauges[metric] as Gauge).set({ event: String(data.event) }, Number(data.durationMs));
+                    break;
+                }
+
+                case Metrics.COMMAND_EXECUTED: {
+                    (gauges[metric] as Gauge).set({ event: String(data.event), commandName: String(data.commandName) }, Number(data.durationMs));
+                    break;
+                }
+
+                case Metrics.RAW_EVENT_RECEIVED: {
+                    (gauges[metric] as Gauge).inc({ event: String(data.event) });
+                    break;
+                }
+
+                case Metrics.METRICS_QUEUE_LENGTH: {
+                    // Handled after the loop
+                    break;
+                }
+
+                case Metrics.METRICS_GENERATION_TIME: {
+                    // Handled after the loop
+                    break;
+                }
+
+                case Metrics.EVENT_RECEIVED: {
+                    (gauges[metric] as Gauge).inc({ event: String(data.event) });
+                    break;
+                }
+
+                case Metrics.APPLICATION_ERROR: {
+                    (gauges[metric] as Gauge).inc({ event: String(data.event) });
+                    break;
+                }
+
+                case Metrics.INTERACTION_RECEIVED: {
+                    (gauges[metric] as Gauge).inc({ interactionType: String(data.interactionType) });
+                    break;
+                }
+
+                case Metrics.FEATURE_USED: {
+                    (gauges[metric] as Gauge).inc({ feature: String(data.feature) });
+                    break;
+                }
+
+                case Metrics.METRICS_HTTP_SERVER_REQUESTS: {
+                    (gauges[metric] as Gauge).inc({
+                        method: String(data.method),
+                        url: String(data.url),
+                        remoteAddress: String(data.remoteAddress),
+                        statusCode: String(data.statusCode)
+                    });
+                    break;
+                }
+
+                case Metrics.DATABASE_OPERATION: {
+                    (gauges[metric] as Histogram).observe(
+                        { model: String(data.model), operation: String(data.operation) },
+                        Number(data.durationMs) / 1000
+                    );
+                    break;
+                }
+
+                default: {
+                    // Exhaustiveness check - using the variable to avoid "assigned but never used"
+                    const _exhaustive: never = metric;
+                    void _exhaustive;
+                    someMetricsFailed = true;
+                    logger.error(`No exporter defined for metric type: ${String(metric)}! This should never happen!`);
+                    break;
+                }
             }
         }
     }
 
+    if (someMetricsFailed) logger.error("Some metrics failed to export due to missing gauge/histogram definitions.");
+
     const durationMs = performance.now() - startTime;
     logger.verbose(`Metrics generation took ${durationMs}ms, queue length is ${queueLength}`);
+
 
     gauges[Metrics.METRICS_GENERATION_TIME].set(durationMs);
     gauges[Metrics.METRICS_QUEUE_LENGTH].set(queueLength);
