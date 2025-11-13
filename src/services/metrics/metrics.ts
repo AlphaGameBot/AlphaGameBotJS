@@ -20,6 +20,7 @@ import type { MetricDataMap } from "../../interfaces/metrics/MetricDataMap.js";
 import { getLogger, LoggerNames } from "../../utility/logging/logger.js";
 
 export enum Metrics {
+    DATABASE_OPERATION = "database_operation",
     METRICS_HTTP_SERVER_REQUESTS = "metrics_http_server_requests",
     INTERACTIONS_RECEIVED = "interactions_received",
     COMMAND_EXECUTED = "command_executed",
@@ -104,8 +105,31 @@ export class MetricsManager {
 
         metricData.push(entry);
 
-        const serialized = data instanceof Map ? JSON.stringify(Object.fromEntries(data)) : JSON.stringify(data);
-        logger.verbose("Metric submitted: " + metric + " with data: " + serialized);
+        if (logger.isVerboseEnabled()) {
+            // Safely serialize metric data to avoid errors or deep recursion when objects contain
+            // circular references. Fall back to a simple string when serialization fails.
+            function safeStringify(obj: unknown) {
+                try {
+                    const seen = new WeakSet();
+                    return JSON.stringify(obj, function(_key, value) {
+                        if (typeof value === "object" && value !== null) {
+                            if (seen.has(value)) return "[Circular]";
+                            seen.add(value as object);
+                        }
+                        return value;
+                    });
+                } catch {
+                    try {
+                        return String(obj);
+                    } catch {
+                        return "[unserializable]";
+                    }
+                }
+            }
+
+            const serialized = data instanceof Map ? safeStringify(Object.fromEntries(data)) : safeStringify(data);
+            logger.verbose("Metric submitted: " + metric + " with data: " + serialized);
+        }
     }
 
     public getMetrics() {

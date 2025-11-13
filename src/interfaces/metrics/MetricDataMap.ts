@@ -63,5 +63,10 @@ export interface MetricDataMap {
         remoteAddress: string,
         statusCode: number,
         durationMs: number
+    },
+    [Metrics.DATABASE_OPERATION]: {
+        model: string,
+        operation: string,
+        durationMs: number
     }
 }

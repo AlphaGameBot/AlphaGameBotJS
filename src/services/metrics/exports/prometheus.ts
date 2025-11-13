@@ -92,6 +92,11 @@ const gauges: Record<Metrics, Gauge> = {
         name: "alphagamebot_metrics_http_server_requests",
         help: "HTTP server requests for metrics",
         labelNames: ["method", "url", "remoteAddress", "statusCode"]
+    }),
+    [Metrics.DATABASE_OPERATION]: new Gauge({
+        name: "alphagamebot_database_operation_duration_ms",
+        help: "Duration of database operations in ms",
+        labelNames: ["model", "operation"]
     })
 };
 
