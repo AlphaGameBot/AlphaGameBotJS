@@ -137,34 +137,84 @@ async function exportMetricsToPrometheus() {
             queueLength++;
             const metricEntry = entry as { data: unknown };
             const data = (metricEntry.data ?? {}) as Record<string, unknown>;
-            if (metric === Metrics.INTERACTIONS_RECEIVED && gauges[metric]) {
-                gauges[metric].inc({ event: String(data.event) });
-            } else if (metric === Metrics.EVENT_EXECUTED) {
-                // For duration metrics, set the gauge value
-                gauges[metric].set({ event: String(data.event) }, Number(data.durationMs));
-            } else if (metric === Metrics.COMMAND_EXECUTED) {
-                gauges[metric].set({ event: String(data.event), commandName: String(data.commandName) }, Number(data.durationMs));
-            } else if (metric === Metrics.RAW_EVENT_RECEIVED) {
-                gauges[metric].inc({ event: String(data.event) });
-            } else if (metric === Metrics.METRICS_QUEUE_LENGTH) {
-                // Handled after the loop
-            } else if (metric === Metrics.METRICS_GENERATION_TIME) {
-                // Handled after the loop
-            } else if (metric === Metrics.EVENT_RECEIVED) {
-                gauges[metric].inc({ event: String(data.event) });
-            } else if (metric === Metrics.APPLICATION_ERROR) {
-                gauges[metric].inc({ event: String(data.event) });
-            } else if (metric === Metrics.FEATURE_USED) {
-                gauges[metric].inc({ feature: String(data.feature) });
-            } else if (metric === Metrics.METRICS_HTTP_SERVER_REQUESTS) {
-                gauges[metric].inc({ method: String(data.method), url: String(data.url), remoteAddress: String(data.remoteAddress), statusCode: String(data.statusCode) });
-            } else if (metric === Metrics.DATABASE_OPERATION && gauges[metric] instanceof Histogram) {
-                // We have to divide ms by 1000 to get seconds for Prometheus histograms
-                // What the fuck Prometheus
-                gauges[metric].observe({ model: String(data.model), operation: String(data.operation) }, Number(data.durationMs) / 1000);
-            } else {
-                logger.warn(`No gauge or histogram defined for metric type ${metric}`);
-                someMetricsFailed = true;
+
+            switch (metric) {
+                case Metrics.INTERACTIONS_RECEIVED: {
+                    (gauges[metric] as Gauge).inc({ event: String(data.event) });
+                    break;
+                }
+
+                case Metrics.EVENT_EXECUTED: {
+                    (gauges[metric] as Gauge).set({ event: String(data.event) }, Number(data.durationMs));
+                    break;
+                }
+
+                case Metrics.COMMAND_EXECUTED: {
+                    (gauges[metric] as Gauge).set({ event: String(data.event), commandName: String(data.commandName) }, Number(data.durationMs));
+                    break;
+                }
+
+                case Metrics.RAW_EVENT_RECEIVED: {
+                    (gauges[metric] as Gauge).inc({ event: String(data.event) });
+                    break;
+                }
+
+                case Metrics.METRICS_QUEUE_LENGTH: {
+                    // Handled after the loop
+                    break;
+                }
+
+                case Metrics.METRICS_GENERATION_TIME: {
+                    // Handled after the loop
+                    break;
+                }
+
+                case Metrics.EVENT_RECEIVED: {
+                    (gauges[metric] as Gauge).inc({ event: String(data.event) });
+                    break;
+                }
+
+                case Metrics.APPLICATION_ERROR: {
+                    (gauges[metric] as Gauge).inc({ event: String(data.event) });
+                    break;
+                }
+
+                case Metrics.INTERACTION_RECEIVED: {
+                    (gauges[metric] as Gauge).inc({ interactionType: String(data.interactionType) });
+                    break;
+                }
+
+                case Metrics.FEATURE_USED: {
+                    (gauges[metric] as Gauge).inc({ feature: String(data.feature) });
+                    break;
+                }
+
+                case Metrics.METRICS_HTTP_SERVER_REQUESTS: {
+                    (gauges[metric] as Gauge).inc({
+                        method: String(data.method),
+                        url: String(data.url),
+                        remoteAddress: String(data.remoteAddress),
+                        statusCode: String(data.statusCode)
+                    });
+                    break;
+                }
+
+                case Metrics.DATABASE_OPERATION: {
+                    (gauges[metric] as Histogram).observe(
+                        { model: String(data.model), operation: String(data.operation) },
+                        Number(data.durationMs) / 1000
+                    );
+                    break;
+                }
+
+                default: {
+                    // Exhaustiveness check - using the variable to avoid "assigned but never used"
+                    const _exhaustive: never = metric;
+                    void _exhaustive;
+                    someMetricsFailed = true;
+                    logger.error(`No exporter defined for metric type: ${String(metric)}! This should never happen!`);
+                    break;
+                }
             }
         }
     }
