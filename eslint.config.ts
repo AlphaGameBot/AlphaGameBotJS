@@ -16,15 +16,15 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import eslint from "@eslint/js";
-import tseslint from "typescript-eslint";
+import * as eslint from "@eslint/js";
+import * as tseslint from "typescript-eslint";
 
 
 export default tseslint.config(
     eslint.configs.recommended,
     ...tseslint.configs.recommended,
     {
-        ignores: ["node_modules/**", "dist/**", "build/**", "coverage/**", ".git/**"],
+        ignores: ["node_modules/**", "dist/**", "build/**", "coverage/**", ".git/**", ".next/**"],
     },
     {
         files: ["**/*.ts", "**/*.tsx"],

@@ -60,6 +60,14 @@
     "skipLibCheck": true,
     "esModuleInterop": true
   },
+  "references": [
+    {
+      "path": "./bot"
+    },
+    {
+      "path": "./web"
+    }
+  ],
   "include": [
     "src/**/*.ts"
   ],

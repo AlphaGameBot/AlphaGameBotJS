@@ -1,0 +1,30 @@
+{
+  "name": "alphagamebot-webui",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "postversion": "git add . && git commit -am \"WebUI Release webui-v$(cat package.json | jq .version -cMr)\" && git tag -a \"webui-v$(cat package.json | jq .version -cMr)\" -m \"WebUI Release $(cat package.json | jq .version -cMr)\"",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint --config ../eslint.config.ts ."
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.0",
+    "next": "16.0.2",
+    "prisma": "^6.19.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
+  },
+  "devDependencies": {
+    "@prisma/config": "^6.19.0",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.2",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

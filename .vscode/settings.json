@@ -15,7 +15,8 @@
         "**/dist": true,
         "**/build": true,
         "**/coverage": true,
-        "**/*.tsbuildinfo": true
+        "**/*.tsbuildinfo": true,
+        "**/.next": true
     },
     "licenser.license": "Custom",
     "licenser.customHeaderFile": "/home/damien/Documents/AlphaGameBotJS/.vscode/license-header.txt",
@@ -78,4 +79,5 @@
         "titleBar.inactiveBackground": "#21573299",
         "titleBar.inactiveForeground": "#e7e7e799"
     },
+    "jest.jestCommandLine": "npm -w bot test",
 }

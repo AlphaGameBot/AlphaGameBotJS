@@ -18,20 +18,28 @@
 
 FROM node:20 AS build
 WORKDIR /app
-COPY package*.json ./
+COPY bot/package*.json ./
 COPY prisma ./prisma
 RUN --mount=type=cache,target=/root/.npm \
     npm install
-COPY . .
+COPY bot .
+
+# Something very weird is happening here... We have two tsconfig.json files.
+# We need to modify it so that tsconfig.json extends tsconfig.base.json, instead of ../tsconfig.json
+COPY bot/tsconfig.json ./tsconfig.json
+COPY tsconfig.json ./tsconfig.base.json
+RUN sed -i 's|"extends": *"[^"]*"|"extends": "./tsconfig.base.json"|' tsconfig.json
 RUN npm run build
 
+# RUN find . -path '*/node_modules' -prune -o -name 'client.d.ts' -exec dirname {} \; && sleep 70
 FROM node:20-alpine
 WORKDIR /app
 ENV NODE_ENV=production
 ARG VERSION
 ENV VERSION=$VERSION
+COPY bot/assets ./assets
 COPY --from=build /app/package*.json ./
-COPY prisma ./prisma
+COPY --from=build /app/prisma ./prisma
 RUN --mount=type=cache,target=/root/.npm \
     npm install --omit=dev
 COPY --from=build /app/dist ./dist
@@ -39,6 +47,5 @@ COPY --from=build /app/dist ./dist
 # Metrics HTTP server
 EXPOSE 9100
 
-COPY assets ./assets
 
-CMD ["node", "dist/main.js"]
+CMD ["node", "--enable-source-maps", "dist/main.js"]
