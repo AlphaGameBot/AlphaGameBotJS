@@ -218,7 +218,7 @@ pipeline {
                         sh "docker container rm alphagamebot-webui -f || true"
                         sh "docker run --detach --tty  \
                                         --name alphagamebot-webui \
-                                        -e BUILD_NUMBER -e DATABASE_URL -e PUSHGATEWAY_URL -e LOKI_URL -e GITHUB_PAT 
+                                        -e BUILD_NUMBER -e DATABASE_URL -e PUSHGATEWAY_URL -e LOKI_URL -e GITHUB_PAT \
                                         --restart=always --network=alphagamebot-net --ip 10.7.1.128 \
                                         --hostname alphagamebot-webui \
                                         alphagamedev/alphagamebot:web-$WEB_VERSION"
