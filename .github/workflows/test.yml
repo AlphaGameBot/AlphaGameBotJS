@@ -23,13 +23,13 @@ jobs:
       - name: Install dependencies
         run: npm ci # Or yarn install
       - name: Run Jest tests
-        run: npm test # Or yarn test
+        run: npm -w bot test # Or yarn test
       - name: Jest Coverage Comment
         uses: ArtiomTr/jest-coverage-report-action@v2 # Example of a specific Jest action
         continue-on-error: true
         env:
           NODE_ENV: test
         with:
-          test-script: node --loader ts-node/esm --no-warnings=ExperimentalWarning --experimental-vm-modules node_modules/jest/bin/jest.js src/ --forceExit --silent
+          test-script: node --loader ts-node/esm --no-warnings=ExperimentalWarning --experimental-vm-modules node_modules/jest/bin/jest.js bot/src/ --forceExit --silent
           github-token: ${{ secrets.GITHUB_TOKEN }}
           output: comment, report-markdown
