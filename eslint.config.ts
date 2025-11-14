@@ -24,7 +24,7 @@ export default tseslint.config(
     eslint.configs.recommended,
     ...tseslint.configs.recommended,
     {
-        ignores: ["node_modules/**", "dist/**", "build/**", "coverage/**", ".git/**"],
+        ignores: ["node_modules/**", "dist/**", "build/**", "coverage/**", ".git/**", ".next/**"],
     },
     {
         files: ["**/*.ts", "**/*.tsx"],

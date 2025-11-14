@@ -65,7 +65,7 @@
       "path": "./bot"
     },
     {
-      "path": "./webui"
+      "path": "./web"
     }
   ],
   "include": [
