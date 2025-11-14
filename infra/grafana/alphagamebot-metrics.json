@@ -61,7 +61,7 @@
             "uid": "fa418a6c-0244-48dc-9326-3e5bb97e726e"
           },
           "editorMode": "builder",
-          "expr": "{service_name=\"AlphaGameBot\"} | json | line_format `{{.level}}: {{.message}}`",
+          "expr": "{service_name=\"AlphaGameBot\"} | json | statusCode != `200` | line_format `{{.level}}: {{.message}}`",
           "queryType": "range",
           "refId": "A"
         }
@@ -873,6 +873,105 @@
       "gridPos": {
         "h": 8,
         "w": 12,
+        "x": 0,
+        "y": 49
+      },
+      "id": 40,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "c1c2ce68-b1d1-431a-a3cb-fc84e1126479"
+          },
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "expr": "alphagamebot_database_operation_duration_seconds_sum",
+          "fullMetaSearch": false,
+          "includeNullMetadata": true,
+          "legendFormat": "{{model}} - {{operation}}",
+          "range": true,
+          "refId": "A",
+          "useBackend": false
+        }
+      ],
+      "title": "Database Operations",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "c1c2ce68-b1d1-431a-a3cb-fc84e1126479"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unitScale": true
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
         "x": 12,
         "y": 49
       },
@@ -1529,7 +1628,7 @@
             "h": 5,
             "w": 4,
             "x": 0,
-            "y": 70
+            "y": 78
           },
           "id": 22,
           "libraryPanel": {
@@ -1566,7 +1665,7 @@
             "h": 5,
             "w": 4,
             "x": 4,
-            "y": 70
+            "y": 78
           },
           "id": 28,
           "options": {
@@ -1630,7 +1729,7 @@
             "h": 9,
             "w": 8,
             "x": 0,
-            "y": 75
+            "y": 83
           },
           "id": 18,
           "options": {
@@ -1692,7 +1791,7 @@
             "h": 5,
             "w": 6,
             "x": 0,
-            "y": 84
+            "y": 92
           },
           "id": 17,
           "options": {
@@ -1749,7 +1848,7 @@
             "h": 5,
             "w": 5,
             "x": 6,
-            "y": 84
+            "y": 92
           },
           "id": 32,
           "options": {
@@ -1827,7 +1926,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 89
+            "y": 97
           },
           "id": 14,
           "options": {
@@ -1889,7 +1988,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 97
+            "y": 105
           },
           "id": 13,
           "options": {
@@ -1990,7 +2089,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 105
+            "y": 113
           },
           "id": 15,
           "options": {
@@ -2096,7 +2195,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 113
+            "y": 121
           },
           "id": 16,
           "options": {
@@ -2201,7 +2300,7 @@
             "h": 10,
             "w": 24,
             "x": 0,
-            "y": 121
+            "y": 129
           },
           "id": 19,
           "options": {
@@ -2258,7 +2357,7 @@
             "h": 18,
             "w": 6,
             "x": 0,
-            "y": 131
+            "y": 139
           },
           "id": 20,
           "options": {
@@ -2360,7 +2459,7 @@
             "h": 8,
             "w": 18,
             "x": 6,
-            "y": 131
+            "y": 139
           },
           "id": 30,
           "options": {
@@ -2476,7 +2575,7 @@
             "h": 10,
             "w": 18,
             "x": 6,
-            "y": 139
+            "y": 147
           },
           "id": 29,
           "options": {
@@ -2555,7 +2654,7 @@
             "h": 16,
             "w": 7,
             "x": 0,
-            "y": 149
+            "y": 157
           },
           "id": 26,
           "options": {
@@ -2630,7 +2729,7 @@
             "h": 16,
             "w": 7,
             "x": 7,
-            "y": 149
+            "y": 157
           },
           "id": 27,
           "options": {
@@ -2731,7 +2830,7 @@
             "h": 13,
             "w": 7,
             "x": 0,
-            "y": 165
+            "y": 173
           },
           "id": 33,
           "options": {
@@ -2858,7 +2957,7 @@
             "h": 13,
             "w": 17,
             "x": 7,
-            "y": 165
+            "y": 173
           },
           "id": 31,
           "options": {
@@ -2919,7 +3018,7 @@
             "h": 13,
             "w": 7,
             "x": 0,
-            "y": 178
+            "y": 186
           },
           "id": 25,
           "options": {
@@ -3019,7 +3118,7 @@
             "h": 13,
             "w": 10,
             "x": 7,
-            "y": 178
+            "y": 186
           },
           "id": 23,
           "options": {
@@ -3135,7 +3234,7 @@
             "h": 11,
             "w": 10,
             "x": 0,
-            "y": 191
+            "y": 199
           },
           "id": 24,
           "options": {
@@ -3189,6 +3288,6 @@
   "timezone": "",
   "title": "AlphaGameBot",
   "uid": "abaff5e0-29c2-4fa5-8337-a89f7abaa907",
-  "version": 28,
+  "version": 31,
   "weekStart": ""
 }
