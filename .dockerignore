@@ -1,4 +1,7 @@
 .env
 tsconfig.tsbuildinfo
+**/tsconfig.tsbuildinfo
 node_modules
 dist
+**/dist
+**/.env

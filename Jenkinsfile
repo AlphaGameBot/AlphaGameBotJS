@@ -121,13 +121,13 @@ pipeline {
                 }
             }
         }
-        stage('build') {
+        stage('build-bot') {
             when {
                 expression { env.SKIP_REMAINING_STAGES != 'true' }
             }
             steps {
                 script {
-                    stageWithPost('build') {
+                    stageWithPost('build-bot') {
                         echo "Building"
                         // 8/1/2024 -> No Cache was added because of the fact that Pycord will never update :/
                         // ----------> If you know a better way, please make a pull request!
@@ -136,24 +136,7 @@ pipeline {
                                         --build-arg BUILD_NUMBER="$BUILD_NUMBER" \
                                         --build-arg BRANCH_NAME="$BRANCH_NAME" \
                                         --build-arg VERSION="$AGB_VERSION" \
-                                        .'
-                    }
-                }
-            }
-        }
-        stage('push') {
-            when {
-                expression { env.SKIP_REMAINING_STAGES != 'true' }
-            }
-            steps {
-                script {
-                    stageWithPost('push') {
-                        echo "Pushing image to Docker Hub"
-                        sh 'echo $DOCKER_TOKEN | docker login -u alphagamedev --password-stdin'
-                        sh 'docker tag  alphagamedev/alphagamebot:$AGB_VERSION alphagamedev/alphagamebot:latest' // point tag latest to most recent version
-                        sh 'docker push alphagamedev/alphagamebot:$AGB_VERSION' // push tag latest version
-                        sh 'docker push alphagamedev/alphagamebot:latest' // push tag latest
-                        sh 'docker logout'
+                                        -f bot/Dockerfile .'
                     }
                 }
             }
@@ -182,7 +165,7 @@ pipeline {
                 }
             }
         }
-        stage('deploy') {
+        stage('deploy-bot') {
             when {
                 expression { env.SKIP_REMAINING_STAGES != 'true' }
             }
@@ -198,6 +181,23 @@ pipeline {
                                         -e DATABASE_URL -e PUSHGATEWAY_URL -e LOKI_URL -e GITHUB_PAT --restart=always \
                                         --network=alphagamebot-net --ip 10.7.1.64 --hostname alphagamebot \
                                         alphagamedev/alphagamebot:$AGB_VERSION" // add alphagamebot flags
+                    }
+                }
+            }
+        }
+        stage('push') {
+            when {
+                expression { env.SKIP_REMAINING_STAGES != 'true' }
+            }
+            steps {
+                script {
+                    stageWithPost('push') {
+                        echo "Pushing image to Docker Hub"
+                        sh 'echo $DOCKER_TOKEN | docker login -u alphagamedev --password-stdin'
+                        sh 'docker tag  alphagamedev/alphagamebot:$AGB_VERSION alphagamedev/alphagamebot:latest' // point tag latest to most recent version
+                        sh 'docker push alphagamedev/alphagamebot:$AGB_VERSION' // push tag latest version
+                        sh 'docker push alphagamedev/alphagamebot:latest' // push tag latest
+                        sh 'docker logout'
                     }
                 }
             }

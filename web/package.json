@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "postversion": "git tag -a \"webui-v$(cat package.json | jq .version -cMr)\" -m \"WebUI Release $(cat package.json | jq .version -cMr)\"",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
