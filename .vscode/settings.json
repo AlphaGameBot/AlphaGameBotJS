@@ -78,4 +78,5 @@
         "titleBar.inactiveBackground": "#21573299",
         "titleBar.inactiveForeground": "#e7e7e799"
     },
+    "jest.jestCommandLine": "npm -w bot test",
 }
