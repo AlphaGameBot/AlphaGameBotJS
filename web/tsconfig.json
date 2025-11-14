@@ -1,6 +1,10 @@
 {
   "compilerOptions": {
+    "rootDir": ".",
     "target": "ES2017",
+    "types": [
+      "node"
+    ],
     "lib": [
       "dom",
       "dom.iterable",
@@ -34,7 +38,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts"
+    "**/*.mts",
+    "**/*.css"
   ],
   "exclude": [
     "node_modules"

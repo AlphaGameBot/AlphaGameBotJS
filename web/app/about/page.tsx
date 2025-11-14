@@ -3,7 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-import { Metadata } from "next";
+import { type Metadata } from "next";
 import AboutPage from "./AboutPage";
 
 

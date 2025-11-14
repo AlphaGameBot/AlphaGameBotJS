@@ -5,11 +5,15 @@
 
 FROM node:20-bookworm AS builder
 WORKDIR /app
-COPY package.json package-lock.json ./
-COPY prisma ./prisma/
+COPY web/package*.json ./
+COPY ./prisma ./prisma/
 RUN npm ci
-COPY . .
-RUN npx prisma generate
+COPY web .
+
+COPY tsconfig.json tsconfig.base.json
+COPY web/tsconfig.json tsconfig.json
+RUN sed -i 's|"extends": *"[^"]*"|"extends": "./tsconfig.base.json"|' tsconfig.json
+
 RUN npm run build
 
 FROM node:20-bookworm-slim AS runner
@@ -20,6 +24,9 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
+
 EXPOSE 3000
 ENV NODE_ENV=production
+ARG VERSION
+ENV VERSION=$VERSION
 CMD ["npx", "next", "start", "-p", "3000"]
