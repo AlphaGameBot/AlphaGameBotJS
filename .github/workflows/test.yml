@@ -30,6 +30,10 @@ jobs:
         env:
           NODE_ENV: test
         with:
-          test-script: npm -w bot test -- --coverage --forceExit --silent
+          # Use --prefix to ensure the test runner runs in the `bot` package regardless
+          # of the action's working directory handling. Using `-w` can behave differently
+          # inside actions which may cause path-related code (like the crawler) to look
+          # in the wrong project root.
+          test-script: npm --prefix ./bot test -- --coverage --forceExit --silent
           github-token: ${{ secrets.GITHUB_TOKEN }}
           output: comment, report-markdown
