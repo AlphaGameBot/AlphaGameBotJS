@@ -16,11 +16,14 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import { collectDefaultMetrics, Gauge, Histogram, Registry } from "prom-client";
+import { collectDefaultMetrics, Counter, Gauge, Histogram, Registry } from "prom-client";
 import { client } from "../../../client.js";
+import { PrometheusMetricType } from "../../../interfaces/metrics/MetricConfiguration.js";
 import { formatTime } from "../../../utility/formatTime.js";
 import { getLogger } from "../../../utility/logging/logger.js";
+import { metricConfigurations } from "../definitions/metricConfigurations.js";
 import { Metrics, metricsManager } from "../metrics.js";
+import { metricRegistry } from "../MetricRegistry.js";
 import { MetricsHTTPServer } from "./http/MetricsHTTPServer.js";
 
 const registry = new Registry();
@@ -28,208 +31,113 @@ collectDefaultMetrics({ register: registry, prefix: "alphagamebot_" });
 const logger = getLogger("prometheus");
 const METRICS_HTTP_SERVER_PORT = process.env.METRICS_HTTP_SERVER_PORT || "9100";
 
-type MetricTypeMap = {
-    [Metrics.INTERACTIONS_RECEIVED]: Gauge,
-    [Metrics.EVENT_EXECUTED]: Gauge,
-    [Metrics.COMMAND_EXECUTED]: Gauge,
-    [Metrics.RAW_EVENT_RECEIVED]: Gauge,
-    [Metrics.METRICS_QUEUE_LENGTH]: Gauge,
-    [Metrics.METRICS_QUEUE_LENGTH_BY_METRIC]: Gauge,
-    [Metrics.METRICS_GENERATION_TIME]: Gauge,
-    [Metrics.EVENT_RECEIVED]: Gauge,
-    [Metrics.DISCORD_LATENCY]: Gauge,
-    [Metrics.APPLICATION_ERROR]: Gauge,
-    [Metrics.INTERACTION_RECEIVED]: Gauge,
-    [Metrics.FEATURE_USED]: Gauge,
-    [Metrics.METRICS_HTTP_SERVER_REQUESTS]: Gauge,
-    [Metrics.DATABASE_OPERATION]: Histogram
+// Register all metric configurations
+metricConfigurations.forEach(config => metricRegistry.register(config));
+
+// Create Prometheus metrics dynamically from configurations
+const prometheusMetrics = new Map<string, Gauge | Counter | Histogram>();
+
+for (const config of metricConfigurations) {
+    let metric: Gauge | Counter | Histogram;
+    
+    switch (config.prometheusType) {
+        case PrometheusMetricType.GAUGE:
+            metric = new Gauge({
+                name: config.prometheusName,
+                help: config.prometheusHelp,
+                labelNames: config.prometheusLabels || []
+            });
+            break;
+        case PrometheusMetricType.COUNTER:
+            metric = new Counter({
+                name: config.prometheusName,
+                help: config.prometheusHelp,
+                labelNames: config.prometheusLabels || []
+            });
+            break;
+        case PrometheusMetricType.HISTOGRAM:
+            metric = new Histogram({
+                name: config.prometheusName,
+                help: config.prometheusHelp,
+                labelNames: config.prometheusLabels || [],
+                ...(config.prometheusBuckets ? { buckets: config.prometheusBuckets } : {})
+            });
+            break;
+        default:
+            throw new Error(`Unknown Prometheus metric type: ${config.prometheusType}`);
+    }
+    
+    prometheusMetrics.set(config.name, metric);
+    registry.registerMetric(metric);
 }
 
-// Define gauges for each metric type
-const gauges: { [K in keyof MetricTypeMap]: MetricTypeMap[K] } = {
-    [Metrics.INTERACTIONS_RECEIVED]: new Gauge({
-        name: "alphagamebot_interactions_received",
-        help: "Number of interactions received",
-        labelNames: ["event"]
-    }),
-    [Metrics.EVENT_EXECUTED]: new Gauge({
-        name: "alphagamebot_event_executed_duration_ms",
-        help: "Duration of event execution in ms",
-        labelNames: ["event", "eventFile"]
-    }),
-    [Metrics.COMMAND_EXECUTED]: new Gauge({
-        name: "alphagamebot_command_executed_duration_ms",
-        help: "Duration of command execution in ms",
-        labelNames: ["event", "commandName"]
-    }),
-    [Metrics.RAW_EVENT_RECEIVED]: new Gauge({
-        name: "alphagamebot_raw_event_received",
-        help: "Number of raw events received",
-        labelNames: ["event"]
-    }),
-    [Metrics.METRICS_QUEUE_LENGTH]: new Gauge({
-        name: "alphagamebot_metrics_queue_length",
-        help: "Current length of the metrics queue"
-    }),
-    [Metrics.METRICS_QUEUE_LENGTH_BY_METRIC]: new Gauge({
-        name: "alphagamebot_metrics_queue_length_by_metric",
-        help: "Current length of the metrics queue by metric",
-        labelNames: ["metric"]
-    }),
-    [Metrics.METRICS_GENERATION_TIME]: new Gauge({
-        name: "alphagamebot_metrics_generation_time_ms",
-        help: "Time taken to generate metrics in ms"
-    }),
-    [Metrics.EVENT_RECEIVED]: new Gauge({
-        name: "alphagamebot_event_received",
-        help: "Events Received",
-        labelNames: ["event"]
-    }),
-    [Metrics.DISCORD_LATENCY]: new Gauge({
-        name: "alphagamebot_discord_latency_ms",
-        help: "Discord API Latency in ms"
-    }),
-    [Metrics.APPLICATION_ERROR]: new Gauge({
-        name: "alphagamebot_application_error",
-        help: "Number of application errors",
-        labelNames: ["event"]
-    }),
-    [Metrics.INTERACTION_RECEIVED]: new Gauge({
-        name: "alphagamebot_interaction_received",
-        help: "Number of interactions received by type",
-        labelNames: ["interactionType"]
-    }),
-    [Metrics.FEATURE_USED]: new Gauge({
-        name: "alphagamebot_feature_used",
-        help: "Features Used",
-        labelNames: ["feature"]
-    }),
-    [Metrics.METRICS_HTTP_SERVER_REQUESTS]: new Gauge({
-        name: "alphagamebot_metrics_http_server_requests",
-        help: "HTTP server requests for metrics",
-        labelNames: ["method", "url", "remoteAddress", "statusCode"]
-    }),
-    [Metrics.DATABASE_OPERATION]: new Histogram({
-        name: "alphagamebot_database_operation_duration_seconds",
-        help: "Database operation duration in seconds",
-        labelNames: ["model", "operation"],
-        buckets: [0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 5]
-    }),
-};
-
-Object.values(gauges).forEach(g => registry.registerMetric(g));
-
 async function exportMetricsToPrometheus() {
-    // Clear previous gauge values
     const startTime = performance.now();
-    Object.values(gauges).forEach(g => g.reset());
+    
+    // Reset all metrics
+    prometheusMetrics.forEach(metric => metric.reset());
+    
     logger.verbose("Exporting metrics...");
     let queueLength = 0;
-    let someMetricsFailed = false;
     const queueLengthByMetric: Map<Metrics, number> = new Map();
 
     const metricsMap = metricsManager.getMetrics();
-    for (const [metric, entries] of metricsMap.entries()) {
-        queueLengthByMetric.set(metric, entries.length);
-        gauges[Metrics.METRICS_QUEUE_LENGTH_BY_METRIC].set({ metric: metric }, entries.length);
-        logger.verbose(`Processing ${entries.length} entries for metric ${metric}`);
+    
+    for (const [metricName, entries] of metricsMap.entries()) {
+        queueLengthByMetric.set(metricName, entries.length);
+        
+        // Handle the special queue length by metric counter
+        const queueLengthByMetricGauge = prometheusMetrics.get(Metrics.METRICS_QUEUE_LENGTH_BY_METRIC) as Gauge;
+        if (queueLengthByMetricGauge) {
+            queueLengthByMetricGauge.set({ metric: metricName }, entries.length);
+        }
+        
+        logger.verbose(`Processing ${entries.length} entries for metric ${metricName}`);
+        
+        const config = metricRegistry.get(metricName);
+        if (!config) {
+            logger.error(`No configuration found for metric: ${metricName}`);
+            continue;
+        }
+        
+        const prometheusMetric = prometheusMetrics.get(metricName);
+        if (!prometheusMetric) {
+            logger.error(`No Prometheus metric found for: ${metricName}`);
+            continue;
+        }
+        
         for (const entry of entries) {
             queueLength++;
             const metricEntry = entry as { data: unknown };
-            const data = (metricEntry.data ?? {}) as Record<string, unknown>;
-
-            switch (metric) {
-                case Metrics.INTERACTIONS_RECEIVED: {
-                    (gauges[metric] as Gauge).inc({ event: String(data.event) });
-                    break;
-                }
-
-                case Metrics.EVENT_EXECUTED: {
-                    (gauges[metric] as Gauge).set({ event: String(data.event) }, Number(data.durationMs));
-                    break;
-                }
-
-                case Metrics.COMMAND_EXECUTED: {
-                    (gauges[metric] as Gauge).set({ event: String(data.event), commandName: String(data.commandName) }, Number(data.durationMs));
-                    break;
-                }
-
-                case Metrics.RAW_EVENT_RECEIVED: {
-                    (gauges[metric] as Gauge).inc({ event: String(data.event) });
-                    break;
-                }
-
-                case Metrics.METRICS_QUEUE_LENGTH: {
-                    // Handled after the loop
-                    break;
-                }
-
-                case Metrics.METRICS_GENERATION_TIME: {
-                    // Handled after the loop
-                    break;
-                }
-
-                case Metrics.EVENT_RECEIVED: {
-                    (gauges[metric] as Gauge).inc({ event: String(data.event) });
-                    break;
-                }
-
-                case Metrics.APPLICATION_ERROR: {
-                    (gauges[metric] as Gauge).inc({ event: String(data.event) });
-                    break;
-                }
-
-                case Metrics.INTERACTION_RECEIVED: {
-                    (gauges[metric] as Gauge).inc({ interactionType: String(data.interactionType) });
-                    break;
-                }
-
-                case Metrics.FEATURE_USED: {
-                    (gauges[metric] as Gauge).inc({ feature: String(data.feature) });
-                    break;
-                }
-
-                case Metrics.METRICS_HTTP_SERVER_REQUESTS: {
-                    (gauges[metric] as Gauge).inc({
-                        method: String(data.method),
-                        url: String(data.url),
-                        remoteAddress: String(data.remoteAddress),
-                        statusCode: String(data.statusCode)
-                    });
-                    break;
-                }
-
-                case Metrics.DATABASE_OPERATION: {
-                    (gauges[metric] as Histogram).observe(
-                        { model: String(data.model), operation: String(data.operation) },
-                        Number(data.durationMs) / 1000
-                    );
-                    break;
-                }
-
-                default: {
-                    // Exhaustiveness check - using the variable to avoid "assigned but never used"
-                    const _exhaustive: never = metric;
-                    void _exhaustive;
-                    someMetricsFailed = true;
-                    logger.error(`No exporter defined for metric type: ${String(metric)}! This should never happen!`);
-                    break;
-                }
+            const data = metricEntry.data;
+            
+            try {
+                config.processData(prometheusMetric, data);
+            } catch (error) {
+                logger.error(`Error processing metric ${metricName}:`, error);
             }
         }
     }
 
-    if (someMetricsFailed) logger.error("Some metrics failed to export due to missing gauge/histogram definitions.");
-
     const durationMs = performance.now() - startTime;
     logger.verbose(`Metrics generation took ${durationMs}ms, queue length is ${queueLength}`);
 
+    // Set special metrics that aren't based on queue entries
+    const metricsGenerationTimeGauge = prometheusMetrics.get(Metrics.METRICS_GENERATION_TIME) as Gauge;
+    if (metricsGenerationTimeGauge) {
+        metricsGenerationTimeGauge.set(durationMs);
+    }
+    
+    const metricsQueueLengthGauge = prometheusMetrics.get(Metrics.METRICS_QUEUE_LENGTH) as Gauge;
+    if (metricsQueueLengthGauge) {
+        metricsQueueLengthGauge.set(queueLength);
+    }
+    
+    const discordLatencyGauge = prometheusMetrics.get(Metrics.DISCORD_LATENCY) as Gauge;
+    if (discordLatencyGauge) {
+        discordLatencyGauge.set(client.ws.ping);
+    }
 
-    gauges[Metrics.METRICS_GENERATION_TIME].set(durationMs);
-    gauges[Metrics.METRICS_QUEUE_LENGTH].set(queueLength);
-    gauges[Metrics.DISCORD_LATENCY].set(client.ws.ping);
-
-    // return data for prometheus, as a string
     return await registry.metrics();
 }
 
