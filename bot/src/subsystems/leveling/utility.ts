@@ -21,20 +21,12 @@ import logger from "../../utility/logging/logger.js";
 import { calculateLevelFromPoints, calculatePoints } from "./math.js";
 
 export async function userNeedsLevelUpAnnouncement(userId: string, guildId: string): Promise<boolean> {
-    const currentData = await prisma.guild_user_stats.findUnique({
-        where: {
-            user_id_guild_id: { user_id: userId, guild_id: guildId }
-        }
-    });
+    const currentData = await prisma.userStats.findFirst({ where: { user_id: userId, guild_id: guildId } });
     const points = calculatePoints(currentData?.messages_sent || 0, currentData?.commands_ran || 0);
     const level = await calculateLevelFromPoints(points);
 
     logger.verbose(`User ${userId} in guild ${guildId} is level ${level} with ${points} points`);
-    const data = await prisma.guild_user_stats.findUnique({
-        where: {
-            user_id_guild_id: { user_id: userId, guild_id: guildId }
-        }
-    });
+    const data = await prisma.userStats.findFirst({ where: { user_id: userId, guild_id: guildId } });
 
     logger.verbose(`User ${userId} in guild ${guildId} last announced level is ${data?.last_announced_level}`);
     if (!data) return false;

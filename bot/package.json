@@ -23,7 +23,6 @@
   "license": "GPL-3.0-or-later",
   "dependencies": {
     "@octokit/rest": "^22.0.1",
-    "@prisma/client": "^6.17.1",
     "discord.js": "^14.23.1",
     "nunjucks": "^3.2.4",
     "prisma": "^6.17.1",

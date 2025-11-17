@@ -21,49 +21,34 @@ import logger from "../../utility/logging/logger.js";
 
 export async function addMessage(userId: string, guildId: string) {
     logger.verbose(`Adding message for user ${userId} in guild ${guildId}`);
+    const global = await prisma.userStats.findFirst({ where: { user_id: userId, guild_id: null } });
+    if (global) {
+        await prisma.userStats.update({ where: { id: global.id }, data: { messages_sent: { increment: 1 } } });
+    } else {
+        await prisma.userStats.create({ data: { user_id: userId, guild_id: null, messages_sent: 1, commands_ran: 0 } });
+    }
 
-    await prisma.user_stats.upsert({
-        where: { user_id: userId },
-        update: { messages_sent: { increment: 1 } },
-        create: { user_id: userId, messages_sent: 1, commands_ran: 0 }
-    });
+    const guildRow = await prisma.userStats.findFirst({ where: { user_id: userId, guild_id: guildId } });
+    if (guildRow) {
+        return await prisma.userStats.update({ where: { id: guildRow.id }, data: { messages_sent: { increment: 1 } } });
+    }
 
-    return await prisma.guild_user_stats.upsert({
-        where: {
-            user_id_guild_id: { user_id: userId, guild_id: guildId }
-        },
-        update: {
-            messages_sent: { increment: 1 }
-        },
-        create: {
-            user_id: userId,
-            guild_id: guildId,
-            messages_sent: 1,
-            commands_ran: 0
-        }
-    });
+    return await prisma.userStats.create({ data: { user_id: userId, guild_id: guildId, messages_sent: 1, commands_ran: 0 } });
 }
 
 export async function addCommand(userId: string, guildId: string) {
     logger.verbose(`Adding command for user ${userId} in guild ${guildId}`);
-    await prisma.user_stats.upsert({
-        where: { user_id: userId },
-        update: { commands_ran: { increment: 1 } },
-        create: { user_id: userId, commands_ran: 1, messages_sent: 0 }
-    });
+    const global = await prisma.userStats.findFirst({ where: { user_id: userId, guild_id: null } });
+    if (global) {
+        await prisma.userStats.update({ where: { id: global.id }, data: { commands_ran: { increment: 1 } } });
+    } else {
+        await prisma.userStats.create({ data: { user_id: userId, guild_id: null, commands_ran: 1, messages_sent: 0 } });
+    }
 
-    return await prisma.guild_user_stats.upsert({
-        where: {
-            user_id_guild_id: { user_id: userId, guild_id: guildId }
-        },
-        update: {
-            commands_ran: { increment: 1 }
-        },
-        create: {
-            user_id: userId,
-            guild_id: guildId,
-            messages_sent: 0,
-            commands_ran: 1
-        }
-    });
+    const guildRow = await prisma.userStats.findFirst({ where: { user_id: userId, guild_id: guildId } });
+    if (guildRow) {
+        return await prisma.userStats.update({ where: { id: guildRow.id }, data: { commands_ran: { increment: 1 } } });
+    }
+
+    return await prisma.userStats.create({ data: { user_id: userId, guild_id: guildId, messages_sent: 0, commands_ran: 1 } });
 }
