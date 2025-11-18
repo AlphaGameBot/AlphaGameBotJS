@@ -38,7 +38,8 @@ export enum Metrics {
 }
 
 export enum Features {
-    SAY_COMMAND = "say_command"
+    SAY_COMMAND = "say_command",
+    LAZY_POPULATION = "lazy_population"
 }
 
 interface MetricEntry<T extends keyof MetricDataMap> {
@@ -109,7 +110,7 @@ export class MetricsManager {
         if (logger.isVerboseEnabled()) {
             // Safely serialize metric data to avoid errors or deep recursion when objects contain
             // circular references. Fall back to a simple string when serialization fails.
-        
+
             const serialized = data instanceof Map ? safeStringify(Object.fromEntries(data)) : safeStringify(data);
             logger.verbose("Metric submitted: " + metric + " with data: " + serialized);
         }

@@ -8,13 +8,14 @@ datasource db {
 }
 
 model User {
-  id            String        @id @unique @db.VarChar(20)
-  username      String        @db.VarChar(32)
-  discriminator String        @db.VarChar(8)
-  created_at    DateTime      @default(now())
-  last_login    DateTime      @updatedAt
-  userStats     UserStats[]
-  errorReports  ErrorReport[]
+  id               String        @id @unique @db.VarChar(20)
+  username         String        @db.VarChar(32)
+  discriminator    String        @db.VarChar(8)
+  created_at       DateTime      @default(now())
+  last_login       DateTime      @updatedAt
+  wasLazyPopulated Boolean       @default(false)
+  userStats        UserStats[]
+  errorReports     ErrorReport[]
 }
 
 model Guild {

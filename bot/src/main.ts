@@ -18,14 +18,16 @@
 import { loadDotenv } from "./utility/debug/dotenv.js";
 await loadDotenv();
 
-import { Events, type ClientEvents } from "discord.js";
+import { Events, User, type ClientEvents } from "discord.js";
 import { existsSync } from "node:fs";
 import { client, gracefulExit } from "./client.js";
 import type { WebhookMetadata } from "./interfaces/WebhookMetadata.js";
 import { startPrometheusExporter } from "./services/metrics/exports/prometheus.js";
 import { Metrics, metricsManager } from "./services/metrics/metrics.js";
+import { lazyPopulateUser } from "./subsystems/lazyPopulation.js";
 import { rotatingStatus } from "./subsystems/rotatingStatus.js";
 import { crawlEvents } from "./utility/crawler.js";
+import prisma from "./utility/database.js";
 import logger, { getLogger, getLokiLogger } from "./utility/logging/logger.js";
 
 // Ensure the database is loaded before we do anything else
@@ -99,6 +101,33 @@ client.on("raw", (event) => {
     } else {
         eventLogger.verbose(`Raw event received: ${event.t} (not in Events enum, data contains ${Object.keys(event.d).length} keys)`);
     }
+});
+
+// on raw, attempt to add the user to the database (if not already present)
+client.on("raw", async (event) => {
+    const data = event.d;
+    if (!data) return; // no data, nothing to do
+    // we use event.d.au
+    if (!event.author && !data.user) return; // no author, nothing to do
+
+    const user = (event.author ? event.author : data.user) as User;
+
+    await prisma.user.upsert({
+        where: { id: user.id },
+        create: {
+            id: user.id,
+            username: user.username,
+            discriminator: user.discriminator
+        },
+        update: {
+            username: user.username,
+            discriminator: user.discriminator
+        }
+    }).catch((e) => {
+        logger.error(`Error upserting user ${user.id} (${user.username}#${user.discriminator}):` + e);
+    });
+
+    await lazyPopulateUser(user);
 });
 
 const djsLogger = getLokiLogger("discordjs", { level: "debug" });
