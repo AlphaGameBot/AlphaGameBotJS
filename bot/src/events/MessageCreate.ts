@@ -18,6 +18,7 @@
 
 import { Events, type Message } from "discord.js";
 import type { EventHandler } from "../interfaces/Event.js";
+import { lazyPopulateUser } from "../subsystems/lazyPopulation.js";
 import { addMessage, getUserLevel } from "../subsystems/leveling/dbhelper.js";
 import { userNeedsLevelUpAnnouncement } from "../subsystems/leveling/utility.js";
 import prisma from "../utility/database.js";
@@ -30,7 +31,7 @@ export default {
     execute: async (message: Message) => {
         // Ignore messages from bots
         if (message.author.bot) return;
-
+        await lazyPopulateUser(message.author);
         await addMessage(message.author.id, message.guildId ?? "0");
 
         if (await userNeedsLevelUpAnnouncement(message.author.id, message.guildId ?? "0")) {
