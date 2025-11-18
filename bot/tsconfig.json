@@ -4,11 +4,7 @@
         "rootDir": "./src",
         "outDir": "./dist",
         "composite": true,
-        "paths": {
-            "@prisma/client": [
-                "../prisma/client"
-            ]
-        }
+        "paths": {}
     },
     "compileOnSave": false,
     "references": [],
