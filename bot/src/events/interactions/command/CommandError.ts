@@ -94,7 +94,8 @@ export async function handleButtonPressReportError(interaction: ButtonInteractio
     // Defer the interaction immediately to avoid hitting the 3s acknowledgement window
     // while we perform DB / GitHub calls.
     try {
-        const query = await prisma.error_reports.create({
+        // Create a new ErrorReport row using the updated Prisma model name `errorReport`.
+        const query = await prisma.errorReport.create({
             data: {
                 user_id: errorInfo.caller.id,
                 guild_id: errorInfo.guild?.id ?? null,

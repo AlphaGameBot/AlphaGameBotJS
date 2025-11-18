@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "postversion": "git add . && git commit -am \"WebUI Release webui-v$(cat package.json | jq .version -cMr)\" && git tag -a \"webui-v$(cat package.json | jq .version -cMr)\" -m \"WebUI Release $(cat package.json | jq .version -cMr)\"",
-    "dev": "next dev",
+    "dev": "next dev -p 4000",
     "build": "next build",
     "start": "next start",
     "lint": "eslint --config ../eslint.config.ts ."

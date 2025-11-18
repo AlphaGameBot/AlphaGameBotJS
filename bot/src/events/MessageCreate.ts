@@ -52,13 +52,12 @@ export default {
                     });
                 }, 15000);
 
-                await prisma.guild_user_stats.update({
-                    where: {
-                        user_id_guild_id: { user_id: message.author.id, guild_id: message.guildId ?? "0" }
-                    },
-                    data: {
-                        last_announced_level: newLevel
-                    }
+                // The Prisma schema now uses a single `UserStats` model with an optional `guild_id`.
+                // Update the matching record(s) by user_id + guild_id. Use updateMany because
+                // there is no compound unique constraint in the schema for (user_id, guild_id).
+                await prisma.userStats.updateMany({
+                    where: { user_id: message.author.id, guild_id: message.guildId ?? null },
+                    data: { last_announced_level: newLevel }
                 });
             } else {
                 logger.warn(`Cannot send level up announcement in channel ${message.channel.id} of guild ${message.guild.id} due to missing permissions or invalid channel type.`);

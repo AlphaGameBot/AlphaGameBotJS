@@ -73,14 +73,17 @@ pipeline {
         COMMIT_MESSAGE = sh(script: 'git log -1 --pretty=%B ${GIT_COMMIT}', returnStdout: true).trim()
     
         // MySQL stuff
-        MYSQL_HOST = "mysql"
+        MYSQL_HOST = "postgres"
         MYSQL_DATABASE = "alphagamebot"
         MYSQL_USER = "alphagamebot" 
+        
+        // yeah it's called mysql-password but it's also for postgres
+        // -- post migration to PostgreSQL.  Don't judge me. :3
         MYSQL_PASSWORD = credentials('alphagamebot-mysql-password-v2')
 
         ENGINEERING_OPS_DISCORD_ID = 420052952686919690
         ERROR_WEBHOOK_URL = credentials('alphagamebot-webhook')
-        DATABASE_URL = "mysql://$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST/$MYSQL_DATABASE"
+        DATABASE_URL = "postgresql://$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST/$MYSQL_DATABASE"
     }
     
     stages {
