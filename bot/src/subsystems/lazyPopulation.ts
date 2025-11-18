@@ -21,6 +21,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { client } from "../client.js";
 import { Features, Metrics, metricsManager } from "../services/metrics/metrics.js";
 import prisma from "../utility/database.js";
+import { ensureUser } from "../utility/dbHelpers.js";
 import { getLogger } from "../utility/logging/logger.js";
 
 const logger = getLogger("subsystems/lazyPopulation");
@@ -64,6 +65,9 @@ if (lazyPopulationFileExists) {
  * radically different schemas. Fuck me.
  */
 export async function lazyPopulateUser(user: User) {
+    // Never lazy-populate bot accounts.
+    if (user.bot) return;
+
     // does the user exist in the lazy population config?
     if (!lazyPopulationConfig[user.id]) {
         return;
@@ -83,20 +87,8 @@ export async function lazyPopulateUser(user: User) {
     metricsManager.submitMetric(Metrics.FEATURE_USED, { feature: Features.LAZY_POPULATION });
 
     await prisma.$transaction(async (tx) => {
-        await tx.user.upsert({
-            where: { id: user.id },
-            create: {
-                id: user.id,
-                username: user.username,
-                discriminator: user.discriminator,
-                wasLazyPopulated: true
-            },
-            update: {
-                username: user.username,
-                discriminator: user.discriminator,
-                wasLazyPopulated: true
-            }
-        })
+        // Use shared helper to ensure the user exists; helper will skip bots.
+        await ensureUser(tx, user);
 
         for (const [guildId, stats] of Object.entries(userConfig.guilds)) {
             // client - get guild info from id

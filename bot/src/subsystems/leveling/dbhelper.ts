@@ -17,6 +17,7 @@
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
 import prisma from "../../utility/database.js";
+import { ensureUserById } from "../../utility/dbHelpers.js";
 import logger from "../../utility/logging/logger.js";
 import { calculateLevelFromPoints, calculatePoints } from "./math.js";
 
@@ -29,11 +30,7 @@ export async function addMessage(userId: string, guildId: string) {
     // stats row cannot be created without the corresponding user,
     // preventing foreign key constraint violations.
     await prisma.$transaction(async (tx) => {
-        await tx.user.upsert({
-            where: { id: userId },
-            create: { id: userId, username: "Unknown", discriminator: "0000", wasLazyPopulated: false },
-            update: { username: "Unknown" }
-        });
+        await ensureUserById(tx, userId, "Unknown", "0000");
 
         await tx.userStats.upsert({
             where: {
@@ -64,11 +61,7 @@ export async function addCommand(userId: string, guildId: string) {
     // Perform both the parent `User` upsert and the `UserStats` upsert
     // inside a single atomic transaction to keep the DB consistent.
     await prisma.$transaction(async (tx) => {
-        await tx.user.upsert({
-            where: { id: userId },
-            create: { id: userId, username: "Unknown", discriminator: "0000", wasLazyPopulated: false },
-            update: { username: "Unknown" }
-        });
+        await ensureUserById(tx, userId, "Unknown", "0000");
 
         await tx.userStats.upsert({
             where: {

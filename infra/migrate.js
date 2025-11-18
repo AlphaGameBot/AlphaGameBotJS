@@ -263,17 +263,17 @@ async function main() {
                     });
                 });
             } else {
-                    await prisma.$transaction(async (tx) => {
-                        return await tx.userStats.create({
-                            data: {
-                                user_id: s.user_id,
-                                guild_id: null,
-                                messages_sent: s.messages_sent,
-                                commands_ran: s.commands_ran,
-                                last_announced_level: 0,
-                            },
-                        });
+                await prisma.$transaction(async (tx) => {
+                    return await tx.userStats.create({
+                        data: {
+                            user_id: s.user_id,
+                            guild_id: null,
+                            messages_sent: s.messages_sent,
+                            commands_ran: s.commands_ran,
+                            last_announced_level: 0,
+                        },
                     });
+                });
             }
         }
 

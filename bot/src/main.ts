@@ -28,6 +28,7 @@ import { lazyPopulateUser } from "./subsystems/lazyPopulation.js";
 import { rotatingStatus } from "./subsystems/rotatingStatus.js";
 import { crawlEvents } from "./utility/crawler.js";
 import prisma from "./utility/database.js";
+import { ensureUser } from "./utility/dbHelpers.js";
 import logger, { getLogger, getLokiLogger } from "./utility/logging/logger.js";
 
 // Ensure the database is loaded before we do anything else
@@ -112,19 +113,11 @@ client.on("raw", async (event) => {
 
     const user = (event.author ? event.author : data.user) as User;
 
+    // Never add bot accounts to the DB.
+    if (user && (user as any).bot) return;
+
     await prisma.$transaction(async (tx) => {
-        return await tx.user.upsert({
-            where: { id: user.id },
-            create: {
-                id: user.id,
-                username: user.username,
-                discriminator: user.discriminator
-            },
-            update: {
-                username: user.username,
-                discriminator: user.discriminator
-            }
-        });
+        return await ensureUser(tx, user);
     }).catch((e) => {
         logger.error(`Error upserting user ${user.id} (${user.username}#${user.discriminator}):` + e);
     });
