@@ -55,8 +55,8 @@ export default {
                 // The Prisma schema now uses a single `UserStats` model with an optional `guild_id`.
                 // Update the matching record(s) by user_id + guild_id. Use updateMany because
                 // there is no compound unique constraint in the schema for (user_id, guild_id).
-                await prisma.userStats.updateMany({
-                    where: { user_id: message.author.id, guild_id: message.guildId ?? null },
+                await prisma.userStats.update({
+                    where: { user_id_guild_id: { user_id: message.author.id, guild_id: message.guild.id } },
                     data: { last_announced_level: newLevel }
                 });
             } else {

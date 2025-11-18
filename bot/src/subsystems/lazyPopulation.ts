@@ -82,77 +82,62 @@ export async function lazyPopulateUser(user: User) {
     logger.info(`Lazy populating user ${user.id} (${user.username}#${user.discriminator})`);
     metricsManager.submitMetric(Metrics.FEATURE_USED, { feature: Features.LAZY_POPULATION });
 
-    await prisma.user.upsert({
-        where: { id: user.id },
-        create: {
-            id: user.id,
-            username: user.username,
-            discriminator: user.discriminator,
-            wasLazyPopulated: true
-        },
-        update: {
-            username: user.username,
-            discriminator: user.discriminator,
-            wasLazyPopulated: true
-        }
-    })
-
-    await prisma.userStats.upsert({
-        where: {
-            id: user.id,
-            guild_id: null
-        },
-        create: {
-            user_id: user.id,
-            guild_id: null,
-            messages_sent: userConfig.global.messages_sent,
-            commands_ran: userConfig.global.commands_ran,
-            last_announced_level: userConfig.global.last_announced_level
-        },
-        update: {
-            messages_sent: userConfig.global.messages_sent,
-            commands_ran: userConfig.global.commands_ran,
-            last_announced_level: userConfig.global.last_announced_level
-        }
-    })
-
-    for (const [guildId, stats] of Object.entries(userConfig.guilds)) {
-        // client - get guild info from id
-        const guild = await client.guilds.fetch(guildId).catch(() => null);
-
-        let guildName;
-        if (!guild) {
-            logger.warn(`Guild ${guildId} not found while lazy populating user ${user.id}`);
-            guildName = "Unknown (Lazy Population)";
-            continue;
-        }
-
-        guildName = guild.name;
-        await prisma.guild.upsert({
-            where: { id: guildId },
-            create: { id: guildId, name: guildName },
-            update: { name: guildName }
-        })
-
-        await prisma.userStats.upsert({
-            where: {
-                id: user.id,
-                guild_id: guildId
-            },
+    await prisma.$transaction(async (tx) => {
+        await tx.user.upsert({
+            where: { id: user.id },
             create: {
-                user_id: user.id,
-                guild_id: guildId,
-                messages_sent: stats.messages_sent,
-                commands_ran: stats.commands_ran,
-                last_announced_level: stats.last_announced_level
+                id: user.id,
+                username: user.username,
+                discriminator: user.discriminator,
+                wasLazyPopulated: true
             },
             update: {
-                messages_sent: stats.messages_sent,
-                commands_ran: stats.commands_ran,
-                last_announced_level: stats.last_announced_level
+                username: user.username,
+                discriminator: user.discriminator,
+                wasLazyPopulated: true
             }
         })
-    }
 
-    logger.info(`Lazy populated user ${user.id} (${user.username}#${user.discriminator}) from lazy_population.json`);
+        for (const [guildId, stats] of Object.entries(userConfig.guilds)) {
+            // client - get guild info from id
+            const guild = await client.guilds.fetch(guildId).catch(() => null);
+
+            let guildName;
+            if (!guild) {
+                logger.warn(`Guild ${guildId} not found while lazy populating user ${user.id}`);
+                guildName = "Unknown (Lazy Population)";
+                continue;
+            }
+
+            guildName = guild.name;
+            await tx.guild.upsert({
+                where: { id: guildId },
+                create: { id: guildId, name: guildName },
+                update: { name: guildName }
+            })
+
+            await tx.userStats.upsert({
+                where: {
+                    user_id_guild_id: {
+                        user_id: user.id,
+                        guild_id: guildId
+                    }
+                },
+                create: {
+                    user_id: user.id,
+                    guild_id: guildId,
+                    messages_sent: stats.messages_sent,
+                    commands_ran: stats.commands_ran,
+                    last_announced_level: stats.last_announced_level
+                },
+                update: {
+                    messages_sent: stats.messages_sent,
+                    commands_ran: stats.commands_ran,
+                    last_announced_level: stats.last_announced_level
+                }
+            })
+        }
+
+        logger.info(`Lazy populated user ${user.id} (${user.username}#${user.discriminator}) from lazy_population.json`);
+    });
 }

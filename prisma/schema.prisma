@@ -28,16 +28,18 @@ model Guild {
 }
 
 model UserStats {
-  id       String  @id @default(cuid())
-  user_id  String  @db.VarChar(20)
-  guild_id String? @db.VarChar(20)
+  id       String @id @default(cuid())
+  user_id  String @db.VarChar(20)
+  guild_id String @db.VarChar(20)
 
-  user  User   @relation(fields: [user_id], references: [id])
-  guild Guild? @relation(fields: [guild_id], references: [id])
+  user  User  @relation(fields: [user_id], references: [id])
+  guild Guild @relation(fields: [guild_id], references: [id])
 
   messages_sent        Int @default(0)
   commands_ran         Int @default(0)
   last_announced_level Int @default(0)
+
+  @@unique([user_id, guild_id])
 }
 
 model ErrorReport {
