@@ -18,6 +18,7 @@
 
 import type { User } from "discord.js";
 import { existsSync, readFileSync } from "node:fs";
+import { client } from "../client.js";
 import { Features, Metrics, metricsManager } from "../services/metrics/metrics.js";
 import prisma from "../utility/database.js";
 import { getLogger } from "../utility/logging/logger.js";
@@ -81,20 +82,22 @@ export async function lazyPopulateUser(user: User) {
     logger.info(`Lazy populating user ${user.id} (${user.username}#${user.discriminator})`);
     metricsManager.submitMetric(Metrics.FEATURE_USED, { feature: Features.LAZY_POPULATION });
 
-    prisma.user.upsert({
+    await prisma.user.upsert({
         where: { id: user.id },
         create: {
             id: user.id,
             username: user.username,
-            discriminator: user.discriminator
+            discriminator: user.discriminator,
+            wasLazyPopulated: true
         },
         update: {
             username: user.username,
-            discriminator: user.discriminator
+            discriminator: user.discriminator,
+            wasLazyPopulated: true
         }
     })
 
-    prisma.userStats.upsert({
+    await prisma.userStats.upsert({
         where: {
             id: user.id,
             guild_id: null
@@ -114,7 +117,24 @@ export async function lazyPopulateUser(user: User) {
     })
 
     for (const [guildId, stats] of Object.entries(userConfig.guilds)) {
-        prisma.userStats.upsert({
+        // client - get guild info from id
+        const guild = await client.guilds.fetch(guildId).catch(() => null);
+
+        let guildName;
+        if (!guild) {
+            logger.warn(`Guild ${guildId} not found while lazy populating user ${user.id}`);
+            guildName = "Unknown (Lazy Population)";
+            continue;
+        }
+
+        guildName = guild.name;
+        await prisma.guild.upsert({
+            where: { id: guildId },
+            create: { id: guildId, name: guildName },
+            update: { name: guildName }
+        })
+
+        await prisma.userStats.upsert({
             where: {
                 id: user.id,
                 guild_id: guildId
