@@ -67,6 +67,13 @@ if (lazyPopulationFileExists) {
 export async function lazyPopulateUser(user: User) {
     // Never lazy-populate bot accounts.
     if (user.bot) return;
+    
+    const currentUser = await prisma.user.findUnique({ where: { id: user.id } });
+    if (currentUser?.wasLazyPopulated) {
+        logger.debug(`User ${user.id} (${user.username}#${user.discriminator}) was already lazy populated.`);
+        return;
+    }
+
 
     // does the user exist in the lazy population config?
     if (!lazyPopulationConfig[user.id]) {
@@ -76,12 +83,6 @@ export async function lazyPopulateUser(user: User) {
     const userConfig = lazyPopulationConfig[user.id];
 
     if (!userConfig) return;
-
-    const currentUser = await prisma.user.findUnique({ where: { id: user.id } });
-    if (currentUser?.wasLazyPopulated) {
-        logger.debug(`User ${user.id} (${user.username}#${user.discriminator}) was already lazy populated.`);
-        return;
-    }
 
     logger.info(`Lazy populating user ${user.id} (${user.username}#${user.discriminator})`);
     metricsManager.submitMetric(Metrics.FEATURE_USED, { feature: Features.LAZY_POPULATION });
