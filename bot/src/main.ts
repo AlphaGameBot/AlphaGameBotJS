@@ -112,17 +112,19 @@ client.on("raw", async (event) => {
 
     const user = (event.author ? event.author : data.user) as User;
 
-    await prisma.user.upsert({
-        where: { id: user.id },
-        create: {
-            id: user.id,
-            username: user.username,
-            discriminator: user.discriminator
-        },
-        update: {
-            username: user.username,
-            discriminator: user.discriminator
-        }
+    await prisma.$transaction(async (tx) => {
+        return await tx.user.upsert({
+            where: { id: user.id },
+            create: {
+                id: user.id,
+                username: user.username,
+                discriminator: user.discriminator
+            },
+            update: {
+                username: user.username,
+                discriminator: user.discriminator
+            }
+        });
     }).catch((e) => {
         logger.error(`Error upserting user ${user.id} (${user.username}#${user.discriminator}):` + e);
     });

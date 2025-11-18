@@ -24,22 +24,34 @@ import { calculateLevelFromPoints, calculatePoints } from "./math.js";
 export async function addMessage(userId: string, guildId: string) {
     logger.verbose(`Adding message for user ${userId} in guild ${guildId}`);
 
-    await prisma.userStats.upsert({
-        where: {
-            user_id_guild_id: {
+    // Perform both the parent `User` upsert and the `UserStats` upsert
+    // inside a single atomic transaction. This guarantees that the
+    // stats row cannot be created without the corresponding user,
+    // preventing foreign key constraint violations.
+    await prisma.$transaction(async (tx) => {
+        await tx.user.upsert({
+            where: { id: userId },
+            create: { id: userId, username: "Unknown", discriminator: "0000", wasLazyPopulated: false },
+            update: { username: "Unknown" }
+        });
+
+        await tx.userStats.upsert({
+            where: {
+                user_id_guild_id: {
+                    user_id: userId,
+                    guild_id: guildId
+                }
+            },
+            update: {
+                messages_sent: { increment: 1 }
+            },
+            create: {
                 user_id: userId,
-                guild_id: guildId
+                guild_id: guildId,
+                messages_sent: 1,
+                commands_ran: 0
             }
-        },
-        update: {
-            messages_sent: { increment: 1 }
-        },
-        create: {
-            user_id: userId,
-            guild_id: guildId,
-            messages_sent: 1,
-            commands_ran: 0
-        }
+        });
     });
 }
 
@@ -49,22 +61,32 @@ export async function addCommand(userId: string, guildId: string) {
     // Guild-scoped stats
 
     // use upsert instead
-    await prisma.userStats.upsert({
-        where: {
-            user_id_guild_id: {
+    // Perform both the parent `User` upsert and the `UserStats` upsert
+    // inside a single atomic transaction to keep the DB consistent.
+    await prisma.$transaction(async (tx) => {
+        await tx.user.upsert({
+            where: { id: userId },
+            create: { id: userId, username: "Unknown", discriminator: "0000", wasLazyPopulated: false },
+            update: { username: "Unknown" }
+        });
+
+        await tx.userStats.upsert({
+            where: {
+                user_id_guild_id: {
+                    user_id: userId,
+                    guild_id: guildId
+                }
+            },
+            update: {
+                commands_ran: { increment: 1 }
+            },
+            create: {
                 user_id: userId,
-                guild_id: guildId
+                guild_id: guildId,
+                messages_sent: 0,
+                commands_ran: 1
             }
-        },
-        update: {
-            commands_ran: { increment: 1 }
-        },
-        create: {
-            user_id: userId,
-            guild_id: guildId,
-            messages_sent: 0,
-            commands_ran: 1
-        }
+        });
     });
 }
 

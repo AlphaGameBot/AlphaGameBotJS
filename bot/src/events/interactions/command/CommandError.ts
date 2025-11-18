@@ -95,14 +95,16 @@ export async function handleButtonPressReportError(interaction: ButtonInteractio
     // while we perform DB / GitHub calls.
     try {
         // Create a new ErrorReport row using the updated Prisma model name `errorReport`.
-        const query = await prisma.errorReport.create({
-            data: {
-                user_id: errorInfo.caller.id,
-                guild_id: errorInfo.guild?.id ?? null,
-                error_msg: typeof errorInfo.error === "string"
-                    ? errorInfo.error
-                    : JSON.stringify(errorInfo.error),
-            }
+        const query = await prisma.$transaction(async (tx) => {
+            return await tx.errorReport.create({
+                data: {
+                    user_id: errorInfo.caller.id,
+                    guild_id: errorInfo.guild?.id ?? null,
+                    error_msg: typeof errorInfo.error === "string"
+                        ? errorInfo.error
+                        : JSON.stringify(errorInfo.error),
+                }
+            });
         });
 
         const safeStringify = (obj: unknown) => {

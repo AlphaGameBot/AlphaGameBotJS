@@ -197,16 +197,18 @@ async function main() {
                 Object.assign(u, userData);
             }
             const lastSeen = u.last_seen ? new Date(u.last_seen) : new Date();
-            await prisma.user.upsert({
-                where: { id: u.id },
-                update: { last_login: lastSeen },
-                create: {
-                    id: u.id,
-                    username: (u && u.username) || `unknown-${u.id}`,
-                    discriminator: (u && u.discriminator) || '0000',
-                    created_at: lastSeen,
-                    last_login: lastSeen,
-                },
+            await prisma.$transaction(async (tx) => {
+                return await tx.user.upsert({
+                    where: { id: u.id },
+                    update: { last_login: lastSeen },
+                    create: {
+                        id: u.id,
+                        username: (u && u.username) || `unknown-${u.id}`,
+                        discriminator: (u && u.discriminator) || '0000',
+                        created_at: lastSeen,
+                        last_login: lastSeen,
+                    },
+                });
             });
         }
 
@@ -229,16 +231,18 @@ async function main() {
                 return await djsrest.get(`/users/${uid}`);
             }).catch(() => null);
 
-            await prisma.user.upsert({
-                where: { id: uid },
-                update: { last_login: new Date() },
-                create: {
-                    id: uid,
-                    username: (u && u.username) || `unknown-${uid}`,
-                    discriminator: (u && u.discriminator) || '0000',
-                    created_at: new Date(),
-                    last_login: new Date(),
-                },
+            await prisma.$transaction(async (tx) => {
+                return await tx.user.upsert({
+                    where: { id: uid },
+                    update: { last_login: new Date() },
+                    create: {
+                        id: uid,
+                        username: (u && u.username) || `unknown-${uid}`,
+                        discriminator: (u && u.discriminator) || '0000',
+                        created_at: new Date(),
+                        last_login: new Date(),
+                    },
+                });
             });
         }
 
@@ -252,20 +256,24 @@ async function main() {
                 where: { user_id: s.user_id, guild_id: null },
             });
             if (existing) {
-                await prisma.userStats.update({
-                    where: { id: existing.id },
-                    data: { messages_sent: s.messages_sent, commands_ran: s.commands_ran },
+                await prisma.$transaction(async (tx) => {
+                    return await tx.userStats.update({
+                        where: { id: existing.id },
+                        data: { messages_sent: s.messages_sent, commands_ran: s.commands_ran },
+                    });
                 });
             } else {
-                await prisma.userStats.create({
-                    data: {
-                        user_id: s.user_id,
-                        guild_id: null,
-                        messages_sent: s.messages_sent,
-                        commands_ran: s.commands_ran,
-                        last_announced_level: 0,
-                    },
-                });
+                    await prisma.$transaction(async (tx) => {
+                        return await tx.userStats.create({
+                            data: {
+                                user_id: s.user_id,
+                                guild_id: null,
+                                messages_sent: s.messages_sent,
+                                commands_ran: s.commands_ran,
+                                last_announced_level: 0,
+                            },
+                        });
+                    });
             }
         }
 
@@ -280,10 +288,12 @@ async function main() {
                 return await djsrest.get(`/guilds/${gid}`);
             }).catch(() => null);
 
-            await prisma.guild.upsert({
-                where: { id: gid },
-                update: { updated_at: new Date() },
-                create: { id: gid, name: (g && g.name) || `unknown-${gid}`, created_at: new Date(), updated_at: new Date() },
+            await prisma.$transaction(async (tx) => {
+                return await tx.guild.upsert({
+                    where: { id: gid },
+                    update: { updated_at: new Date() },
+                    create: { id: gid, name: (g && g.name) || `unknown-${gid}`, created_at: new Date(), updated_at: new Date() },
+                });
             });
         }
 
@@ -296,23 +306,27 @@ async function main() {
                 where: { user_id: s.user_id, guild_id: s.guild_id },
             });
             if (existing) {
-                await prisma.userStats.update({
-                    where: { id: existing.id },
-                    data: {
-                        messages_sent: s.messages_sent,
-                        commands_ran: s.commands_ran,
-                        last_announced_level: s.last_announced_level ?? existing.last_announced_level,
-                    },
+                await prisma.$transaction(async (tx) => {
+                    return await tx.userStats.update({
+                        where: { id: existing.id },
+                        data: {
+                            messages_sent: s.messages_sent,
+                            commands_ran: s.commands_ran,
+                            last_announced_level: s.last_announced_level ?? existing.last_announced_level,
+                        },
+                    });
                 });
             } else {
-                await prisma.userStats.create({
-                    data: {
-                        user_id: s.user_id,
-                        guild_id: s.guild_id,
-                        messages_sent: s.messages_sent,
-                        commands_ran: s.commands_ran,
-                        last_announced_level: s.last_announced_level ?? 0,
-                    },
+                await prisma.$transaction(async (tx) => {
+                    return await tx.userStats.create({
+                        data: {
+                            user_id: s.user_id,
+                            guild_id: s.guild_id,
+                            messages_sent: s.messages_sent,
+                            commands_ran: s.commands_ran,
+                            last_announced_level: s.last_announced_level ?? 0,
+                        },
+                    });
                 });
             }
         }
@@ -326,24 +340,28 @@ async function main() {
             const exists = await prisma.errorReport.findUnique({ where: { id: e.id } });
             const createdAt = e.created_at ? new Date(e.created_at) : new Date();
             if (exists) {
-                await prisma.errorReport.update({
-                    where: { id: e.id },
-                    data: {
-                        error_msg: e.error_msg,
-                        user_id: e.user_id,
-                        guild_id: e.guild_id ?? null,
-                        created_at: createdAt,
-                    },
+                await prisma.$transaction(async (tx) => {
+                    return await tx.errorReport.update({
+                        where: { id: e.id },
+                        data: {
+                            error_msg: e.error_msg,
+                            user_id: e.user_id,
+                            guild_id: e.guild_id ?? null,
+                            created_at: createdAt,
+                        },
+                    });
                 });
             } else {
-                await prisma.errorReport.create({
-                    data: {
-                        id: e.id,
-                        user_id: e.user_id,
-                        guild_id: e.guild_id ?? null,
-                        error_msg: e.error_msg,
-                        created_at: createdAt,
-                    },
+                await prisma.$transaction(async (tx) => {
+                    return await tx.errorReport.create({
+                        data: {
+                            id: e.id,
+                            user_id: e.user_id,
+                            guild_id: e.guild_id ?? null,
+                            error_msg: e.error_msg,
+                            created_at: createdAt,
+                        },
+                    });
                 });
             }
         }
