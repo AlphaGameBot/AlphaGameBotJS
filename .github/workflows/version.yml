@@ -73,7 +73,7 @@ jobs:
                 echo "Creating changeset for $pkg: type=$TYPE, summary=$SUMMARY"
 
                 # Generate changeset
-                npx changeset add --package "$pkg" --type "$TYPE" --summary "Auto bump $pkg: $SUMMARY"
+                npx changeset add --non-interactive --package "$pkg" --type "$TYPE" --summary "Auto bump $pkg: $SUMMARY"
             done
 
       - name: Create & Publish Releases
