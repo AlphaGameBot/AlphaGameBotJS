@@ -29,9 +29,6 @@ jobs:
 
       - name: Create & Publish Releases
         uses: changesets/action@v1
-        with:
-          # no publish - jenkins handles that
-          publish: none
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
