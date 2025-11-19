@@ -1,0 +1,40 @@
+name: Version & Release Packages
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Create & Publish Releases
+        uses: changesets/action@v1
+        with:
+          # no publish - jenkins handles that
+          publish: none
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fire off Jenkins
+        run: |
+          curl -X POST https://jenkins.alphagame.dev/multibranch-webhook-trigger/invoke?token=${{secrets.JENKINS_BUILD_TOKEN}}
