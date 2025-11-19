@@ -203,6 +203,7 @@ pipeline {
                                         -e TOKEN -e WEBHOOK -e BUILD_NUMBER -e ENGINEERING_OPS_DISCORD_ID -e ERROR_WEBHOOK_URL \
                                         -e DATABASE_URL -e PUSHGATEWAY_URL -e LOKI_URL -e GITHUB_PAT --restart=always \
                                         --network=alphagamebot-net --ip 10.7.1.64 --hostname alphagamebot \
+                                        -v /home/damien/migration-json/stats_export_20251118_173149.json:/lazy_population.json:ro \
                                         alphagamedev/alphagamebot:$AGB_VERSION" // add alphagamebot flags
                     }
                 }
