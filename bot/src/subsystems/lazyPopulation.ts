@@ -74,7 +74,13 @@ export async function lazyPopulateUser(user: User) {
         return;
     }
 
-
+    if (currentUser && currentUser.username === "Unknown") {
+        logger.info(`Updating existing user ${user.id} (${user.username}#${user.discriminator}) because their username was unknown.`);
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { username: user.username, discriminator: user.discriminator }
+        });
+    }
     // does the user exist in the lazy population config?
     if (!lazyPopulationConfig[user.id]) {
         return;
