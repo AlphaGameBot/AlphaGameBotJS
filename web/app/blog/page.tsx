@@ -22,11 +22,11 @@ export default function BlogPage() {
             ) : (
                 <div className="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                     {posts.map((post: any) => {
-                        const excerpt = post.content 
+                        const excerpt = post.content
                             ? String(post.content).substring(0, 150).replace(/[#*_`]/g, '').trim() + '...'
                             : 'Click to read more...';
-                        
-                        const formattedDate = post.date 
+
+                        const formattedDate = post.date
                             ? new Date(post.date).toLocaleDateString('en-US', {
                                 year: 'numeric',
                                 month: 'long',
@@ -45,8 +45,8 @@ export default function BlogPage() {
 
                                 {/* Post Title */}
                                 <h2 className="mb-3">
-                                    <Link 
-                                        href={post.permalink} 
+                                    <Link
+                                        href={post.permalink}
                                         className="text-2xl font-bold text-text-default group-hover:text-primary-500 transition-colors"
                                     >
                                         {post.title || post.id}
@@ -59,24 +59,24 @@ export default function BlogPage() {
                                 </p>
 
                                 {/* Read More Link */}
-                                <Link 
-                                    href={post.permalink} 
+                                <Link
+                                    href={post.permalink}
                                     className="inline-flex items-center gap-2 text-primary-500 font-semibold hover:text-primary-600 transition-colors group/link"
                                 >
                                     Read more
-                                    <svg 
-                                        xmlns="http://www.w3.org/2000/svg" 
-                                        width="16" 
-                                        height="16" 
-                                        viewBox="0 0 24 24" 
-                                        fill="none" 
-                                        stroke="currentColor" 
-                                        strokeWidth="2" 
-                                        strokeLinecap="round" 
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
                                         strokeLinejoin="round"
                                         className="group-hover/link:translate-x-1 transition-transform"
                                     >
-                                        <path d="m9 18 6-6-6-6"/>
+                                        <path d="m9 18 6-6-6-6" />
                                     </svg>
                                 </Link>
                             </article>

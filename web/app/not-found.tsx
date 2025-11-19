@@ -17,14 +17,11 @@
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
 "use client";
-import Footer from "./components/Footer";
-import Header from "./components/Header";
 
 
 export default function NotFound() {
     return (
         <main>
-            <Header />
             {/* nice 404 page - funny and engaging */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
                 <h1 style={{ fontSize: '4rem', marginBottom: '1rem' }}>404 Not Found</h1>
@@ -33,9 +30,6 @@ export default function NotFound() {
                     (╯°□°）╯︵ ┻━┻</p>
                 <a href="/" style={{ marginTop: '2rem', padding: '1rem 2rem', backgroundColor: '#0070f3', color: '#fff', borderRadius: '5px', textDecoration: 'none' }}>Go to Home</a>
             </div>
-
-
-            <Footer />
         </main>
     );
 }

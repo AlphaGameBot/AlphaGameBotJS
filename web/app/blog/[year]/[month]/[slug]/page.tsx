@@ -1,9 +1,9 @@
-import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import Markdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 import { getPostByRoute } from '../../../../lib/posts';
 
 type Props = {
@@ -24,29 +24,29 @@ export default async function PostPage({ params }: Props) {
 
         if (isExternal) {
             return (
-                <a 
-                    href={href} 
-                    target="_blank" 
+                <a
+                    href={href}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1"
                     {...props}
                 >
                     {children}
-                    <svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        width="14" 
-                        height="14" 
-                        viewBox="0 0 24 24" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        strokeWidth="2" 
-                        strokeLinecap="round" 
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
                         strokeLinejoin="round"
                         className="inline-block"
                     >
-                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                        <polyline points="15 3 21 3 21 9"/>
-                        <line x1="10" y1="14" x2="21" y2="3"/>
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                        <polyline points="15 3 21 3 21 9" />
+                        <line x1="10" y1="14" x2="21" y2="3" />
                     </svg>
                 </a>
             );
@@ -62,22 +62,22 @@ export default async function PostPage({ params }: Props) {
     return (
         <main className="container py-12">
             {/* Back to Blog Link */}
-            <Link 
-                href="/blog" 
+            <Link
+                href="/blog"
                 className="inline-flex items-center gap-2 mb-8 text-primary-500 hover:text-primary-600 transition-colors"
             >
-                <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    width="20" 
-                    height="20" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2" 
-                    strokeLinecap="round" 
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
                     strokeLinejoin="round"
                 >
-                    <path d="m15 18-6-6 6-6"/>
+                    <path d="m15 18-6-6 6-6" />
                 </svg>
                 Back to Blog
             </Link>
@@ -95,7 +95,7 @@ export default async function PostPage({ params }: Props) {
                             day: 'numeric'
                         }) : 'No date'}
                     </time>
-                    {post.author && typeof post.author === 'string' && (
+                    {typeof post.author === 'string' && post.author && (
                         <>
                             <span>•</span>
                             <span className="text-sm">By {post.author}</span>
@@ -107,7 +107,7 @@ export default async function PostPage({ params }: Props) {
             {/* Blog Post Content */}
             <article className="card">
                 <div className="prose max-w-none">
-                    <Markdown 
+                    <Markdown
                         remarkPlugins={[remarkGfm]}
                         rehypePlugins={[rehypeHighlight, rehypeRaw]}
                         components={{
@@ -121,22 +121,22 @@ export default async function PostPage({ params }: Props) {
 
             {/* Back to Blog Footer Link */}
             <div className="mt-12 pt-8 border-t border-border">
-                <Link 
-                    href="/blog" 
+                <Link
+                    href="/blog"
                     className="inline-flex items-center gap-2 text-primary-500 hover:text-primary-600 transition-colors"
                 >
-                    <svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        width="20" 
-                        height="20" 
-                        viewBox="0 0 24 24" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        strokeWidth="2" 
-                        strokeLinecap="round" 
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
                         strokeLinejoin="round"
                     >
-                        <path d="m15 18-6-6 6-6"/>
+                        <path d="m15 18-6-6 6-6" />
                     </svg>
                     Back to all posts
                 </Link>
