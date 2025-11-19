@@ -17,6 +17,48 @@ export default async function PostPage({ params }: Props) {
 
     const html = String(post.content || '');
 
+    // Custom link component to handle external links
+    const LinkRenderer = ({ href, children, ...props }: any) => {
+        const isExternal = href?.startsWith('http://') || href?.startsWith('https://');
+        const isInternal = href?.startsWith('/') || href?.startsWith('#');
+
+        if (isExternal) {
+            return (
+                <a 
+                    href={href} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1"
+                    {...props}
+                >
+                    {children}
+                    <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        width="14" 
+                        height="14" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                        className="inline-block"
+                    >
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                        <polyline points="15 3 21 3 21 9"/>
+                        <line x1="10" y1="14" x2="21" y2="3"/>
+                    </svg>
+                </a>
+            );
+        }
+
+        if (isInternal) {
+            return <Link href={href} {...props}>{children}</Link>;
+        }
+
+        return <a href={href} {...props}>{children}</a>;
+    };
+
     return (
         <main className="container py-12">
             {/* Back to Blog Link */}
@@ -68,6 +110,9 @@ export default async function PostPage({ params }: Props) {
                     <Markdown 
                         remarkPlugins={[remarkGfm]}
                         rehypePlugins={[rehypeHighlight, rehypeRaw]}
+                        components={{
+                            a: LinkRenderer,
+                        }}
                     >
                         {html}
                     </Markdown>
