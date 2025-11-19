@@ -104,7 +104,11 @@ export async function crawlEvents() {
     const srcEventsPath = path.join(projectRoot, "src", "events");
     const eventsPath = existsSync(distEventsPath) ? distEventsPath : srcEventsPath;
     const eventsIsDist = eventsPath.includes(path.join(path.sep, "dist", path.sep)) || eventsPath.endsWith(path.join(path.sep, "dist"));
-    const eventFiles = readdirSync(eventsPath).filter(file => eventsIsDist ? file.endsWith(".js") : file.endsWith(".ts") || file.endsWith(".js"));
+    const eventFiles = readdirSync(eventsPath).filter(file => {
+        // Exclude test files
+        if (file.includes('.test.')) return false;
+        return eventsIsDist ? file.endsWith(".js") : file.endsWith(".ts") || file.endsWith(".js");
+    });
     const events: Array<LoadedEventHandler<keyof ClientEvents>> = [];
 
     logger.debug(`Crawling events in: ${eventsPath}`);
