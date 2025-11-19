@@ -27,6 +27,21 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Generate Changesets automatically
+        run: |
+          # Find changed packages since last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 || echo "")
+          if [ -n "$LAST_TAG" ]; then
+            CHANGED=$(git diff --name-only $LAST_TAG HEAD | grep -E '^(bot|web)/' | cut -d/ -f1 | sort -u)
+          else
+            CHANGED="bot web"
+          fi
+
+          for pkg in $CHANGED; do
+            echo "Creating changeset for $pkg"
+            npx changeset add --empty --summary "Auto bump $pkg due to changes"
+          done
+
       - name: Create & Publish Releases
         uses: changesets/action@v1
         env:
