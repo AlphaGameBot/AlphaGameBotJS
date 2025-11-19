@@ -48,6 +48,12 @@ jobs:
             for pkg in $CHANGED; do
                 echo "Processing $pkg..."
 
+                # Map folder to package.json name
+                if [ "$pkg" = "bot" ]; then
+                    PKG_NAME="alphagamebot"
+                elif [ "$pkg" = "web" ]; then
+                    PKG_NAME="alphagamebot-webui"
+                fi
                 # Get commit messages since last tag
                 if [ -n "$LAST_TAG" ]; then
                     MSGS=$(git log $LAST_TAG..HEAD --pretty=%B -- $pkg)
@@ -70,10 +76,10 @@ jobs:
 
                 SUMMARY=$(echo "$MSGS" | head -n1 | tr -d '\n')
 
-                echo "Creating changeset for $pkg: type=$TYPE, summary=$SUMMARY"
+                echo "Creating changeset for $PKG_NAME: type=$TYPE, summary=$SUMMARY"
 
                 # Generate changeset
-                npx changeset add --non-interactive --package "$pkg" --type "$TYPE" --summary "Auto bump $pkg: $SUMMARY"
+                npx changeset add --non-interactive --package "$PKG_NAME" --type "$TYPE" --summary "Auto bump $PKG_NAME: $SUMMARY"
             done
 
       - name: Create & Publish Releases
