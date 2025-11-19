@@ -21,16 +21,33 @@ import { ensureUserById } from "../../utility/dbHelpers.js";
 import logger from "../../utility/logging/logger.js";
 import { calculateLevelFromPoints, calculatePoints } from "./math.js";
 
+/**
+ * Ensure a guild exists in the database.
+ * This is a defensive helper that uses a placeholder name if the guild isn't found.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function ensureGuildById(tx: any, guildId: string) {
+    await tx.guild.upsert({
+        where: { id: guildId },
+        create: { 
+            id: guildId, 
+            name: `unknown-${guildId}` 
+        },
+        update: {}
+    });
+}
+
 
 export async function addMessage(userId: string, guildId: string) {
     logger.verbose(`Adding message for user ${userId} in guild ${guildId}`);
 
-    // Perform both the parent `User` upsert and the `UserStats` upsert
+    // Perform both the parent `User` and `Guild` upserts along with the `UserStats` upsert
     // inside a single atomic transaction. This guarantees that the
-    // stats row cannot be created without the corresponding user,
+    // stats row cannot be created without the corresponding user and guild,
     // preventing foreign key constraint violations.
     await prisma.$transaction(async (tx) => {
         await ensureUserById(tx, userId, "Unknown", "0000");
+        await ensureGuildById(tx, guildId);
 
         await tx.userStats.upsert({
             where: {
@@ -58,10 +75,11 @@ export async function addCommand(userId: string, guildId: string) {
     // Guild-scoped stats
 
     // use upsert instead
-    // Perform both the parent `User` upsert and the `UserStats` upsert
+    // Perform both the parent `User` and `Guild` upserts along with the `UserStats` upsert
     // inside a single atomic transaction to keep the DB consistent.
     await prisma.$transaction(async (tx) => {
         await ensureUserById(tx, userId, "Unknown", "0000");
+        await ensureGuildById(tx, guildId);
 
         await tx.userStats.upsert({
             where: {

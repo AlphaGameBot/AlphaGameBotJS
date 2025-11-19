@@ -99,15 +99,15 @@ export async function lazyPopulateUser(user: User) {
             if (!guild) {
                 logger.warn(`Guild ${guildId} not found while lazy populating user ${user.id}`);
                 guildName = "Unknown (Lazy Population)";
-                continue;
+            } else {
+                guildName = guild.name;
             }
 
-            guildName = guild.name;
             await tx.guild.upsert({
                 where: { id: guildId },
                 create: { id: guildId, name: guildName },
                 update: { name: guildName }
-            })
+            });
 
             await tx.userStats.upsert({
                 where: {
@@ -128,7 +128,7 @@ export async function lazyPopulateUser(user: User) {
                     commands_ran: stats.commands_ran,
                     last_announced_level: stats.last_announced_level
                 }
-            })
+            });
         }
 
         logger.info(`Lazy populated user ${user.id} (${user.username}#${user.discriminator}) from lazy_population.json`);
