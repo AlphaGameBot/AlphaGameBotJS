@@ -1,5 +1,13 @@
 # AlphaGameBot Development Guide
 
+## Important Notes
+- When working, please make git commits automatically, using the Conventional Commits format.
+  - Examples:
+    - `feat: add new command to greet users`
+    - `fix: resolve issue with event handling`
+    - `docs: update development guide with new instructions`
+    - `feat(web): implement new blog post rendering logic`
+    
 ## Project Architecture
 
 **Type**: Discord.js v14 bot using TypeScript with strict ESM modules (`"type": "module"` in package.json)
