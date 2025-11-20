@@ -9,7 +9,7 @@ COPY web/package*.json ./
 COPY ./prisma ./prisma/
 RUN npm install
 COPY web .
-
+COPY .git .git
 COPY tsconfig.json tsconfig.base.json
 COPY web/tsconfig.json tsconfig.json
 RUN sed -i 's|"extends": *"[^"]*"|"extends": "./tsconfig.base.json"|' tsconfig.json
