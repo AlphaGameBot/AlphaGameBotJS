@@ -4,11 +4,23 @@ import Markdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
-import { getPostByRoute } from '../../../../lib/posts';
+import { getAllPostRoutes, getPostByRoute } from '../../../../lib/posts';
 
 type Props = {
     params: { year: string; month: string; slug: string };
 };
+
+// Generate static params for all blog posts at build time
+export async function generateStaticParams() {
+    const routes = getAllPostRoutes();
+    return routes
+        .filter((route) => route.year && route.month) // Filter out posts without valid dates
+        .map((route) => ({
+            year: route.year!,
+            month: route.month!,
+            slug: route.slug,
+        }));
+}
 
 export default async function PostPage({ params }: Props) {
     const { year, month, slug } = await params;
