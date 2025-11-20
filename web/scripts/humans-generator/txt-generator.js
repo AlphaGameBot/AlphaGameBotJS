@@ -26,7 +26,7 @@
  * @param {string} data.quote - Random quote
  * @returns {string}
  */
-function generateHumansTxt({ contributors, prodDeps, devDeps, quote }) {
+function generateHumansTxt({ contributors, prodDeps, devDeps, quote, gitHash, gitHashDate, gitBranch, webVersion, botVersion }) {
     const depsStr = prodDeps
         .map(dep => {
             const usedByStr = dep.usedBy.join(", ");
@@ -57,6 +57,21 @@ function generateHumansTxt({ contributors, prodDeps, devDeps, quote }) {
         .join("\n");
 
     return `
+  ______   __            __                   ______                                     _______               __     
+ /      \\ /  |          /  |                 /      \\                                   /       \\             /  |    
+/$$$$$$  |$$ |  ______  $$ |____    ______  /$$$$$$  |  ______   _____  ____    ______  $$$$$$$  |  ______   _$$ |_   
+$$ |__$$ |$$ | /      \\ $$      \\  /      \\ $$ | _$$/  /      \\ /     \\/    \\  /      \\ $$ |__$$ | /      \\ / $$   |  
+$$    $$ |$$ |/$$$$$$  |$$$$$$$  | $$$$$$  |$$ |/    | $$$$$$  |$$$$$$ $$$$  |/$$$$$$  |$$    $$< /$$$$$$  |$$$$$$/   
+$$$$$$$$ |$$ |$$ |  $$ |$$ |  $$ | /    $$ |$$ |$$$$ | /    $$ |$$ | $$ | $$ |$$    $$ |$$$$$$$  |$$ |  $$ |  $$ | __ 
+$$ |  $$ |$$ |$$ |__$$ |$$ |  $$ |/$$$$$$$ |$$ \\__$$ |/$$$$$$$ |$$ | $$ | $$ |$$$$$$$$/ $$ |__$$ |$$ \\__$$ |  $$ |/  |
+$$ |  $$ |$$ |$$    $$/ $$ |  $$ |$$    $$ |$$    $$/ $$    $$ |$$ | $$ | $$ |$$       |$$    $$/ $$    $$/   $$  $$/ 
+$$/   $$/ $$/ $$$$$$$/  $$/   $$/  $$$$$$$/  $$$$$$/   $$$$$$$/ $$/  $$/  $$/  $$$$$$$/ $$$$$$$/   $$$$$$/     $$$$/  
+              $$ |    
+              $$ |    Web Version: ${webVersion}
+              $$/     Bot Version: ${botVersion}
+              $/      Git: ${gitBranch}@${gitHash}, dated ${gitHashDate}
+
+  Also, make sure to check out the humans.html file! It's way cooler.
  ______________________________________
 < Made on earth by humans, for humans. >
  --------------------------------------
@@ -88,7 +103,7 @@ ${depsStr}
 ${devDepsStr}
 
 Made with ♥ in Novato, California, and wherever our contributors are.
-    `.trim();
+`;
 }
 
 module.exports = { generateHumansTxt };

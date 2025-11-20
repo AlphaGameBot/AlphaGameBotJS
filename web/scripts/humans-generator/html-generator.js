@@ -29,7 +29,7 @@ const { quotes } = require("./quotes");
  * @param {string} data.quote - Random quote
  * @returns {string}
  */
-function generateHumansHtml({ contributors, prodDeps, devDeps, quote }) {
+function generateHumansHtml({ contributors, prodDeps, devDeps, quote, gitHash, gitHashDate, gitBranch, webVersion, botVersion }) {
     const contributorRows = contributors
         .filter(c => !c.name.includes("bot"))
         .map(c => {
@@ -103,8 +103,11 @@ function generateHumansHtml({ contributors, prodDeps, devDeps, quote }) {
     </style>
 </head>
 <body>
-    <h1>AlphaGameBot - Humans</h1>
+    <h1>AlphaGameBot - Humans.txt</h1>
     <p><em>Made on Earth by humans, for humans</em></p>
+    <p>Web Version: ${webVersion} <br />
+       Bot Version: ${botVersion} <br />
+       Git: ${gitBranch}@${gitHash}, dated ${gitHashDate}</p>
     
     <blockquote id="quote">
         ${quoteHtml}

@@ -19,7 +19,6 @@
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
 const { readFileSync } = require("node:fs");
-const path = require("node:path");
 
 /**
  * @typedef {Object} DependencyInfo
@@ -33,7 +32,7 @@ const path = require("node:path");
  * @param {string} webDir - Path to web directory
  * @returns {{prodDeps: DependencyInfo[], devDeps: DependencyInfo[]}}
  */
-function getDependencies(webDir) {
+function getDependencies(webDir, webPackageJsonPath, botPackageJsonPath, rootPackageJsonPath) {
     const dependencyMap = new Map();
 
     /**
@@ -63,7 +62,7 @@ function getDependencies(webDir) {
     // Read bot package.json
     try {
         const botPackageJson = JSON.parse(
-            readFileSync(path.join(webDir, "..", "bot", "package.json"), "utf-8")
+            readFileSync(botPackageJsonPath, "utf-8")
         );
         addDependencies(botPackageJson.dependencies, "bot", false);
         addDependencies(botPackageJson.devDependencies, "bot", true);
@@ -74,7 +73,7 @@ function getDependencies(webDir) {
     // Read web package.json
     try {
         const webPackageJson = JSON.parse(
-            readFileSync(path.join(webDir, "package.json"), "utf-8")
+            readFileSync(webPackageJsonPath, "utf-8")
         );
         addDependencies(webPackageJson.dependencies, "web", false);
         addDependencies(webPackageJson.devDependencies, "web", true);
@@ -85,7 +84,7 @@ function getDependencies(webDir) {
     // Read root package.json
     try {
         const rootPackageJson = JSON.parse(
-            readFileSync(path.join(webDir, "..", "package.json"), "utf-8")
+            readFileSync(rootPackageJsonPath, "utf-8")
         );
         addDependencies(rootPackageJson.dependencies, "root", false);
         addDependencies(rootPackageJson.devDependencies, "root", true);
