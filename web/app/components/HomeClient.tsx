@@ -42,7 +42,7 @@ type HomeClientProps = {
 export default function HomeClient({ posts }: HomeClientProps) {
     const [currentUsers, setCurrentUsers] = useState<number | null>(null);
     const [guilds, setGuilds] = useState<number>(20);
-    
+
     useEffect(() => {
         // Reveal on scroll animation
         const observer = new IntersectionObserver(

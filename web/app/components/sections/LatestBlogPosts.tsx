@@ -77,7 +77,7 @@ export default function LatestBlogPosts({ posts }: LatestBlogPostsProps) {
                         From the Blog
                     </h2>
                     <p className="reveal-on-scroll text-lg" style={{ color: 'var(--text-muted)' }}>
-                        Stay up to date with the latest news, updates, and announcements
+                        Posts about the development process, updates, postmortems, you name it.
                     </p>
                 </div>
 
