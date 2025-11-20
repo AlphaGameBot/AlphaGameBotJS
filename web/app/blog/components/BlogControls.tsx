@@ -82,7 +82,7 @@ export default function BlogControls({ categories, onFilterChange, onSortChange 
                     id="sort-order"
                     value={selectedSort}
                     onChange={handleSortChange}
-                    className="flex-1 sm:flex-none sm:min-w-[160px] px-4 py-2 rounded-lg bg-surface-default border border-border text-text-default font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 hover:border-primary-400 cursor-pointer"
+                    className="flex-1 sm:flex-none sm:min-w-40 px-4 py-2 rounded-lg bg-surface-default border border-border text-text-default font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 hover:border-primary-400 cursor-pointer"
                 >
                     <option value="newest">Newest First</option>
                     <option value="oldest">Oldest First</option>
