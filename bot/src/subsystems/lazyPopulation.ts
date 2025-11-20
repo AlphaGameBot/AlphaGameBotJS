@@ -67,14 +67,20 @@ if (lazyPopulationFileExists) {
 export async function lazyPopulateUser(user: User) {
     // Never lazy-populate bot accounts.
     if (user.bot) return;
-    
+
     const currentUser = await prisma.user.findUnique({ where: { id: user.id } });
     if (currentUser?.wasLazyPopulated) {
         logger.debug(`User ${user.id} (${user.username}#${user.discriminator}) was already lazy populated.`);
         return;
     }
 
-
+    if (currentUser && currentUser.username === "Unknown") {
+        logger.info(`Updating existing user ${user.id} (${user.username}#${user.discriminator}) because their username was unknown.`);
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { username: user.username, discriminator: user.discriminator }
+        });
+    }
     // does the user exist in the lazy population config?
     if (!lazyPopulationConfig[user.id]) {
         return;
@@ -99,15 +105,15 @@ export async function lazyPopulateUser(user: User) {
             if (!guild) {
                 logger.warn(`Guild ${guildId} not found while lazy populating user ${user.id}`);
                 guildName = "Unknown (Lazy Population)";
-                continue;
+            } else {
+                guildName = guild.name;
             }
 
-            guildName = guild.name;
             await tx.guild.upsert({
                 where: { id: guildId },
                 create: { id: guildId, name: guildName },
                 update: { name: guildName }
-            })
+            });
 
             await tx.userStats.upsert({
                 where: {
@@ -128,7 +134,13 @@ export async function lazyPopulateUser(user: User) {
                     commands_ran: stats.commands_ran,
                     last_announced_level: stats.last_announced_level
                 }
-            })
+            });
+
+            // set lazy populated flag on user
+            await tx.user.update({
+                where: { id: user.id },
+                data: { wasLazyPopulated: true }
+            });
         }
 
         logger.info(`Lazy populated user ${user.id} (${user.username}#${user.discriminator}) from lazy_population.json`);

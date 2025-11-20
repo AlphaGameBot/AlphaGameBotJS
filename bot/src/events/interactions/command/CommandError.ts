@@ -96,6 +96,34 @@ export async function handleButtonPressReportError(interaction: ButtonInteractio
     try {
         // Create a new ErrorReport row using the updated Prisma model name `errorReport`.
         const query = await prisma.$transaction(async (tx) => {
+            // Ensure user exists in database
+            await tx.user.upsert({
+                where: { id: errorInfo.caller.id },
+                create: {
+                    id: errorInfo.caller.id,
+                    username: errorInfo.caller.username,
+                    discriminator: errorInfo.caller.discriminator
+                },
+                update: {
+                    username: errorInfo.caller.username,
+                    discriminator: errorInfo.caller.discriminator
+                }
+            });
+
+            // Ensure guild exists in database if guild_id is provided
+            if (errorInfo.guild?.id) {
+                await tx.guild.upsert({
+                    where: { id: errorInfo.guild.id },
+                    create: {
+                        id: errorInfo.guild.id,
+                        name: errorInfo.guild.name
+                    },
+                    update: {
+                        name: errorInfo.guild.name
+                    }
+                });
+            }
+
             return await tx.errorReport.create({
                 data: {
                     user_id: errorInfo.caller.id,

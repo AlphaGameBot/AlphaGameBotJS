@@ -61,7 +61,7 @@ export class MetricsHTTPServer {
         // Above 200, inclusive, and below 400, exclusive, is considered successful (200 to 399 per HTTP spec)
         // realistically we only serve 200 and 404 here, but future-proofing.
         (res.statusCode >= 200 && res.statusCode < 400
-            ? logger.info
+            ? logger.verbose
             : logger.warn
         )(`${req.method} ${req.url} - ${res.statusCode} - ${formatTime(performance.now() - startTime)}`, {
             method: req.method,
