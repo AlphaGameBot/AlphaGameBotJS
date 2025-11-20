@@ -9,6 +9,9 @@ type Post = {
     title?: string;
     date?: string;
     content?: string;
+    author?: string;
+    category: string;
+    permalink: string;
     [key: string]: unknown;
 };
 
@@ -46,6 +49,7 @@ export function getSortedPostsData(): Post[] {
         return {
             id,
             content: matterResult.content,
+            category: matterResult.data.category || 'unknown',
             permalink: makePermalink(date, id),
             ...matterResult.data,
         } as Post;
@@ -92,5 +96,43 @@ export function getPostContent(slug: string) {
         id: slug,
         content: matterResult.content,
         ...matterResult.data,
+    };
+}
+
+export function getPostWithNavigation(year: string, month: string, slug: string) {
+    const posts = getSortedPostsData();
+    const currentIndex = posts.findIndex((p) => {
+        if (p.id !== slug) return false;
+        if (!p.date) return false;
+        const d = new Date(p.date);
+        if (isNaN(d.getTime())) return false;
+        return String(d.getFullYear()) === year && pad(d.getMonth() + 1) === month;
+    });
+
+    if (currentIndex === -1) return null;
+
+    const current = posts[currentIndex];
+    // Posts are sorted newest first, so:
+    // - "previous" (older post) is at currentIndex + 1
+    // - "next" (newer post) is at currentIndex - 1
+    const previous = currentIndex < posts.length - 1 ? posts[currentIndex + 1] : null;
+    const next = currentIndex > 0 ? posts[currentIndex - 1] : null;
+
+    const makeNavLink = (post: Post | null) => {
+        if (!post || !post.date) return null;
+        const d = new Date(post.date);
+        if (isNaN(d.getTime())) return null;
+        return {
+            title: post.title || post.id,
+            slug: post.id,
+            year: String(d.getFullYear()),
+            month: pad(d.getMonth() + 1),
+        };
+    };
+
+    return {
+        ...current,
+        previous: makeNavLink(previous ?? null),
+        next: makeNavLink(next ?? null),
     };
 }

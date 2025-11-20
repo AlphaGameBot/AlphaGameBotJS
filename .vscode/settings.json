@@ -19,7 +19,7 @@
         "**/.next": true
     },
     "licenser.license": "Custom",
-    "licenser.customHeaderFile": "/home/damien/Documents/AlphaGameBotJS/.vscode/license-header.txt",
+    "licenser.customHeaderFile": "/home/damien/alphagamebot/Monorepo/.vscode/license-header.txt",
     "peacock.surpriseMeOnStartup": true,
     "peacock.color": "215732",
     "peacock.favoriteColors": [
