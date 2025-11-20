@@ -16,11 +16,24 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import HomeClient from "./components/HomeClient";
-import { getSortedPostsData } from "./lib/posts";
+import { getSortedPostsData } from '../lib/posts';
+import BlogPostsList from './components/BlogPostsList';
 
-export default function Home() {
+export default function BlogPage() {
     const posts = getSortedPostsData();
 
-    return <HomeClient posts={posts} />;
+    return (
+        <main className="container py-12">
+            {/* Header Section */}
+            <div className="mb-12">
+                <h1 className="mb-4 text-5xl pb-5 font-bold gradient-text">Blog</h1>
+                <p className="text-xl text-text-muted max-w-2xl">
+                    Explore our latest articles, tutorials, and updates from the AlphaGameBot team.
+                </p>
+            </div>
+
+            {/* Blog Posts List with Controls */}
+            <BlogPostsList posts={posts} />
+        </main>
+    );
 }

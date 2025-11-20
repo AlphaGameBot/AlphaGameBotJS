@@ -3,6 +3,8 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
+"use client";
+
 import SystemStatus from "./parts/SystemStatus";
 
 export default function Footer() {
