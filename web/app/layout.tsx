@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Footer from "./components/Footer";
 import Header from "./components/Header";
+import { UmamiAnalytics } from "./components/Umami";
 import "./globals.css";
 
 const inter = Inter({
@@ -81,6 +82,7 @@ export default function RootLayout({
         <html lang="en" >
             <head>
                 <link rel="icon" href="/favicon.ico" sizes="any" />
+                <UmamiAnalytics />
             </head>
             <body className="bg-gray-900 text-gray-200 font-sans antialiased min-h-screen flex flex-col justify-between  " >
                 <Header />
