@@ -94,6 +94,18 @@ export async function handleButtonPressReportError(interaction: ButtonInteractio
     // Defer the interaction immediately to avoid hitting the 3s acknowledgement window
     // while we perform DB / GitHub calls.
     try {
+        const safeStringify = (obj: unknown) => {
+            try {
+                if (typeof obj === "string") return obj;
+                return JSON.stringify(obj, (_k, v) =>
+                    typeof v === "bigint" ? v.toString() : v, 2);
+            } catch {
+                try {
+                    return String(obj);
+                } catch { return "<unserializable>"; }
+            }
+        };
+
         // Create a new ErrorReport row using the updated Prisma model name `errorReport`.
         const query = await prisma.$transaction(async (tx) => {
             // Ensure user exists in database
@@ -128,24 +140,10 @@ export async function handleButtonPressReportError(interaction: ButtonInteractio
                 data: {
                     user_id: errorInfo.caller.id,
                     guild_id: errorInfo.guild?.id ?? null,
-                    error_msg: typeof errorInfo.error === "string"
-                        ? errorInfo.error
-                        : JSON.stringify(errorInfo.error),
+                    error_msg: safeStringify(errorInfo.error),
                 }
             });
         });
-
-        const safeStringify = (obj: unknown) => {
-            try {
-                if (typeof obj === "string") return obj;
-                return JSON.stringify(obj, (_k, v) =>
-                    typeof v === "bigint" ? v.toString() : v, 2);
-            } catch {
-                try {
-                    return String(obj);
-                } catch { return "<unserializable>"; }
-            }
-        };
 
         await reportIssueViaGitHub({
             databaseRow: query,
@@ -154,7 +152,7 @@ export async function handleButtonPressReportError(interaction: ButtonInteractio
             interaction: errorInfo.originalInteraction
                 ? errorInfo.originalInteraction as unknown as Interaction
                 : undefined,
-            error: safeStringify(errorInfo.error),
+            error: errorInfo.error,
         });
 
         // Edit the original message's button to show it was reported
