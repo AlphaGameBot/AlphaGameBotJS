@@ -21,12 +21,25 @@
 import Script from "next/script";
 
 export const UmamiAnalytics = () => {
+    // guard for SSR — this component is marked "use client" but be explicit
+    if (typeof window === "undefined") return null;
+
+    const src = window.location.hostname.includes("alphagamebot.com")
+        ? "https://www.alphagamebot.com/rt/hazel.js"
+        : "https://analytics.alphagamebot.com/script.js";
+
+    const host_url = window.location.hostname.includes("alphagamebot.com")
+        ? "https://www.alphagamebot.com/"
+        : "https://analytics.alphagamebot.com/";
+
     return (
         <Script
-            defer
-            async
-            src="https://analytics.alphagamebot.com/script.js"
+            src={src}
+            strategy="afterInteractive"
+            defer={true}
+            async={true}
             data-website-id="ff1f8a0d-7597-429a-b73f-f5bea5a4d9d3"
+            data-host-url={host_url}
         />
-    )
+    );
 }
