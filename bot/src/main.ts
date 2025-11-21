@@ -26,6 +26,7 @@ import { startPrometheusExporter } from "./services/metrics/exports/prometheus.j
 import { Metrics, metricsManager } from "./services/metrics/metrics.js";
 import { lazyPopulateUser } from "./subsystems/lazyPopulation.js";
 import { rotatingStatus } from "./subsystems/rotatingStatus.js";
+import { UptimeSubsystem } from "./subsystems/uptime.js";
 import { crawlEvents } from "./utility/crawler.js";
 import prisma from "./utility/database.js";
 import { ensureUser } from "./utility/dbHelpers.js";
@@ -48,6 +49,13 @@ if (weHaveDist) {
     logger.verbose("I can see that we have a 'dist' folder, changing cwd to it.");
     process.chdir("./dist");
 }
+
+// Initialize the uptime subsystem
+try {
+    const uptimeSystem = new UptimeSubsystem();
+    uptimeSystem.begin();
+} catch { } // We don't really care if it fails, and if it does, the subsystem already logged it.
+
 
 // Note, client is imported from client.ts
 //       this is to make it accessible to other modules
