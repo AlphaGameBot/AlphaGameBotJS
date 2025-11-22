@@ -45,10 +45,17 @@ export default async function handleInteractionCommand(interaction: ChatInputCom
             durationMs: durationMs
         });
     } catch (error) {
-        if (interaction.replied || interaction.deferred) {
-            await interaction.followUp({ content: ":x: There was an error while executing this command!", ephemeral: true });
-        } else {
-            await interaction.reply({ content: ":x: There was an error while executing this command!", ephemeral: true });
+        // Try to send an immediate error message to the user
+        try {
+            if (interaction.replied || interaction.deferred) {
+                await interaction.followUp({ content: ":x: There was an error while executing this command!", ephemeral: true });
+            } else {
+                await interaction.reply({ content: ":x: There was an error while executing this command!", ephemeral: true });
+            }
+        } catch (replyError) {
+            // If we can't send the error message (e.g., InteractionAlreadyReplied),
+            // log it but continue to the error handler which will try to send a message with a report button
+            logger.error(`Failed to send immediate error message:`, replyError);
         }
 
         logger.error(`Error executing command ${interaction.commandName}:`, error);
