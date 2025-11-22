@@ -1,6 +1,6 @@
 {
   "name": "alphagamebot-webui",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "private": true,
   "scripts": {
     "postversion": "git add . && git commit -am \"WebUI Release webui-v$(cat package.json | jq .version -cMr)\" && git tag -a \"webui-v$(cat package.json | jq .version -cMr)\" -m \"WebUI Release $(cat package.json | jq .version -cMr)\"",
