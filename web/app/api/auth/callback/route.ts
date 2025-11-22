@@ -1,3 +1,4 @@
+import type { User } from 'discord.js';
 import { NextRequest, NextResponse } from 'next/server';
 
 async function fetchToken(code: string) {
@@ -21,10 +22,10 @@ async function fetchUser(access_token: string) {
     const res = await fetch('https://discord.com/api/users/@me', {
         headers: { Authorization: `Bearer ${access_token}` }
     });
-    return res.json();
+    return res.json() as unknown as User;
 }
 
-function createSessionCookie(user: any) {
+function createSessionCookie(user: User) {
     // Minimal session using JSON cookie. Keep small and short-lived.
     const payload = JSON.stringify({ user, iat: Date.now() });
     // Base64 encode
@@ -44,10 +45,10 @@ export async function GET(req: NextRequest) {
         const user = await fetchUser(token.access_token);
 
         const res = NextResponse.redirect(new URL('/', req.url));
-        const cookie = createSessionCookie({ id: user.id, username: user.username, discriminator: user.discriminator, avatar: user.avatar });
+        const cookie = createSessionCookie(user);
         res.headers.append('Set-Cookie', cookie);
         return res;
     } catch (err) {
-        return NextResponse.json({ error: 'OAuth callback failed', detail: String(err) }, { status: 500 });
+        return NextResponse.json({ error: 'OAuth callback failed', detail: JSON.stringify(err) }, { status: 500 });
     }
 }

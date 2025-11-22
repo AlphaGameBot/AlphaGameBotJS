@@ -6,6 +6,7 @@ export async function GET() {
     const clientId = process.env.DISCORD_CLIENT_ID;
     const base = process.env.NEXT_PUBLIC_BASE_URL;
     const redirectUri = (base || '') + '/api/auth/callback';
+    console.log('Redirect URI:', redirectUri);
     const scope = encodeURIComponent('identify');
 
     if (!clientId || !process.env.NEXT_PUBLIC_BASE_URL) {
