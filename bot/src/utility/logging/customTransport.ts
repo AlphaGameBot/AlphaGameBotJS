@@ -19,6 +19,18 @@
 import { EmbedBuilder } from "discord.js";
 import TransportStream from "winston-transport";
 
+function safeJSONStringify(value: unknown): string {
+    try {
+        return JSON.stringify(value, (_key, val) => typeof val === 'bigint' ? val.toString() : val, 2) ?? '';
+    } catch (err) {
+        try {
+            return String(value);
+        } catch {
+            return '<unserializable>';
+        }
+    }
+}
+
 function level2emoji(level: string): string {
     switch (level) {
         case "error": return "🔴";
@@ -61,7 +73,7 @@ export class EngineeringOpsTransport extends TransportStream {
                 .setTitle(level2emoji(level) + " " + level.toUpperCase())
                 .setDescription(message)
                 .addFields(
-                    { name: 'Meta', value: JSON.stringify(meta) }
+                    { name: 'Meta', value: safeJSONStringify(meta) }
                 )
                 .toJSON();
 
