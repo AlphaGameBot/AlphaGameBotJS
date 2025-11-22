@@ -64,6 +64,10 @@ export default function HomeClient({ posts }: HomeClientProps) {
             setCurrentUsers(data.count);
         });
 
+        fetch('/api/stats/count/guilds').then(res => res.json()).then(data => {
+            setGuilds(data.count);
+        });
+
         return () => observer.disconnect();
     }, []);
 
@@ -118,9 +122,9 @@ export default function HomeClient({ posts }: HomeClientProps) {
                         <div className="reveal-on-scroll mt-16 grid grid-cols-2 gap-4 md:grid-cols-3 max-w-2xl mx-auto">
                             <div className="card text-center">
                                 <div className="mb-1 text-3xl font-bold" style={{ color: 'var(--primary-500)' }}>
-                                    {currentUsers !== null ? `~${currentUsers}` : '~800'}
+                                    {currentUsers !== null ? `${guilds}+` : '~20'}
                                 </div>
-                                <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Active Users</div>
+                                <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Active Servers</div>
                             </div>
                             <div className="card text-center">
                                 <div className="mb-1 text-3xl font-bold" style={{ color: 'var(--primary-500)' }}>100%</div>
