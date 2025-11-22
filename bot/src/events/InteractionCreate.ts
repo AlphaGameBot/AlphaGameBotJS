@@ -33,7 +33,6 @@ export default {
         switch (interaction.type) {
             case InteractionType.ApplicationCommand: {
                 interactionType = "ApplicationCommand";
-                await handleInteractionCommand(interaction as ChatInputCommandInteraction);
                 break;
             }
             case InteractionType.MessageComponent: {
