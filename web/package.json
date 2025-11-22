@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "postversion": "git add . && git commit -am \"WebUI Release webui-v$(cat package.json | jq .version -cMr)\" && git tag -a \"webui-v$(cat package.json | jq .version -cMr)\" -m \"WebUI Release $(cat package.json | jq .version -cMr)\"",
-    "dev": "next dev -p 4000",
+    "dev": "set NODE_OPTIONS='--env-file=.env' && next dev -p 4000",
     "prebuild": "node scripts/generate-humans.js",
     "postbuild": "next-sitemap",
     "predev": "node scripts/generate-humans.js",

@@ -42,4 +42,4 @@ export const UmamiAnalytics = () => {
             data-host-url={host_url}
         />
     );
-}
+};
