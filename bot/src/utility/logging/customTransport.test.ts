@@ -184,5 +184,40 @@ describe("EngineeringOpsTransport", () => {
             expect(metaField.foo).toBe("bar");
             expect(metaField.baz).toBe(123);
         });
+
+        it("should serialize BigInt values as strings in meta", async () => {
+            const big = BigInt("9007199254740993123456789");
+            const info = { level: "error", message: "bigint test", big };
+
+            await transport.log(info, jest.fn());
+
+            const fetchCall = (global.fetch as jest.Mock).mock.calls[0];
+            expect(fetchCall).toBeDefined();
+            if (!fetchCall) return;
+            const body = JSON.parse((fetchCall[1] as RequestInit).body as string);
+            const metaField = JSON.parse(body.embeds[0].fields[0].value);
+            expect(metaField.big).toBe(big.toString());
+            expect(typeof metaField.big).toBe("string");
+        });
+
+        it("should serialize nested BigInt values and arrays", async () => {
+            const info = {
+                level: "error",
+                message: "nested bigint",
+                nested: { id: BigInt(42) },
+                arr: [1, BigInt(3), { v: BigInt(4) }]
+            };
+
+            await transport.log(info, jest.fn());
+
+            const fetchCall = (global.fetch as jest.Mock).mock.calls[0];
+            expect(fetchCall).toBeDefined();
+            if (!fetchCall) return;
+            const body = JSON.parse((fetchCall[1] as RequestInit).body as string);
+            const metaField = JSON.parse(body.embeds[0].fields[0].value);
+            expect(metaField.nested.id).toBe("42");
+            expect(metaField.arr[1]).toBe("3");
+            expect(metaField.arr[2].v).toBe("4");
+        });
     });
 });
