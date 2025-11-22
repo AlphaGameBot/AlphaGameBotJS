@@ -16,7 +16,7 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import type { error_reports } from "@prisma/client";
+import type { ErrorReport } from "@prisma/client";
 import type { Guild, Interaction, User } from "discord.js";
 
 export interface UserComments {
@@ -26,7 +26,7 @@ export interface UserComments {
 }
 
 export interface ErrorReportOptions {
-    databaseRow: error_reports,
+    databaseRow: ErrorReport,
     user: User,
     interaction?: Interaction | undefined,
     guild?: Guild | null,

@@ -17,66 +17,93 @@
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
 import prisma from "../../utility/database.js";
+import { ensureUserById } from "../../utility/dbHelpers.js";
 import logger from "../../utility/logging/logger.js";
 import { calculateLevelFromPoints, calculatePoints } from "./math.js";
+
+/**
+ * Ensure a guild exists in the database.
+ * This is a defensive helper that uses a placeholder name if the guild isn't found.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function ensureGuildById(tx: any, guildId: string) {
+    await tx.guild.upsert({
+        where: { id: guildId },
+        create: { 
+            id: guildId, 
+            name: `unknown-${guildId}` 
+        },
+        update: {}
+    });
+}
 
 
 export async function addMessage(userId: string, guildId: string) {
     logger.verbose(`Adding message for user ${userId} in guild ${guildId}`);
 
-    await prisma.user_stats.upsert({
-        where: { user_id: userId },
-        update: { messages_sent: { increment: 1 } },
-        create: { user_id: userId, messages_sent: 1, commands_ran: 0 }
-    });
+    // Perform both the parent `User` and `Guild` upserts along with the `UserStats` upsert
+    // inside a single atomic transaction. This guarantees that the
+    // stats row cannot be created without the corresponding user and guild,
+    // preventing foreign key constraint violations.
+    await prisma.$transaction(async (tx) => {
+        await ensureUserById(tx, userId, "Unknown", "0000");
+        await ensureGuildById(tx, guildId);
 
-    return await prisma.guild_user_stats.upsert({
-        where: {
-            user_id_guild_id: { user_id: userId, guild_id: guildId }
-        },
-        update: {
-            messages_sent: { increment: 1 }
-        },
-        create: {
-            user_id: userId,
-            guild_id: guildId,
-            messages_sent: 1,
-            commands_ran: 0
-        }
+        await tx.userStats.upsert({
+            where: {
+                user_id_guild_id: {
+                    user_id: userId,
+                    guild_id: guildId
+                }
+            },
+            update: {
+                messages_sent: { increment: 1 }
+            },
+            create: {
+                user_id: userId,
+                guild_id: guildId,
+                messages_sent: 1,
+                commands_ran: 0
+            }
+        });
     });
 }
 
 export async function addCommand(userId: string, guildId: string) {
     logger.verbose(`Adding command for user ${userId} in guild ${guildId}`);
-    await prisma.user_stats.upsert({
-        where: { user_id: userId },
-        update: { commands_ran: { increment: 1 } },
-        create: { user_id: userId, commands_ran: 1, messages_sent: 0 }
-    });
 
-    return await prisma.guild_user_stats.upsert({
-        where: {
-            user_id_guild_id: { user_id: userId, guild_id: guildId }
-        },
-        update: {
-            commands_ran: { increment: 1 }
-        },
-        create: {
-            user_id: userId,
-            guild_id: guildId,
-            messages_sent: 0,
-            commands_ran: 1
-        }
+    // Guild-scoped stats
+
+    // use upsert instead
+    // Perform both the parent `User` and `Guild` upserts along with the `UserStats` upsert
+    // inside a single atomic transaction to keep the DB consistent.
+    await prisma.$transaction(async (tx) => {
+        await ensureUserById(tx, userId, "Unknown", "0000");
+        await ensureGuildById(tx, guildId);
+
+        await tx.userStats.upsert({
+            where: {
+                user_id_guild_id: {
+                    user_id: userId,
+                    guild_id: guildId
+                }
+            },
+            update: {
+                commands_ran: { increment: 1 }
+            },
+            create: {
+                user_id: userId,
+                guild_id: guildId,
+                messages_sent: 0,
+                commands_ran: 1
+            }
+        });
     });
 }
 
 export async function getUserLevel(userId: string, guildId: string) {
     logger.verbose(`Getting level for user ${userId} in guild ${guildId}`);
-    const user = await prisma.guild_user_stats.findUnique({
-        where: {
-            user_id_guild_id: { user_id: userId, guild_id: guildId }
-        }
-    });
+    const user = await prisma.userStats.findFirst({ where: { user_id: userId, guild_id: guildId } });
 
     if (!user) return -1;
 

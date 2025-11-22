@@ -1,11 +1,12 @@
 {
   "name": "alphagamebot",
   "type": "module",
-  "version": "4.2.1",
+  "version": "4.3.4",
   "description": "A Discord bot that's free and (hopefully) doesn't suck.",
   "main": "index.js",
   "scripts": {
-    "build:clean": "rm -rf ./dist && tsc --build --verbose",
+    "postversion": "git add . && git commit -am \"Bot Version v$(cat package.json | jq .version -cMr)\" && git tag -a \"$(cat package.json | jq .version -cMr)\" -m \"Bot Release $(cat package.json | jq .version -cMr)\"",
+    "build:clean": "rm -rf ./dist ./tsconfig.tsbuildinfo && tsc --build --verbose",
     "test": "export NODE_ENV=test && node --loader ts-node/esm --no-warnings=ExperimentalWarning --experimental-vm-modules ../node_modules/jest/bin/jest.js --config ../jest.config.mjs src/ --forceExit --silent",
     "lint": "eslint . --ext .ts --config ../eslint.config.ts",
     "lint:fix": "eslint . --ext .ts --fix",
@@ -23,7 +24,7 @@
   "license": "GPL-3.0-or-later",
   "dependencies": {
     "@octokit/rest": "^22.0.1",
-    "@prisma/client": "^6.17.1",
+    "@prisma/client": "^6.19.0",
     "discord.js": "^14.23.1",
     "nunjucks": "^3.2.4",
     "prisma": "^6.17.1",

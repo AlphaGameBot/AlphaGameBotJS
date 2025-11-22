@@ -63,6 +63,7 @@ pipeline {
         TOKEN = credentials('alphagamebot-token')
         WEBHOOK = credentials('alphagamebot-webhook')
         JENKINS_NOTIFICATIONS_WEBHOOK = credentials('discord-jenkins-webhook')
+        UPTIME_POLL_URL = 'http://kuma:3001/api/push/J8C7hyZzdg'
         DOCKER_TOKEN = credentials('alphagamedev-docker-token')
         GITHUB_PAT = credentials('github-token-alphagamebotqa')
         AGB_VERSION = sh(returnStdout: true, script: "cat bot/package.json | jq '.version' -cMr").trim()
@@ -73,14 +74,17 @@ pipeline {
         COMMIT_MESSAGE = sh(script: 'git log -1 --pretty=%B ${GIT_COMMIT}', returnStdout: true).trim()
     
         // MySQL stuff
-        MYSQL_HOST = "mysql"
+        MYSQL_HOST = "postgres"
         MYSQL_DATABASE = "alphagamebot"
         MYSQL_USER = "alphagamebot" 
+        
+        // yeah it's called mysql-password but it's also for postgres
+        // -- post migration to PostgreSQL.  Don't judge me. :3
         MYSQL_PASSWORD = credentials('alphagamebot-mysql-password-v2')
 
         ENGINEERING_OPS_DISCORD_ID = 420052952686919690
         ERROR_WEBHOOK_URL = credentials('alphagamebot-webhook')
-        DATABASE_URL = "mysql://$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST/$MYSQL_DATABASE"
+        DATABASE_URL = "postgresql://$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_HOST/$MYSQL_DATABASE"
     }
     
     stages {
@@ -198,8 +202,9 @@ pipeline {
                         sh "docker run --detach --tty  \
                                         --name alphagamebotjs \
                                         -e TOKEN -e WEBHOOK -e BUILD_NUMBER -e ENGINEERING_OPS_DISCORD_ID -e ERROR_WEBHOOK_URL \
-                                        -e DATABASE_URL -e PUSHGATEWAY_URL -e LOKI_URL -e GITHUB_PAT --restart=always \
+                                        -e DATABASE_URL -e PUSHGATEWAY_URL -e LOKI_URL -e GITHUB_PAT -e UPTIME_POLL_URL --restart=always \
                                         --network=alphagamebot-net --ip 10.7.1.64 --hostname alphagamebot \
+                                        -v /home/damien/migration-json/stats_export_20251118_173149.json:/lazy_population.json:ro \
                                         alphagamedev/alphagamebot:$AGB_VERSION" // add alphagamebot flags
                     }
                 }
@@ -216,6 +221,7 @@ pipeline {
                         // conditionally deploy
                         sh "docker container stop alphagamebot-webui || true"
                         sh "docker container rm alphagamebot-webui -f || true"
+                        sh "docker compose -p alphagamebotjs exec -i nginx rm -rf /var/cache/nginx/* || true"
                         sh "docker run --detach --tty  \
                                         --name alphagamebot-webui \
                                         -e BUILD_NUMBER -e DATABASE_URL -e PUSHGATEWAY_URL -e LOKI_URL -e GITHUB_PAT \
@@ -227,21 +233,36 @@ pipeline {
             }
         }
 
-        stage('push') {
+        stage('push-bot') {
             when {
                 expression { env.SKIP_REMAINING_STAGES != 'true' }
             }
             steps {
                 script {
-                    stageWithPost('push') {
-                        echo "Pushing image to Docker Hub"
+                    stageWithPost('push-bot') {
+                        echo "Pushing bot image to Docker Hub"
                         sh 'echo $DOCKER_TOKEN | docker login -u alphagamedev --password-stdin'
-                        sh 'docker tag  alphagamedev/alphagamebot:$AGB_VERSION alphagamedev/alphagamebot:latest' // point tag latest to most recent version
-                        sh 'docker tag  alphagamedev/alphagamebot:web-$WEB_VERSION alphagamedev/alphagamebot:web-latest' // point tag latest to most recent version
-                        sh 'docker push alphagamedev/alphagamebot:$AGB_VERSION' // push tag latest version
-                        sh 'docker push alphagamedev/alphagamebot:latest' // push tag latest
-                        sh 'docker push alphagamedev/alphagamebot:web-$WEB_VERSION' // push tag latest version
-                        sh 'docker push alphagamedev/alphagamebot:web-latest' // push tag latest version
+                        sh 'docker tag alphagamedev/alphagamebot:$AGB_VERSION alphagamedev/alphagamebot:latest'
+                        sh 'docker push alphagamedev/alphagamebot:$AGB_VERSION'
+                        sh 'docker push alphagamedev/alphagamebot:latest'
+                        sh 'docker logout'
+                    }
+                }
+            }
+        }
+
+        stage('push-web') {
+            when {
+                expression { env.SKIP_REMAINING_STAGES != 'true' }
+            }
+            steps {
+                script {
+                    stageWithPost('push-web') {
+                        echo "Pushing web image to Docker Hub"
+                        sh 'echo $DOCKER_TOKEN | docker login -u alphagamedev --password-stdin'
+                        sh 'docker tag alphagamedev/alphagamebot:web-$WEB_VERSION alphagamedev/alphagamebot:web-latest'
+                        sh 'docker push alphagamedev/alphagamebot:web-$WEB_VERSION'
+                        sh 'docker push alphagamedev/alphagamebot:web-latest'
                         sh 'docker logout'
                     }
                 }

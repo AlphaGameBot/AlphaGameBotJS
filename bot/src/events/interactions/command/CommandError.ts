@@ -73,11 +73,19 @@ export async function handleCommandError(interaction: ChatInputCommandInteractio
         ? interaction.followUp.bind(interaction)
         : interaction.reply.bind(interaction);
 
-    await sendIt({
-        content: ":x: Whoops. Something went really wrong there.  My bad.\n-# Please report this issue with the button below!",
-        components: [row],
-        ephemeral: true
-    });
+    try {
+        await sendIt({
+            content: ":x: Whoops. Something went really wrong there.  My bad.\n-# Please report this issue with the button below!",
+            components: [row],
+            ephemeral: true
+        });
+    } catch (sendError) {
+        // If we can't send the error message (e.g., InteractionAlreadyReplied),
+        // log it but don't let it mask the original error.
+        // The original error is already stored in the cache above.
+        logger.error(`Failed to send error message for error ID ${errorId}:`, sendError);
+        logger.error(`Original error that triggered this:`, error);
+    }
 }
 
 export async function handleButtonPressReportError(interaction: ButtonInteraction, errorId: string): Promise<void> {
@@ -94,16 +102,6 @@ export async function handleButtonPressReportError(interaction: ButtonInteractio
     // Defer the interaction immediately to avoid hitting the 3s acknowledgement window
     // while we perform DB / GitHub calls.
     try {
-        const query = await prisma.error_reports.create({
-            data: {
-                user_id: errorInfo.caller.id,
-                guild_id: errorInfo.guild?.id ?? null,
-                error_msg: typeof errorInfo.error === "string"
-                    ? errorInfo.error
-                    : JSON.stringify(errorInfo.error),
-            }
-        });
-
         const safeStringify = (obj: unknown) => {
             try {
                 if (typeof obj === "string") return obj;
@@ -116,6 +114,45 @@ export async function handleButtonPressReportError(interaction: ButtonInteractio
             }
         };
 
+        // Create a new ErrorReport row using the updated Prisma model name `errorReport`.
+        const query = await prisma.$transaction(async (tx) => {
+            // Ensure user exists in database
+            await tx.user.upsert({
+                where: { id: errorInfo.caller.id },
+                create: {
+                    id: errorInfo.caller.id,
+                    username: errorInfo.caller.username,
+                    discriminator: errorInfo.caller.discriminator
+                },
+                update: {
+                    username: errorInfo.caller.username,
+                    discriminator: errorInfo.caller.discriminator
+                }
+            });
+
+            // Ensure guild exists in database if guild_id is provided
+            if (errorInfo.guild?.id) {
+                await tx.guild.upsert({
+                    where: { id: errorInfo.guild.id },
+                    create: {
+                        id: errorInfo.guild.id,
+                        name: errorInfo.guild.name
+                    },
+                    update: {
+                        name: errorInfo.guild.name
+                    }
+                });
+            }
+
+            return await tx.errorReport.create({
+                data: {
+                    user_id: errorInfo.caller.id,
+                    guild_id: errorInfo.guild?.id ?? null,
+                    error_msg: safeStringify(errorInfo.error),
+                }
+            });
+        });
+
         await reportIssueViaGitHub({
             databaseRow: query,
             user: errorInfo.caller,
@@ -123,7 +160,7 @@ export async function handleButtonPressReportError(interaction: ButtonInteractio
             interaction: errorInfo.originalInteraction
                 ? errorInfo.originalInteraction as unknown as Interaction
                 : undefined,
-            error: safeStringify(errorInfo.error),
+            error: errorInfo.error,
         });
 
         // Edit the original message's button to show it was reported

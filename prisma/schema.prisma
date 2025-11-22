@@ -3,35 +3,53 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-model guild_user_stats {
-  user_id              String @db.VarChar(20)
-  guild_id             String @db.VarChar(20)
-  messages_sent        Int    @default(0)
-  commands_ran         Int    @default(0)
-  last_announced_level Int    @default(0)
-
-  @@id([user_id, guild_id])
+model User {
+  id               String        @id @unique @db.VarChar(20)
+  username         String        @db.VarChar(32)
+  discriminator    String        @db.VarChar(8)
+  created_at       DateTime      @default(now())
+  last_login       DateTime      @updatedAt
+  wasLazyPopulated Boolean       @default(false)
+  userStats        UserStats[]
+  errorReports     ErrorReport[]
 }
 
-model user_stats {
-  user_id       String @id @db.VarChar(20)
-  messages_sent Int    @default(0)
-  commands_ran  Int    @default(0)
+model Guild {
+  id           String        @id @unique @db.VarChar(20)
+  name         String        @db.VarChar(100)
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+  userStats    UserStats[]
+  errorReports ErrorReport[]
 }
 
-model users {
-  id        String   @id @db.VarChar(20)
-  last_seen DateTime @default(now())
+model UserStats {
+  id       String @id @default(cuid())
+  user_id  String @db.VarChar(20)
+  guild_id String @db.VarChar(20)
+
+  user  User  @relation(fields: [user_id], references: [id])
+  guild Guild @relation(fields: [guild_id], references: [id])
+
+  messages_sent        Int @default(0)
+  commands_ran         Int @default(0)
+  last_announced_level Int @default(0)
+
+  @@unique([user_id, guild_id])
 }
 
-model error_reports {
-  id         Int      @id @default(autoincrement())
-  user_id    String   @db.VarChar(20)
-  guild_id   String?  @db.VarChar(20)
+model ErrorReport {
+  id       Int     @id @default(autoincrement())
+  user_id  String  @db.VarChar(20)
+  guild_id String? @db.VarChar(20)
+
+  user  User   @relation(fields: [user_id], references: [id])
+  guild Guild? @relation(fields: [guild_id], references: [id])
+
   error_msg  String   @db.Text
   created_at DateTime @default(now())
 }

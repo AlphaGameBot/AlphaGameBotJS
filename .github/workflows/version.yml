@@ -1,0 +1,92 @@
+name: Version & Release Packages
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate Changesets automatically
+        run: |
+            #!/bin/bash
+
+            # Find last tag (empty if none)
+            LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+            echo "Last tag: $LAST_TAG"
+
+            # Get changed packages since last tag
+            if [ -n "$LAST_TAG" ]; then
+                CHANGED=$(git diff --name-only $LAST_TAG HEAD | grep -E '^(bot|web)/' | cut -d/ -f1 | sort -u)
+            else
+                CHANGED="bot web"
+            fi
+
+            echo "Changed packages: $CHANGED"
+
+            for pkg in $CHANGED; do
+                echo "Processing $pkg..."
+
+                # Map folder to package.json name
+                if [ "$pkg" = "bot" ]; then
+                    PKG_NAME="alphagamebot"
+                elif [ "$pkg" = "web" ]; then
+                    PKG_NAME="alphagamebot-webui"
+                fi
+                # Get commit messages since last tag
+                if [ -n "$LAST_TAG" ]; then
+                    MSGS=$(git log $LAST_TAG..HEAD --pretty=%B -- $pkg)
+                else
+                    MSGS=$(git log --pretty=%B -- $pkg)
+                fi
+
+                echo "Commits for $pkg:"
+                echo "$MSGS"
+
+                # Determine bump type
+                TYPE="patch"
+                if echo "$MSGS" | grep -iq "BREAKING"; then
+                    TYPE="major"
+                elif echo "$MSGS" | grep -iq "^feat"; then
+                    TYPE="minor"
+                elif echo "$MSGS" | grep -iq "^fix"; then
+                    TYPE="patch"
+                fi
+
+                SUMMARY=$(echo "$MSGS" | head -n1 | tr -d '\n')
+
+                echo "Creating changeset for $PKG_NAME: type=$TYPE, summary=$SUMMARY"
+
+                # Generate changeset
+                npx changeset add --non-interactive --package "$PKG_NAME" --type "$TYPE" --summary "Auto bump $PKG_NAME: $SUMMARY"
+            done
+
+      - name: Create & Publish Releases
+        uses: changesets/action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fire off Jenkins
+        run: |
+          curl -X POST https://jenkins.alphagame.dev/multibranch-webhook-trigger/invoke?token=${{secrets.JENKINS_BUILD_TOKEN}}

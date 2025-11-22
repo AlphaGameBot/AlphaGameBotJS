@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Footer from "./components/Footer";
+import Header from "./components/Header";
+import { UmamiAnalytics } from "./components/Umami";
 import "./globals.css";
 
 const inter = Inter({
@@ -15,7 +18,7 @@ export const metadata: Metadata = {
         template: "%s • AlphaGameBot",
     },
     description:
-    "Free open-source Discord bot with user leveling, XP system, global leaderboards, and engagement tracking. Boost your Discord community with 1,200+ active servers.",
+        "Free open-source Discord bot with user leveling, XP system, global leaderboards, and engagement tracking. Boost your Discord community with 1,200+ active servers.",
     keywords: [
         "discord bot",
         "leveling bot",
@@ -47,7 +50,7 @@ export const metadata: Metadata = {
         url: "https://alphagamebot.com",
         title: "AlphaGameBot - Free Discord Engagement Bot",
         description:
-      "Boost your Discord server engagement with our free open-source leveling bot. XP system, global leaderboards, and more!",
+            "Boost your Discord server engagement with our free open-source leveling bot. XP system, global leaderboards, and more!",
         siteName: "AlphaGameBot",
         images: [
             {
@@ -62,7 +65,7 @@ export const metadata: Metadata = {
         card: "summary_large_image",
         title: "AlphaGameBot - Free Discord Engagement Bot",
         description:
-      "Boost your Discord server engagement with our free open-source leveling bot. XP system, global leaderboards, and more!",
+            "Boost your Discord server engagement with our free open-source leveling bot. XP system, global leaderboards, and more!",
         images: ["/og-image.png"],
     },
     alternates: {
@@ -73,15 +76,20 @@ export const metadata: Metadata = {
 export default function RootLayout({
     children,
 }: Readonly<{
-  children: React.ReactNode;
+    children: React.ReactNode;
 }>) {
     return (
         <html lang="en" >
             <head>
                 <link rel="icon" href="/favicon.ico" sizes="any" />
+                <UmamiAnalytics />
             </head>
             <body className="bg-gray-900 text-gray-200 font-sans antialiased min-h-screen flex flex-col justify-between  " >
-                {children}
+                <Header />
+                <main className="py-12">
+                    {children}
+                </main>
+                <Footer />
             </body>
         </html>
     );

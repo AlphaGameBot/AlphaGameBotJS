@@ -8,7 +8,7 @@
 import client from "@/app/lib/database";
 
 export async function GET() {
-    const count = await client.user_stats.count();
+    const count = await client.userStats.count();
 
     return new Response(JSON.stringify({ count }), {
         headers: { "Content-Type": "application/json" },

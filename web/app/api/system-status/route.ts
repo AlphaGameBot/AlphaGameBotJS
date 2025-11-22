@@ -7,7 +7,8 @@ import client from "@/app/lib/database";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-    if (client.$executeRaw`SELECT 1`.catch(() => null) === null) {
+    const ok = await client.$executeRaw`SELECT 1`.catch(() => null);
+    if (ok === null) {
         return NextResponse.json({ status: "degraded" });
     }
     return NextResponse.json({ status: "operational" });

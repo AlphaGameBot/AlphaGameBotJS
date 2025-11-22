@@ -8,8 +8,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import Footer from "../components/Footer";
-import Header from "../components/Header";
 
 
 export default function AboutPage() {
@@ -46,8 +44,6 @@ export default function AboutPage() {
 
     return (
         <main className="min-h-screen">
-            <Header />
-
             {/* Hero Section */}
             <section className="relative overflow-hidden py-20 md:py-32">
                 <div className="container">
@@ -418,8 +414,6 @@ export default function AboutPage() {
                     </div>
                 </div>
             </section>
-
-            <Footer />
         </main>
     );
 }

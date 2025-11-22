@@ -18,6 +18,7 @@
 
 import { Events, type Message } from "discord.js";
 import type { EventHandler } from "../interfaces/Event.js";
+import { lazyPopulateUser } from "../subsystems/lazyPopulation.js";
 import { addMessage, getUserLevel } from "../subsystems/leveling/dbhelper.js";
 import { userNeedsLevelUpAnnouncement } from "../subsystems/leveling/utility.js";
 import prisma from "../utility/database.js";
@@ -30,7 +31,7 @@ export default {
     execute: async (message: Message) => {
         // Ignore messages from bots
         if (message.author.bot) return;
-
+        await lazyPopulateUser(message.author);
         await addMessage(message.author.id, message.guildId ?? "0");
 
         if (await userNeedsLevelUpAnnouncement(message.author.id, message.guildId ?? "0")) {
@@ -52,13 +53,12 @@ export default {
                     });
                 }, 15000);
 
-                await prisma.guild_user_stats.update({
-                    where: {
-                        user_id_guild_id: { user_id: message.author.id, guild_id: message.guildId ?? "0" }
-                    },
-                    data: {
-                        last_announced_level: newLevel
-                    }
+                // The Prisma schema now uses a single `UserStats` model with an optional `guild_id`.
+                // Update the matching record(s) by user_id + guild_id. Use updateMany because
+                // there is no compound unique constraint in the schema for (user_id, guild_id).
+                await prisma.userStats.update({
+                    where: { user_id_guild_id: { user_id: message.author.id, guild_id: message.guild.id } },
+                    data: { last_announced_level: newLevel }
                 });
             } else {
                 logger.warn(`Cannot send level up announcement in channel ${message.channel.id} of guild ${message.guild.id} due to missing permissions or invalid channel type.`);

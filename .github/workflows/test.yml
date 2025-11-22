@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: '20' # Or your desired Node.js version
       - name: Install dependencies
-        run: npm ci # Or yarn install
+        run: npm install --workspaces
       - name: Run Jest tests
         run: npm -w bot test # Or yarn test
       - name: Jest Coverage Comment
@@ -30,10 +30,6 @@ jobs:
         env:
           NODE_ENV: test
         with:
-          # Use --prefix to ensure the test runner runs in the `bot` package regardless
-          # of the action's working directory handling. Using `-w` can behave differently
-          # inside actions which may cause path-related code (like the crawler) to look
-          # in the wrong project root.
-          test-script: npm --prefix ./bot test -- --coverage --forceExit --silent
+          test-script: npm -w bot test
           github-token: ${{ secrets.GITHUB_TOKEN }}
           output: comment, report-markdown
