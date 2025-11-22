@@ -153,29 +153,37 @@ export async function handleButtonPressReportError(interaction: ButtonInteractio
             });
         });
 
-        await reportIssueViaGitHub({
-            databaseRow: query,
-            user: errorInfo.caller,
-            guild: errorInfo.guild ?? null,
-            interaction: errorInfo.originalInteraction
-                ? errorInfo.originalInteraction as unknown as Interaction
-                : undefined,
-            error: errorInfo.error,
-        });
+        if (process.env.NODE_ENV === "production" || process.env.GITHUB_ISSUES) {
+            await reportIssueViaGitHub({
+                databaseRow: query,
+                user: errorInfo.caller,
+                guild: errorInfo.guild ?? null,
+                interaction: errorInfo.originalInteraction
+                    ? errorInfo.originalInteraction as unknown as Interaction
+                    : undefined,
+                error: errorInfo.error,
+            });
+        } else {
+            logger.warn("Skipping GitHub issue creation in non-production environment.");
+        }
 
-        // Edit the original message's button to show it was reported
-        const currentButton = ButtonBuilder.from(interaction.component)
-            .setLabel("✅ Error Reported")
-            .setStyle(ButtonStyle.Success)
-            .setDisabled(true);
+        try {
+            // Edit the original message's button to show it was reported
+            const currentButton = ButtonBuilder.from(interaction.component)
+                .setLabel("✅ Error Reported")
+                .setStyle(ButtonStyle.Success)
+                .setDisabled(true);
 
 
-        const updatedRow = new ActionRowBuilder<ButtonBuilder>()
-            .addComponents(currentButton);
+            const updatedRow = new ActionRowBuilder<ButtonBuilder>()
+                .addComponents(currentButton);
 
-        await interaction.update({
-            components: [updatedRow]
-        });
+            await interaction.update({
+                components: [updatedRow]
+            });
+        } catch (editError) {
+            logger.error(`Failed to update error report button state for error ID ${errorId}:`, editError);
+        }
     } catch (e) {
         logger.error(`Failed to report error ID ${errorId}:`, e);
         // Attempt to notify the user of the failure. If the interaction was deferred,

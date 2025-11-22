@@ -45,7 +45,7 @@ export class GitHubReporter {
                 // The only thing I've seen Octokit log at 'info' level are HTTP requests/responses,
                 // such as POST /repos/AlphaGameBot/Issues/issues - 201... etc
                 // so HTTP is more appropriate here.
-                info: (msg: string) => ghLogger.http(msg),
+                info: (msg: string) => ghLogger.info(msg),
                 warn: (msg: string) => ghLogger.warn(msg),
                 error: (msg: string) => ghLogger.error(msg),
             }
@@ -61,7 +61,7 @@ export class GitHubReporter {
             body,
             labels,
         });
-        logger.http(`Created GitHub issue #${data.number}: "${data.title}" - ${data.html_url}`, { metadata: data });
+        logger.info(`Created GitHub issue #${data.number}: "${data.title}" - ${data.html_url}`, { metadata: data });
         return {
             number: data.number,
             url: data.html_url,
