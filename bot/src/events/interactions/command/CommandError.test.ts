@@ -16,7 +16,7 @@
 //     You should have received a copy of the GNU General Public License
 //     along with AlphaGameBot.  If not, see <https://www.gnu.org/licenses/>.
 
-import { describe, expect, it, jest, beforeEach } from '@jest/globals';
+import { describe, expect, it, jest } from '@jest/globals';
 import type { ChatInputCommandInteraction } from 'discord.js';
 import { handleCommandError } from './CommandError.js';
 
