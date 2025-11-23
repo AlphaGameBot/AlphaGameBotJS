@@ -7,6 +7,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import InlineLoginStatus from "./InlineLoginStatus";
 import UserAvatar from "./UserAvatar";
 
 // page header * navbar
@@ -88,6 +89,12 @@ export default function Header() {
                                 >
                                     Contact
                                 </Link>
+                            </li>
+
+                            <li>
+                                <div className="pt-2">
+                                    <InlineLoginStatus />
+                                </div>
                             </li>
                         </ul>
                     </nav>
