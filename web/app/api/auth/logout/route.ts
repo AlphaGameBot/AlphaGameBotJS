@@ -8,6 +8,9 @@ export async function GET(req: NextRequest) {
     // get session id from cookie
     const sessionId = req.cookies.get('agb_session')?.value;
 
+    // congratulations? You're already logged out.
+    if (!sessionId) return res;
+
     const hashedId = hashToken(sessionId);
     if (sessionId) {
         await db.session.delete({
