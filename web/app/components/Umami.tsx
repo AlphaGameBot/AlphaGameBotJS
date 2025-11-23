@@ -23,6 +23,10 @@ import Script from "next/script";
 export const UmamiAnalytics = () => {
     // guard for SSR — this component is marked "use client" but be explicit
     if (typeof window === "undefined") return null;
+    if (process.env.NEXT_PUBLIC_NODE_ENV !== "production") {
+        console.warn("Not loading umami out of production environment");
+        return null;
+    }
 
     const src = window.location.hostname.includes("alphagamebot.com")
         ? "https://www.alphagamebot.com/rt/hazel.js"

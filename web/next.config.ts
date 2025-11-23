@@ -7,6 +7,9 @@ const cwd = process.cwd();
 const nextConfig: NextConfig = {
   "turbopack": {
     "root": path.join(cwd, "..")
+  },
+  "env": {
+    "NEXT_PUBLIC_NODE_ENV": process.env.NODE_ENV
   }
 };
 
