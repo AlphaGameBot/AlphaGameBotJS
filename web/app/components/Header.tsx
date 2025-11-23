@@ -63,8 +63,8 @@ export default function Header() {
                     <nav className="container">
                         <ul className="flex flex-col gap-4 m-0 p-0 list-none">
                             <li>
-                                <Link 
-                                    href="/blog" 
+                                <Link
+                                    href="/blog"
                                     className="block text-lg py-2"
                                     onClick={() => setMobileMenuOpen(false)}
                                 >
@@ -72,8 +72,8 @@ export default function Header() {
                                 </Link>
                             </li>
                             <li>
-                                <Link 
-                                    href="/about" 
+                                <Link
+                                    href="/about"
                                     className="block text-lg py-2"
                                     onClick={() => setMobileMenuOpen(false)}
                                 >
@@ -81,16 +81,13 @@ export default function Header() {
                                 </Link>
                             </li>
                             <li>
-                                <Link 
-                                    href="/contact" 
+                                <Link
+                                    href="/contact"
                                     className="block text-lg py-2"
                                     onClick={() => setMobileMenuOpen(false)}
                                 >
                                     Contact
                                 </Link>
-                            </li>
-                            <li className="pt-2 border-t" style={{ borderColor: 'var(--border)' }}>
-                                <UserAvatar showSignIn={true} />
                             </li>
                         </ul>
                     </nav>
