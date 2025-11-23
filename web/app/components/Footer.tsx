@@ -11,7 +11,7 @@ export default function Footer() {
     return (
         <footer className="py-12" style={{ borderTop: '1px solid var(--border)' }}>
             <div className="container">
-                <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+                <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
                     <div className="text-center md:text-left">
                         <div className="mb-2 text-xl font-bold" style={{ color: 'var(--primary-500)' }}>AlphaGameBot</div>
                         <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>

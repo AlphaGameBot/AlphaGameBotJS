@@ -257,6 +257,27 @@ h1, h2, h3 {
     padding: 0.625rem 1.25rem;
     font-size: 0.9rem;
   }
+
+  /* Better mobile text sizes */
+  h1 {
+    font-size: 2rem !important;
+    line-height: 1.2 !important;
+  }
+
+  h2 {
+    font-size: 1.75rem !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Ensure cards stack nicely */
+  .card {
+    padding: 1.25rem;
+  }
+
+  /* Make grid items stack on mobile */
+  .grid-auto {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Utility Classes */
