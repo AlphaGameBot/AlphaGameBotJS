@@ -61,6 +61,8 @@ pipeline {
     }
     environment {
         TOKEN = credentials('alphagamebot-token')
+        DISCORD_CLIENT_SECRET = credentials('alphagamebot-client-secret')
+        DISCORD_CLIENT_ID = sh(returnStdout: true, script: "curl -H \"Authorization: Bot ${TOKEN}\" https://discord.com/api/users/@me | jq .id -cMr").trim()
         WEBHOOK = credentials('alphagamebot-webhook')
         JENKINS_NOTIFICATIONS_WEBHOOK = credentials('discord-jenkins-webhook')
         UPTIME_POLL_URL = 'http://kuma:3001/api/push/J8C7hyZzdg'
@@ -225,6 +227,8 @@ pipeline {
                         sh "docker run --detach --tty  \
                                         --name alphagamebot-webui \
                                         -e BUILD_NUMBER -e DATABASE_URL -e PUSHGATEWAY_URL -e LOKI_URL -e GITHUB_PAT \
+                                        -e DISCORD_CLIENT_ID -e DISCORD_CLIENT_SECRET \
+                                        -e NEXT_PUBLIC_BASE_URL='https://alphagamebot.com' \
                                         --restart=always --network=alphagamebot-net --ip 10.7.1.128 \
                                         --hostname alphagamebot-webui \
                                         alphagamedev/alphagamebot:web-$WEB_VERSION"
