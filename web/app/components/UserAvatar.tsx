@@ -18,10 +18,12 @@
 
 "use client";
 
+import { faDiscord } from "@fortawesome/free-brands-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import type { User } from "discord.js";
 import { useEffect, useState } from "react";
 
-export default function UserAvatar() {
+export default function UserAvatar({ className, showSignIn }: { className?: string, showSignIn?: boolean }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
 
@@ -30,14 +32,13 @@ export default function UserAvatar() {
             .then((res) => res.json())
             .then((data) => {
                 setUser(data.user);
-                console.log(data)
                 setLoading(false);
             });
     }, []);
 
     return (
         <>
-            <div>
+            <div className={className}>
                 {loading ? (
                     <div className="w-10 h-10 rounded-full bg-gray-300 animate-pulse"></div>
                 ) : user ? (
@@ -93,12 +94,15 @@ export default function UserAvatar() {
                         </div>
                     </div>
                 ) : (
-                    <a
-                        href="/api/auth/login"
-                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-                    >
-                        Sign in with Discord
-                    </a>
+                    showSignIn !== false && (
+                        <a
+                            href="/api/auth/login"
+                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                        >
+                            <FontAwesomeIcon icon={faDiscord} className="mr-2" />
+                            Sign In
+                        </a>
+                    )
                 )}
             </div>
         </>
