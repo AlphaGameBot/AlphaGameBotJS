@@ -18,7 +18,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, type ChangeEvent } from 'react';
 
 type BlogControlsProps = {
     categories: string[];
@@ -64,7 +64,7 @@ export default function BlogControls({ categories, onFilterChange, onSortChange 
                 </select>
                 {selectedCategory !== 'all' && (
                     <button
-                        onClick={() => handleCategoryChange({ target: { value: 'all' } } as any)}
+                        onClick={() => handleCategoryChange({ target: { value: 'all' } } as unknown as ChangeEvent<HTMLSelectElement>)}
                         className="text-xs text-text-muted hover:text-primary-500 transition-colors underline"
                         title="Clear filter"
                     >

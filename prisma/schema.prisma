@@ -16,6 +16,7 @@ model User {
   wasLazyPopulated Boolean       @default(false)
   userStats        UserStats[]
   errorReports     ErrorReport[]
+  sessions         Session[]
 }
 
 model Guild {
@@ -52,4 +53,17 @@ model ErrorReport {
 
   error_msg  String   @db.Text
   created_at DateTime @default(now())
+}
+
+/// Sessions for web authentication. Stores a hash of the session token
+/// (so the raw token is only sent to the user's cookie) and points to a User.
+model Session {
+  id         String   @id @default(cuid())
+  hashedId   String   @unique
+  user_id    String   @db.VarChar(20)
+  user_json  Json
+  created_at DateTime @default(now())
+  expires_at DateTime
+
+  user User @relation(fields: [user_id], references: [id])
 }

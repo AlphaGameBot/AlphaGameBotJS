@@ -4,6 +4,7 @@
 // https://opensource.org/licenses/MIT
 
 import Link from "next/link";
+import UserAvatar from "./UserAvatar";
 
 // page header * navbar
 export default function Header() {
@@ -16,8 +17,8 @@ export default function Header() {
                         AlphaGame<span style={{ color: 'var(--primary-500)' }}>Bot</span>
                     </h3>
                 </Link>
-                <nav>
-                    <ul className="flex gap-8 items-center">
+                <nav className="flex items-center gap-6">
+                    <ul className="flex gap-8 items-center m-0 p-0 list-none">
                         <li>
                             <Link href="/blog" className="text-lg">Blog</Link>
                         </li>
@@ -28,6 +29,7 @@ export default function Header() {
                             <Link href="/contact" className="text-lg">Contact</Link>
                         </li>
                     </ul>
+                    <UserAvatar showSignIn={true} />
                 </nav>
             </div>
         </header>
