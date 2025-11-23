@@ -5,7 +5,6 @@
 // https://opensource.org/licenses/MIT
 
 import { useState } from "react";
-import Header from "../components/Header";
 import submitForm from "./submitForm";
 
 export default function ContactPage() {
@@ -13,8 +12,7 @@ export default function ContactPage() {
     const [submitted, setSubmitted] = useState(false);
     const [error, setError] = useState<string | null>(null);
     return (
-        <main className="min-h-screen">
-            <Header />
+        <div className="min-h-screen">
             <div className="mx-auto max-w-3xl">
                 <section className="container py-12">
                     <h1 className="mb-6 text-4xl font-bold">Contact Us</h1>
@@ -122,14 +120,14 @@ export default function ContactPage() {
                         </form>
                     )}
                 </section>
-                <h2 className="mt-12 text-2xl font-bold">Alternate Contact Methods</h2>
-                <p className="mb-4" style={{ color: 'var(--text-muted)' }}>
+                <h2 className="mt-12 text-2xl font-bold px-6 md:px-0">Alternate Contact Methods</h2>
+                <p className="mb-4 px-6 md:px-0" style={{ color: 'var(--text-muted)' }}>
                     If webforms aren&apos;t your thing, you can also reach me via email at{" "}
                     <a href="mailto:howdy@alphagamebot.com" style={{ color: 'var(--primary-500)', textDecoration: 'underline' }}>
                         howdy@alphagamebot.com
                     </a>!
                 </p>
             </div>
-        </main>
+        </div>
     );
 }
