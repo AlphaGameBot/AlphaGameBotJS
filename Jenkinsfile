@@ -223,7 +223,7 @@ pipeline {
                         // conditionally deploy
                         sh "docker container stop alphagamebot-webui || true"
                         sh "docker container rm alphagamebot-webui -f || true"
-                        sh "docker compose -p alphagamebotjs exec -i nginx rm -rf /var/cache/nginx/* || true"
+                        sh "docker compose -p alphagamebotjs restart nginx || true"
                         sh "docker run --detach --tty  \
                                         --name alphagamebot-webui \
                                         -e BUILD_NUMBER -e DATABASE_URL -e PUSHGATEWAY_URL -e LOKI_URL -e GITHUB_PAT \

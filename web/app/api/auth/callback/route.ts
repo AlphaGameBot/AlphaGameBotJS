@@ -1,8 +1,8 @@
+import { hashToken } from '@/app/lib/session';
 import crypto from 'crypto';
 import type { User } from 'discord.js';
 import { NextRequest, NextResponse } from 'next/server';
 import db from '../../../lib/database';
-import { hashToken } from '@/app/lib/session';
 
 async function fetchToken(code: string) {
     const params = new URLSearchParams({
@@ -31,7 +31,7 @@ async function fetchUser(access_token: string) {
 export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const code = url.searchParams.get('code');
-    if (!code) return NextResponse.redirect(new URL('/', req.url));
+    if (!code) return NextResponse.json({ error: 'No code provided' }, { status: 400 });
 
     try {
         const token = await fetchToken(code);
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
 
         const user = await fetchUser(token.access_token);
 
-        const res = NextResponse.redirect(new URL('/', req.url));
+        const res = NextResponse.redirect(new URL(process.env.NEXT_PUBLIC_BASE_URL || '/'));
 
         const raw = crypto.randomBytes(32).toString('hex');
         const hashed = hashToken(raw);
@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
             update: { username: user.username, discriminator: user.discriminator, last_login: new Date() },
             create: { id: user.id, username: user.username, discriminator: user.discriminator }
         });
-        
+
         await db.session.create({
             data: {
                 hashedId: hashed,
