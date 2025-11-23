@@ -1,3 +1,4 @@
+import { hashToken } from '@/app/lib/session';
 import { NextRequest, NextResponse } from 'next/server';
 import db from '../../../lib/database';
 
@@ -7,10 +8,11 @@ export async function GET(req: NextRequest) {
     // get session id from cookie
     const sessionId = req.cookies.get('agb_session')?.value;
 
+    const hashedId = hashToken(sessionId);
     if (sessionId) {
         await db.session.delete({
             where: {
-                id: sessionId
+                hashedId: hashedId
             }
         });
     }

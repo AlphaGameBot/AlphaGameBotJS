@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import type { User } from 'discord.js';
 import { NextRequest, NextResponse } from 'next/server';
 import db from '../../../lib/database';
+import { hashToken } from '@/app/lib/session';
 
 async function fetchToken(code: string) {
     const params = new URLSearchParams({
@@ -27,14 +28,6 @@ async function fetchUser(access_token: string) {
     return res.json() as unknown as User;
 }
 
-function makeToken() {
-    return crypto.randomBytes(32).toString('hex');
-}
-
-function hashToken(token: string) {
-    return crypto.createHash('sha256').update(token).digest('hex');
-}
-
 export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const code = url.searchParams.get('code');
@@ -47,14 +40,17 @@ export async function GET(req: NextRequest) {
         const user = await fetchUser(token.access_token);
 
         const res = NextResponse.redirect(new URL('/', req.url));
-        const raw = makeToken();
+
+        const raw = crypto.randomBytes(32).toString('hex');
         const hashed = hashToken(raw);
+
         const expires = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
         await db.user.upsert({
             where: { id: user.id },
             update: { username: user.username, discriminator: user.discriminator, last_login: new Date() },
             create: { id: user.id, username: user.username, discriminator: user.discriminator }
         });
+        
         await db.session.create({
             data: {
                 hashedId: hashed,
@@ -63,7 +59,7 @@ export async function GET(req: NextRequest) {
                 expires_at: expires
             }
         });
-        
+
         const cookie = `agb_session=${raw}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${60 * 60 * 24 * 7};`;
         res.headers.append('Set-Cookie', cookie);
         return res;

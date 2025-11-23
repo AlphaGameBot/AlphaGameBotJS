@@ -1,11 +1,7 @@
-import crypto from 'crypto';
+import { hashToken } from '@/app/lib/session';
 import type { User } from 'discord.js';
 import { NextRequest, NextResponse } from 'next/server';
 import db from '../../../lib/database';
-
-function hashToken(token: string) {
-    return crypto.createHash('sha256').update(token).digest('hex');
-}
 
 export async function GET(req: NextRequest) {
     const cookie = req.headers.get('cookie') || '';
