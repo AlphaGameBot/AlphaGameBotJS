@@ -99,14 +99,6 @@ export default function BlogPostsList({ posts }: BlogPostsListProps) {
                             ? String(post.content).substring(0, 150).replace(/[#*_`]/g, '').trim() + '...'
                             : 'Click to read more...';
 
-                        const formattedDate = post.date
-                            ? new Date(post.date).toLocaleDateString('en-US', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                            })
-                            : 'No date';
-
                         return (
                             <article key={post.id} className="card group hover:border-primary-500 transition-all duration-300 flex flex-col">
                                 {/* Post Date Badge */}

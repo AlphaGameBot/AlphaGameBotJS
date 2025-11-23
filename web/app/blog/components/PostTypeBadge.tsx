@@ -48,11 +48,13 @@ export default function PostTypeBadge({ type }: { type: PostType }) {
             badgeText = 'Development';
             badgeColor = 'bg-purple-500';
             break;
-        default:
+        default: {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const _never: never = type;
             badgeColor = 'bg-gray-500';
             badgeText = 'Unknown';
+            break;
+        }
     }
 
     return (

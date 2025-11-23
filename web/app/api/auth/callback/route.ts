@@ -1,5 +1,7 @@
+import crypto from 'crypto';
 import type { User } from 'discord.js';
 import { NextRequest, NextResponse } from 'next/server';
+import db from '../../../lib/database';
 
 async function fetchToken(code: string) {
     const params = new URLSearchParams({
@@ -25,12 +27,12 @@ async function fetchUser(access_token: string) {
     return res.json() as unknown as User;
 }
 
-function createSessionCookie(user: User) {
-    // Minimal session using JSON cookie. Keep small and short-lived.
-    const payload = JSON.stringify({ user, iat: Date.now() });
-    // Base64 encode
-    const val = Buffer.from(payload).toString('base64');
-    return `agb_session=${val}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${60 * 60 * 24};`;
+function makeToken() {
+    return crypto.randomBytes(32).toString('hex');
+}
+
+function hashToken(token: string) {
+    return crypto.createHash('sha256').update(token).digest('hex');
 }
 
 export async function GET(req: NextRequest) {
@@ -45,7 +47,24 @@ export async function GET(req: NextRequest) {
         const user = await fetchUser(token.access_token);
 
         const res = NextResponse.redirect(new URL('/', req.url));
-        const cookie = createSessionCookie(user);
+        const raw = makeToken();
+        const hashed = hashToken(raw);
+        const expires = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
+        await db.user.upsert({
+            where: { id: user.id },
+            update: { username: user.username, discriminator: user.discriminator, last_login: new Date() },
+            create: { id: user.id, username: user.username, discriminator: user.discriminator }
+        });
+        await db.session.create({
+            data: {
+                hashedId: hashed,
+                user_id: user.id,
+                user_json: user,
+                expires_at: expires
+            }
+        });
+        
+        const cookie = `agb_session=${raw}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${60 * 60 * 24 * 7};`;
         res.headers.append('Set-Cookie', cookie);
         return res;
     } catch (err) {

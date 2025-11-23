@@ -30,6 +30,7 @@ export default function UserAvatar() {
             .then((res) => res.json())
             .then((data) => {
                 setUser(data.user);
+                console.log(data)
                 setLoading(false);
             });
     }, []);

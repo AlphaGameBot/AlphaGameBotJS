@@ -32,7 +32,8 @@ type Props = {
 export async function generateStaticParams() {
     const routes = getAllPostRoutes();
     return routes
-        .filter((route) => route.year && route.month) // Filter out posts without valid dates
+        // Filter out posts without valid dates
+        .filter((route) => route.year && route.month)
         .map((route) => ({
             year: route.year!,
             month: route.month!,
