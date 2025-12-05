@@ -124,7 +124,8 @@ pipeline {
                         result: 'STARTED'
                     )
 
-                    sh 'curl -X POST -H "Content-Type: application/json" $JENKINS_NOTIFICATIONS_WEBHOOK -d \'{"content": "<:jenkins:1428899392810909747> Build **#$BUILD_NUMBER** started for **$JOB_NAME** (Version: **$AGB_VERSION**)"}\''
+                    sh 'curl -X POST -H "Content-Type: application/json"  $JENKINS_NOTIFICATIONS_WEBHOOK \
+                    -d \'{"content": "<:jenkins:1428899392810909747> Build **#$BUILD_NUMBER** started for **$JOB_NAME** (Version: **$AGB_VERSION**)"}\''
                 }
             }
         }
@@ -162,6 +163,8 @@ pipeline {
                                         --build-arg BUILD_NUMBER="$BUILD_NUMBER" \
                                         --build-arg BRANCH_NAME="$BRANCH_NAME" \
                                         --build-arg VERSION="$WEB_VERSION" \
+                                        --build-arg GIT_SHA="$GIT_COMMIT" \
+                                        --build-arg BUILD_TIMESTAMP="$(date +%s)" \
                                         -f web/Dockerfile .'
                     }
                 }
@@ -174,7 +177,11 @@ pipeline {
             steps {
                 script {
                     stageWithPost('deploy-commands') {
-                        sh "docker run --rm -i --network=alphagamebot-net --name agb-temp-deploy-cmds -e NODE_ENV=deploy -e TOKEN -e DATABASE_URL --entrypoint sh alphagamedev/alphagamebot:$AGB_VERSION -c 'node ./dist/deploy-commands.js'"
+                        sh "docker run --rm -i \
+                            --network=alphagamebot-net --name agb-temp-deploy-cmds \
+                            -e NODE_ENV=deploy -e TOKEN -e DATABASE_URL \
+                            --entrypoint sh alphagamedev/alphagamebot:$AGB_VERSION \
+                            -c 'node ./dist/deploy-commands.js'"
                     }
                 }
             }
